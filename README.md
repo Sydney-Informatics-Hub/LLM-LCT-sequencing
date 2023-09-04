@@ -1,2 +1,19 @@
 # LCT_sequencing
 LLM tool for classifying sequencing relations between text clauses for Legitimation Code Theory (LCT).
+
+## Introduction
+
+Legitimation Code Theory (LCT) is a framework developed by Prof. Karl Maton for identify and classify the ‘epistemic-semantic density (ESD)’ in English discourse. On top of the ESD at individual word level, the ‘epistemological condensation (EC)’, i.e. strengthening of ESD by combining words, is defined at the ‘clausing’ and ‘sequencing’ levels as typologies that link with different degrees of increasing complexity. Utilising the LCT analytic method, the complexity of knowledge practices and knowledge-building can be conceptualised and revealed from educational texts, such as the lecture transcriptions.
+
+SIH has previously completed the ‘clausing tool’ (project PIPE-156), i.e. combining word-groupings into short, coherent standalone passages, and in turn classifying the clauses as one of the eight predefined types so that the EC can be quantitatively measured, and an information density profile of the text was generated.
+
+This project (SIH project PIPE-4038) focuses on implementing the next level of the epistemological condensation of the texts, “sequencing tool”. By combining more than one short passages (clauses), the sequencing patterns affects how the meanings are condensed from more than one passages and transported across passages. Similar to the clausing typology, the sequencing tool has a 3-level hierarchical system that consists of 8 sub-types of sequencing at the finest granularity.
+
+## Functionality
+
+The aim of the LCT analysis tool is to provide resaerchers an automatic classification system that detects and identifies the sequencing types of combination of passages (clauses). Existing large language models (LLMs), such as the OpenAI GPT-4 and LLama-2, are applied for sequencing classification.
+
+## References
+
+- Maton, Karl, and Yaegan J. Doran. "Condensation: A translation device for revealing complexity of knowledge practices in discourse, part 2—clausing and sequencing." Onomázein (2017): 77-110
+
