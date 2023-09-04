@@ -11,9 +11,16 @@ This project (SIH project PIPE-4038) focuses on implementing the next level of t
 
 ## Functionality
 
-The aim of the LCT analysis tool is to provide resaerchers an automatic classification system that detects and identifies the sequencing types of combination of passages (clauses). Existing large language models (LLMs), such as the OpenAI GPT-4 and LLama-2, are applied for sequencing classification.
+The aim of the LCT analysis tool is to provide researchers an automatic classification system that detects and identifies the sequencing types of combination of passages (clauses). Existing large language models (LLMs), such as the OpenAI GPT-4 and LLama-2, are applied for sequencing classification.
 
 ## References
 
 - Maton, Karl, and Yaegan J. Doran. "Condensation: A translation device for revealing complexity of knowledge practices in discourse, part 2—clausing and sequencing." Onomázein (2017): 77-110
+
+## Attribution and Acknowledgement
+Acknowledgments are an important way for us to demonstrate the value we bring to your research. Your research outcomes are vital for ongoing funding of the Sydney Informatics Hub.
+
+If you make use of this software for your research project, please include the following acknowledgment:
+
+“This research was supported by the Sydney Informatics Hub, a Core Research Facility of the University of Sydney."
 
