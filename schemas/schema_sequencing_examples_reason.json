@@ -1,0 +1,49 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "Data": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "Type": {
+                        "type": "string"
+                    },
+                    "Subtype": {
+                        "type": "string"
+                    },
+                    "Sub_Subtype": {
+                        "type": "string"
+                    },
+                    "Examples": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "Example": {
+                                    "type": "string"
+                                },
+                                "Reasoning": {
+                                    "type": "string"
+                                },
+                                "Linkage_Word": {
+                                    "type": ["string", "null"]
+                                },
+                                "Page_Number": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["Example", "Reasoning"],
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "required": ["Type", "Subtype", "Examples"],
+                "additionalProperties": false
+            }
+        }
+    },
+    "required": ["Data"],
+    "additionalProperties": false
+}
