@@ -1,0 +1,86 @@
+{
+  "Sequencing_Types": [
+    {
+      "Type": "Cumulative Sequencing",
+      "Description": "Explicitly relates terms from different passages, adding meaning. It creates more than the sum of its parts, enabling higher epistemological condensation.",
+      "Page_Number": "15",
+      "Subtypes": [
+        {
+          "Subtype": "Vertical Sequencing",
+          "Description": "Condenses meanings from one or more passages and transports those meanings into another passage.",
+          "Page_Number": "16",
+          "Sub_Subtypes": [
+            {
+              "Sub_Subtype": "Integrative Sequencing",
+              "Description": "Condenses and transports meanings from more than one passage.",
+              "Page_Number": "16"
+            },
+            {
+              "Sub_Subtype": "Subsumptive Sequencing",
+              "Description": "Condenses and transports meanings from within a single passage. Often involves successive passages.",
+              "Page_Number": "16"
+            }
+          ]
+        },
+        {
+          "Subtype": "Horizontal Sequencing",
+          "Description": "Links passages without explicitly transporting meanings across passages.",
+          "Page_Number": "18",
+          "Sub_Subtypes": [
+            {
+              "Sub_Subtype": "Consequential Sequencing",
+              "Description": "Indicates how meanings from different passages shape one another.",
+              "Page_Number": "18"
+            },
+            {
+              "Sub_Subtype": "Sequential Sequencing",
+              "Description": "Indicates the ordering of meanings from different passages. Adds only temporal relations.",
+              "Page_Number": "18"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Type": "Segmental Sequencing",
+      "Description": "Does not explicitly relate terms from constitutive passages.",
+      "Page_Number": "13",
+      "Subtypes": [
+        {
+          "Subtype": "Compartmental Sequencing",
+          "Description": "Brings together different passages.",
+          "Page_Number": "19",
+          "Sub_Subtypes": [
+            {
+              "Sub_Subtype": "Incoherent Sequencing",
+              "Description": "Involves the sequencing of passages with no significant relation to each other.",
+              "Page_Number": "20"
+            },
+            {
+              "Sub_Subtype": "Coherent Sequencing",
+              "Description": "Involves the sequencing of passages that offer continuity.",
+              "Page_Number": "20"
+            }
+          ]
+        },
+        {
+          "Subtype": "Sedimental Sequencing",
+          "Description": "Brings together similar or identical passages.",
+          "Page_Number": "19",
+          "Sub_Subtypes": [
+            {
+              "Sub_Subtype": "Repetitive Sequencing",
+              "Description": "Involves practically identical passages.",
+              "Page_Number": "23"
+            },
+            {
+              "Sub_Subtype": "Reiterative Sequencing",
+              "Description": "Involves similar passages with sufficient difference to add meanings.",
+              "Page_Number": "23"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
