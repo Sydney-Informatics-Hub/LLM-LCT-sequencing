@@ -1,0 +1,147 @@
+{
+  "Data": [
+    {
+      "Type": "Cumulative Sequencing",
+      "Subtype": "Horizontal Sequencing",
+      "Examples": [
+        {
+          "Example": "There is nothing wrong with going back to your Year 11 information on bath houses, because the activities that happened in one bath house generally happened in every other bath house.",
+          "Reasoning": "The example uses the word 'because' to link passages, creating relations among them and adding meanings of their own.",
+          "Linkage_Word": "because",
+          "Page_Number": "15"
+        },
+        {
+          "Example": "Do, you know, are the themes of their artwork reflecting it? So it’s saying remember when we started, we said that Pompeii had originally been settled by Greeks? Okay?",
+          "Reasoning": "The example uses the word 'so', creating relations among them and adding meanings of their own.",
+          "Linkage_Word": "So",
+          "Page_Number": "25"
+        },
+        {
+          "Example": "if we started to look at all the things in Pompeii and Herculaneum, what objects may be showing Greek design? Or Egyptian design? Or Greek mythology? Or Egyptian mythology? Or what building techniques like columns?",
+          "Reasoning": "The use of the linkage word 'if' sets up a conditional scenario, suggesting a hypothetical situation where we examine objects in Pompeii and Herculaneum. The subsequent questions introduced by the word 'Or' present multiple possibilities or alternatives related to the initial scenario. This structure indicates how meanings from different passages shape one another, as each question builds upon the previous one, exploring different facets of the initial hypothetical situation. The use of 'Or' repeatedly emphasizes the various possibilities and alternatives, linking them together in a horizontal sequence.",
+          "Linkage_Word": "So",
+          "Page_Number": "25"
+        },
+        {
+          "Example": "if we look at where Italy is, it’s not that far from Egypt at this time",
+          "Reasoning": "The use of the linkage word 'if' sets up a conditional scenario, suggesting a hypothetical situation where we consider Italy's geographical location in relation to Egypt. The statement that follows the 'if' condition ('it’s not that far from Egypt at this time') provides a consequence or result of the initial condition. This structure indicates how meanings from the initial passage (looking at Italy's location) shape the subsequent passage (its proximity to Egypt). The relationship between the two passages is established horizontally, with the second passage building upon the premise set by the first, without necessarily condensing or subsuming the meanings of the first passage.",
+          "Linkage_Word": "If",
+          "Page_Number": "25"
+        },
+        {
+          "Example": "Egypt is part of the Roman Empire. So there would be massive amounts of trade going on,",
+          "Reasoning": "The use of the linkage word 'So' introduces a consequence or result based on the premise provided in the preceding statement. The initial statement ('Egypt is part of the Roman Empire') sets up a fact or context. The subsequent statement introduced by 'So' ('there would be massive amounts of trade going on') provides a logical outcome or implication of the initial fact. This structure indicates how meanings from the initial passage (Egypt being part of the Roman Empire) shape or lead to the subsequent passage (the implication of significant trade). The relationship between the two passages is established horizontally, with the second passage providing a consequence or elaboration based on the premise set by the first, without necessarily condensing or subsuming the meanings of the first passage.",
+          "Linkage_Word": "So",
+          "Page_Number": "25"
+        },
+        {
+          "Example": "When you get trade in ideas—you wouldn’t have heard this word before—we call it aesthetic trade",
+          "Reasoning": "The use of the linkage word 'When' introduces a condition or scenario, specifically referring to the occurrence of 'trade in ideas.' The statement that follows ('you wouldn’t have heard this word before—we call it aesthetic trade') provides an elaboration or clarification based on the initial condition. This structure indicates how the introduction of the concept (trade in ideas) in the initial passage shapes or leads to the subsequent passage, which provides a name or label for that concept ('aesthetic trade'). ",
+          "Linkage_Word": "When",
+          "Page_Number": "26"
+        },
+        {
+          "Example": "High-Density lipoprotein (hdl) protects the artery wall by removing cholesterol from lipidladen macrophages. However, recent evidence suggests that hdl might also inhibit atherogenesis by combating inflammation.",
+          "Reasoning": "The use of the linkage word 'However' introduces a contrast or additional perspective to the preceding statement. The initial statement provides a known or established function of High-Density lipoprotein (hdl) in protecting the artery wall. The subsequent statement introduced by 'However' presents a contrasting or additional piece of information, suggesting another potential function of hdl based on recent evidence. This structure indicates how the initial passage (hdl's protective function) is juxtaposed with the subsequent passage (hdl's potential anti-inflammatory role).",
+          "Linkage_Word": "However",
+          "Page_Number": "28"
+        },
+        {
+          "Example": "To identify potential anti-inflammatory mechanisms we challenged macrophages with lipopolysaccharide, an inflammatory microbial ligand for Toll-like receptor 4.",
+          "Reasoning": "The use of the linkage word 'To' sets up a purpose or objective, specifically outlining the goal of identifying potential anti-inflammatory mechanisms. The statement that follows ('we challenged macrophages with lipopolysaccharide, an inflammatory microbial ligand for Toll-like receptor 4') provides the method or action taken to achieve or address the stated purpose. This structure indicates how the initial passage (the purpose of identifying anti-inflammatory mechanisms) shapes or leads to the subsequent passage, which provides details on the experimental approach taken.",
+          "Linkage_Word": "To",
+          "Page_Number": "28"
+          }
+      ]
+    },
+    { "Type": "Cumulative Sequencing",
+      "Subtype": "Vertical Sequencing",
+      "Sub_Subtype": "Subsumptive Sequencing",
+      "Examples": [
+        {
+          "Example": "Vesicles in the cytoplasm called lysosome fuse with the phagosome releasing digestive enzymes such as lysozyme and proteases into the phagosome. The result of this fusion is called phagolysosome.",
+          "Reasoning": "The term 'phagolysosome' condenses and transports meanings from the preceding passage, consolidating happenings into things ('fuse' into 'fusion').",
+          "Linkage_Word": "this",
+          "Page_Number": "16"
+        },
+        {
+          "Example": "These findings raise the possibility that regulation of macrophage genes by hdl might link innate immunity and cardioprotection.",
+          "Reasoning": "The use of the linkage word 'These' refers back to previously mentioned findings or results. The statement that follows ('raise the possibility that regulation of macrophage genes by hdl might link innate immunity and cardioprotection') provides an implication or potential significance of the previously mentioned findings. This structure indicates how the initial findings or results are condensed and transported into a new context or perspective, suggesting a potential link between innate immunity and cardioprotection. The relationship between the two passages is established vertically, with the second passage offering a broader implication or significance based on the findings mentioned earlier, thereby condensing and transporting the meanings from the initial context to a new one.",
+          "Linkage_Word": "these",
+          "Page_Number": "29"
+          }
+      ]
+    },
+    {   
+      "Type": "Cumulative Sequencing",
+        "Subtype": "Vertical Sequencing",
+        "Sub_Subtype": "Integrative Sequencing",
+          "Examples": [
+            {
+              "Example": "hdl inhibits a subset of lipopolysaccharide-stimulated macrophage genes that regulate the type I interferon response, and it's action is independent of sterol metabolism.",
+              "Reasoning": "the two distinct pieces of information about hdl are integrated into a single statement, providing a comprehensive understanding of hdl's functions. The use of 'and' in the statement serves to combine these two pieces of information, making the overall statement more than the sum of its parts. The relationship between the two pieces of information is established in a manner that integrates them, thereby condensing and transporting the meanings from multiple contexts into a unified perspective.",
+              "Linkage_Word": "and",
+              "Page_Number": "30"
+            }
+          ]
+    },
+    { 
+      "Type": "Cumulative Sequencing",
+      "Subtype": "Horizontal Sequencing",
+      "Sub_Subtype": "Consequential Sequencing",
+      "Examples": [
+        {
+          "Example": "You have to read it and then you’re asked some questions",
+          "Reasoning": "The example uses the word 'then' to indicate how meanings from different passages shape one another.",
+          "Linkage_Word": "then",
+          "Page_Number": "18"
+        }
+      ]
+    },
+    {
+      "Type": "Segmental Sequencing",
+      "Subtype": "Compartmental Sequencing",
+      "Sub_Subtype": "Incoherent Sequencing",
+      "Examples": [
+        {
+          "Example": "The scale is red, orange, yellow, green, blue, indigo, violet. David—where’s your gear?",
+          "Reasoning": "The passages are not linked and are on unrelated topics, disrupting the focus of discussion.",
+          "Linkage_Word": null,
+          "Page_Number": "20"
+        }
+      ]
+    },
+    { 
+      "Type": "Segmental Sequencing",
+      "Subtype": "Compartmental Sequencing",
+      "Sub_Subtype": "Coherent Sequencing",
+      "Examples": [
+        {
+          "Example": "you’ve got a written source and you’ve got a picture source",
+          "Reasoning": "The word 'and' signals that a further short passage will follow which remains on topic, maintaining the focus of discussion.",
+          "Linkage_Word": "and",
+          "Page_Number": "20"
+        },
+        {
+          "Example": "We’re very pleased to open our season with a win. We made sure they couldn’t run their attack and we managed to hold them down.",
+          "Reasoning": "Includes two instances of coherent sequencing, one where ‘and’ could be inserted to connect the two sentences and one where ‘and’ explicitly indicates continuity, maintaining the focus of discussion.",
+          "Linkage_Word": "and",
+          "Page_Number": "20"
+        }
+      ]
+    },
+    { 
+      "Type": "Segmental Sequencing",
+      "Subtype": "Sedimental Sequencing",
+      "Sub_Subtype": "Reiterative Sequencing",
+      "Examples": [
+        {
+          "Example": "Most of them weren’t deflected at all? They weren’t deflected at all.",
+          "Reasoning": "The passages are similar but with sufficient difference to add meanings.",
+          "Linkage_Word": null,
+          "Page_Number": "23"
+        }
+      ]
+    }
+  ]
+}
