@@ -19,7 +19,7 @@
         {
           "Example": "if we started to look at all the things in Pompeii and Herculaneum, what objects may be showing Greek design? Or Egyptian design? Or Greek mythology? Or Egyptian mythology? Or what building techniques like columns?",
           "Reasoning": "The use of the linkage word 'if' sets up a conditional scenario, suggesting a hypothetical situation where we examine objects in Pompeii and Herculaneum. The subsequent questions introduced by the word 'Or' present multiple possibilities or alternatives related to the initial scenario. This structure indicates how meanings from different passages shape one another, as each question builds upon the previous one, exploring different facets of the initial hypothetical situation. The use of 'Or' repeatedly emphasizes the various possibilities and alternatives, linking them together in a horizontal sequence.",
-          "Linkage_Word": "So",
+          "Linkage_Word": "If",
           "Page_Number": "25"
         },
         {
@@ -59,17 +59,11 @@
       "Sub_Subtype": "Subsumptive Sequencing",
       "Examples": [
         {
-          "Example": "Vesicles in the cytoplasm called lysosome fuse with the phagosome releasing digestive enzymes such as lysozyme and proteases into the phagosome. The result of this fusion is called phagolysosome.",
-          "Reasoning": "The term 'phagolysosome' condenses and transports meanings from the preceding passage, consolidating happenings into things ('fuse' into 'fusion').",
-          "Linkage_Word": "this",
-          "Page_Number": "16"
-        },
-        {
-          "Example": "These findings raise the possibility that regulation of macrophage genes by hdl might link innate immunity and cardioprotection.",
-          "Reasoning": "The use of the linkage word 'These' refers back to previously mentioned findings or results. The statement that follows ('raise the possibility that regulation of macrophage genes by hdl might link innate immunity and cardioprotection') provides an implication or potential significance of the previously mentioned findings. This structure indicates how the initial findings or results are condensed and transported into a new context or perspective, suggesting a potential link between innate immunity and cardioprotection. The relationship between the two passages is established vertically, with the second passage offering a broader implication or significance based on the findings mentioned earlier, thereby condensing and transporting the meanings from the initial context to a new one.",
-          "Linkage_Word": "these",
-          "Page_Number": "29"
-          }
+          "Example": "hdl inhibits a subset of lipopolysaccharide-stimulated macrophage genes that regulate the type I interferon response, and it's action is independent of sterol metabolism.",
+          "Reasoning": "the two distinct pieces of information about hdl are integrated into a single statement, providing a comprehensive understanding of hdl's functions. The use of 'and' in the statement serves to combine these two pieces of information, making the overall statement more than the sum of its parts. The relationship between the two pieces of information is established in a manner that integrates them, thereby condensing and transporting the meanings from multiple contexts into a unified perspective.",
+          "Linkage_Word": "and",
+          "Page_Number": "30"
+        }
       ]
     },
     {   
@@ -77,12 +71,26 @@
         "Subtype": "Vertical Sequencing",
         "Sub_Subtype": "Integrative Sequencing",
           "Examples": [
+
             {
-              "Example": "hdl inhibits a subset of lipopolysaccharide-stimulated macrophage genes that regulate the type I interferon response, and it's action is independent of sterol metabolism.",
-              "Reasoning": "the two distinct pieces of information about hdl are integrated into a single statement, providing a comprehensive understanding of hdl's functions. The use of 'and' in the statement serves to combine these two pieces of information, making the overall statement more than the sum of its parts. The relationship between the two pieces of information is established in a manner that integrates them, thereby condensing and transporting the meanings from multiple contexts into a unified perspective.",
-              "Linkage_Word": "and",
-              "Page_Number": "30"
-            }
+              "Example": "Vesicles in the cytoplasm called lysosome fuse with the phagosome releasing digestive enzymes such as lysozyme and proteases into the phagosome. The result of this fusion is called phagolysosome.",
+              "Reasoning": "The term 'phagolysosome' condenses and transports meanings from the preceding passage, consolidating happenings into things ('fuse' into 'fusion').",
+              "Linkage_Word": "this",
+              "Page_Number": "16"
+            },
+            {
+              "Example": "These findings raise the possibility that regulation of macrophage genes by hdl might link innate immunity and cardioprotection.",
+              "Reasoning": "The use of the linkage word 'These' refers back to previously mentioned findings or results. The statement that follows ('raise the possibility that regulation of macrophage genes by hdl might link innate immunity and cardioprotection') provides an implication or potential significance of the previously mentioned findings. This structure indicates how the initial findings or results are condensed and transported into a new context or perspective, suggesting a potential link between innate immunity and cardioprotection. The relationship between the two passages is established vertically, with the second passage offering a broader implication or significance based on the findings mentioned earlier, thereby condensing and transporting the meanings from the initial context to a new one.",
+              "Linkage_Word": "these",
+              "Page_Number": "29"
+              },
+              {
+                "Example": "No more than one electron in the same atom can have all 4 quantum numbers the same. This is truly wonderful stuff." ,
+                "Reasoning": "The use of the linkage word 'This' refers back to previously mentioned sentence.",
+                "Linkage_Word": "this",
+                "Page_Number": "A2"
+                }
+
           ]
     },
     { 
@@ -92,9 +100,88 @@
       "Examples": [
         {
           "Example": "You have to read it and then you’re asked some questions",
-          "Reasoning": "The example uses the word 'then' to indicate how meanings from different passages shape one another.",
-          "Linkage_Word": "then",
+          "Reasoning": "This example presents a sequence of events where one action leads to or results in another. The action of 'reading it' is a prerequisite or condition for the subsequent event, which is 'being asked some questions.' The use of the linker 'and then' establishes a cause-and-effect relationship: the act of reading is the cause, and the consequence or result is being asked questions",
+          "Linkage_Word": "and then",
           "Page_Number": "18"
+        },
+        {
+          "Example": "electrons can move to higher energy states by absorbing energy",
+          "Reasoning": "The example indicates a cause-and-effect relationship between two passages. The cause is 'absorbing energy,' and the effect or consequence is 'electrons can move to higher energy states.' The linker 'by' in this context signifies the reason or method by which the action (movement to higher energy states) occurs, establishing a consequential relationship between the two ideas.",
+          "Linkage_Word": "then",
+          "Page_Number": "A3"
+        },
+        {
+          "Example": "It doesn’t always have to be eight, but atoms would like to have eight.",
+          "Reasoning": "The example presents a contrast between two statements. The first part, 'It doesn’t always have to be eight,' sets up an initial condition or statement. The linker 'but' introduces a concession or counter-expectancy, indicating a contrast or exception to the initial statement. The second part, 'atoms would like to have eight,' provides the contrasting preference or tendency of atoms. The use of 'but' establishes a consequential relationship between the two ideas, highlighting the difference between a general condition and a specific preference.",
+          "Linkage_Word": "but",
+          "Page_Number": "A3"
+        },
+        {
+          "Example": "This column is going to be very small because it’s just a number.",
+          "Reasoning": "The example establishes a cause-and-effect relationship between two statements. The cause or reason is provided by the segment 'it’s just a number,' and the effect or result is 'This column is going to be very small.'' The linker 'because' explicitly indicates the reason for the column's size, making the relationship between the two ideas consequential. The size of the column (effect) is directly influenced by its content being just a number (cause).",
+          "Linkage_Word": "because",
+          "Page_Number": "A3"
+        },
+        {
+          "Example": "If you are disappointed with the number, then it means you probably could have tried a little bit harder, ",
+          "Reasoning": "The example establishes a conditional cause-and-effect relationship. The conditional cause is 'you are disappointed with the number,' and the effect or result of that condition being met is 'it means you probably could have tried a little bit harder.' The linkers 'If' and 'then' work together to form a consequential sequence, indicating that the realization or feeling of disappointment (cause) leads to the conclusion or implication about one's effort (effect)",
+          "Linkage_Word": "If ... then",
+          "Page_Number": "A3"
+        },
+        {
+          "Example": "If you are disappointed with the number, then it means you probably could have tried a little bit harder, ",
+          "Reasoning": "The example implies a cause-and-effect relationship between the two statements. The action 'We went slowly' (effect) is a result of the intention or reason 'We wanted to make it easy for them' (cause). Even though an explicit linker like 'because' or 'so' isn't used, the context suggests that the decision to go slowly was influenced by the desire to make things easy for 'them.'' The sequence of actions and intentions presented makes the relationship between the two ideas consequential.",
+          "Linkage_Word": null,
+          "Page_Number": "A3"
+        }
+      ]
+    },
+    { 
+      "Type": "Cumulative Sequencing",
+      "Subtype": "Horizontal Sequencing",
+      "Sub_Subtype": "Sequential Sequencing",
+      "Examples": [
+        {
+          "Example": "The corn is fried and then added to the mix.",
+          "Reasoning": "The example uses the word 'and then', which marks an ordering of events and specifies a temporal relation between two events: first, the corn is fried, and subsequently, it is added to the mix. ",
+          "Linkage_Word": "then",
+          "Page_Number": "A3"
+        },
+        {
+          "Example": "Place the potatoes in the oven. Bake for thirty minutes.",
+          "Reasoning": "The example is a sequential sequence because it presents a clear order of actions to be followed. The first action is placing the potatoes in the oven, and the subsequent action is baking them for a specified duration. The ordering of these actions, without the need for explicit linkers, demonstrates a temporal progression, characteristic of sequential sequencing",
+          "Linkage_Word": "then",
+          "Page_Number": "A3"
+        },
+        {
+          "Example": "he worked late at night before sleeping in until lunchtime",
+          "Reasoning": "The example indicates an ordering of events based on time. The linker 'before' is used to establish a temporal relation between two actions: first, 'he worked late at night,'' and subsequently, he 'slept in until lunchtime.'' The use of the linker 'before' specifies the sequence in which the events occurred, making the relationship between the two actions sequential.",
+          "Linkage_Word": "before",
+          "Page_Number": "A6"
+        },
+        {
+          "Example": "You only have to do it one day, and then you’ve done your service.",
+          "Reasoning": "The example presents a clear order of events. The action 'do it one day' precedes the outcome 'you’ve done your service.' The linker 'and then' establishes a temporal progression between the two events, indicating that after completing the action on that one day, the service is considered done.",
+          "Linkage_Word": "and then",
+          "Page_Number": "A6"
+        },
+        {
+          "Example": "he worked late at night before sleeping in until lunchtime without attending lectures.",
+          "Reasoning": "The example presents a series of events in a specific order. The sequence of events is as follows: 1) 'He worked late at night' - The first event.; 2) 'before sleeping in until lunchtime' - The event that follows working late, indicating a temporal progression.; 3) 'without attending lectures' - An additional event or consequence that occurred simultaneously with or as a result of sleeping in. The linker 'before' help establish the temporal and causal relationships between these events",
+          "Linkage_Word": "before",
+          "Page_Number": "A6"
+        },
+        {
+          "Example": "He took the mark and kicked the goal",
+          "Reasoning": "The example describes two events in a specific order. First, 'He took the mark,' and then he 'kicked the goal.' The conjunction 'and' indicates a progression of events, marking the sequence in which they occurred.",
+          "Linkage_Word": "and",
+          "Page_Number": "A7"
+        },
+        {
+          "Example": "he liked rocking backwards and forwards in his chair, whilst thinking, until the whole building shook.",
+          "Reasoning": "This example is a sequential sequence because it presents a series of events or actions in a specific temporal order. A sequential relation is set up between rocking and thinking, and then another between this sequence and until the building shook. The linkers 'whilst' and 'until' help establish the temporal progression and simultaneous occurrence of these events, marking the sequence in which they took place or co-occurred.",
+          "Linkage_Word": "whilst, until",
+          "Page_Number": "A9"
         }
       ]
     },
@@ -108,6 +195,12 @@
           "Reasoning": "The passages are not linked and are on unrelated topics, disrupting the focus of discussion.",
           "Linkage_Word": null,
           "Page_Number": "20"
+        },
+        {
+          "Example": "It doesn’t look like this arrangement here. |INC So we’ll just turn the lights on again INC|. It doesn’t look like a full spectrum up here",
+          "Reasoning": "incoherent because the middle clause 'So we’ll just turn the lights on again' interrupts the flow of the topic being discussed.  the middle statement about turning the lights on seems unrelated to the surrounding context and introduces a different topic without a clear connection to the preceding or following statement. The use of the continuative 'So' further emphasizes this sudden shift in topic",
+          "Linkage_Word": "So",
+          "Page_Number": "A9"
         }
       ]
     },
@@ -118,7 +211,7 @@
       "Examples": [
         {
           "Example": "you’ve got a written source and you’ve got a picture source",
-          "Reasoning": "The word 'and' signals that a further short passage will follow which remains on topic, maintaining the focus of discussion.",
+          "Reasoning": "This example coherent because it presents two related pieces of information in a continuous manner using the linker 'and.' The two clauses provide information about different types of sources without introducing contrasting, causal, or repetitive elements. The simple conjunction 'and' connects the two ideas, offering a smooth and straightforward continuity between them",
           "Linkage_Word": "and",
           "Page_Number": "20"
         },
@@ -127,6 +220,12 @@
           "Reasoning": "Includes two instances of coherent sequencing, one where ‘and’ could be inserted to connect the two sentences and one where ‘and’ explicitly indicates continuity, maintaining the focus of discussion.",
           "Linkage_Word": "and",
           "Page_Number": "20"
+        },
+        {
+          "Example": "Let us look at the example of element carbon in its ground (least energetic) state. It has 6 electrons.",
+          "Reasoning": "The example is coherent because it offers continuity in the subject matter without explicitly using linkers to establish relationships like cause-effect, contrast, or repetition. The two sentences naturally flow from one to the next, with the second sentence providing additional information about the carbon element mentioned in the first. The absence of explicit linkers or referring items and the smooth transition from one idea to the next make this sequence coherent.",
+          "Linkage_Word": null,
+          "Page_Number": "A8"
         }
       ]
     },
@@ -137,9 +236,34 @@
       "Examples": [
         {
           "Example": "Most of them weren’t deflected at all? They weren’t deflected at all.",
-          "Reasoning": "The passages are similar but with sufficient difference to add meanings.",
+          "Reasoning": "The example is reiterative because the same meaning is expressed twice, albeit with slight variation. The first part mentions 'Most of them' while the second part generalizes with 'They.' Both parts emphasize the fact that they 'weren't deflected at all.' The repetition serves to reinforce and restate the initial information, making it a reiterative sequence.",
           "Linkage_Word": null,
           "Page_Number": "23"
+        },
+        {
+          "Example": "I don’t think it’s a good idea for us. That is, we shouldn’t go.",
+          "Reasoning": "The example presents the same meaning in two different ways. The first statement expresses a negative opinion about an idea, while the second statement clarifies or reiterates that sentiment more directly by suggesting not to go. The phrase 'That is' serves as a cue for the reiteration, essentially saying 'in other words' to emphasize and clarify the initial statement.",
+          "Linkage_Word": "That is",
+          "Page_Number": "A8"
+        },
+        {
+          "Example": "it doesn’t look like this arrangement here. It doesn’t look like a full spectrum up here. ",
+          "Reasoning": "The example conveys a similar meaning in two different ways. Both statements emphasize that 'it' doesn't resemble something, first referring to 'this arrangement here' and then to 'a full spectrum up here.'",
+          "Linkage_Word": null,
+          "Page_Number": "23"
+        }
+      ]
+    },
+    { 
+      "Type": "Segmental Sequencing",
+      "Subtype": "Sedimental Sequencing",
+      "Sub_Subtype": "Repetitive Sequencing",
+      "Examples": [
+        {
+          "Example": "Most of them weren’t deflected at all? They weren’t deflected at all.",
+          "Reasoning": "The example is repetitive because the two clauses are practically identical, conveying the exact same information without any variation or additional meaning.",
+          "Linkage_Word": null,
+          "Page_Number": "A8"
         }
       ]
     }
