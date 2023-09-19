@@ -104,6 +104,27 @@ def json_to_excel(
     write_excel_formatting(df, excel_filename)
 
 
+def json_to_excel_definitions(
+    json_filename, 
+    excel_filename):
+    """
+    Convert the JSON data to an Excel file.
+
+    Parameters
+    ----------
+    json_filename : str
+        JSON filename for definitions
+    excel_filename : str
+        Output Excel filename for definitions
+    """
+    data = load_json(json_filename)
+    
+    df = json_to_dataframe_definitions(data)
+    
+    df.to_excel(excel_filename, index=False)
+    #write_excel_formatting(df, excel_filename)
+
+
 def write_excel_formatting(df, path):
     """ Create a writer object with excel formatting
 
@@ -175,7 +196,6 @@ def plot_classes(json_filename, fname_out):
     plt.close(fig)
 
 
-
 def test_json_to_excel():
     """
     Test json_to_excel().
@@ -193,3 +213,7 @@ def test_excel_to_json():
     excel_filename = "../schemas/sequencing_examples_reason.xlsx"
     json_filename_out = "../schemas/sequencing_examples_reason_recovered.json"
     excel_to_json(excel_filename, json_filename_out)
+
+
+def test_excel_to_json_definitions():
+    json_to_excel_definitions("../schemas/sequencing_types.json", "../schemas/sequencing_types.xlsx")
