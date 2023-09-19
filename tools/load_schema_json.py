@@ -62,6 +62,36 @@ def json_to_dataframe(data):
     df = pd.DataFrame(rows)
     return df
 
+
+
+def json_to_dataframe_definitions(data):
+    """
+    Convert the JSON data to a dataframe.
+
+    Parameters
+    ----------
+    data : dict
+        JSON data
+
+    Returns
+    -------
+    df : pandas.DataFrame
+    """
+    rows = []
+    for item in data['Sequencing_Types']:
+        for subtype in item['Subtypes']:
+            for subsubtype in subtype['Sub_Subtypes']:
+                row = {
+                    'Type': item.get('Type', None),
+                    'Subtype': subtype.get('Subtype', None),
+                    'Sub_Subtype': subsubtype.get('Sub_Subtype', None),
+                    'Description': subsubtype.get('Description', None),
+                    'Page_Number': subsubtype.get('Page_Number', None),
+                }
+                rows.append(row)
+    df = pd.DataFrame(rows)
+    return df
+
 def main():
     # Load the JSON data and schema
     path_schema = "../schemas/"
