@@ -4,6 +4,9 @@ import pandas as pd
 import os
 import json
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 from load_schema_json import load_json, validate_json, json_to_dataframe
 from openpyxl.styles import PatternFill, Border, Side, Font
 
@@ -140,6 +143,36 @@ def write_excel_formatting(df, path):
         }
         for col, width in col_widths.items():
             worksheet.column_dimensions[col].width = width
+
+
+def plot_classes(json_filename, fname_out):
+    """
+    Plot histogram of the occurence of sub and sub-subtype classes in the dataframe.
+
+    Parameters
+    ----------
+    fname_json : str
+        input json filename
+    fname_out : str
+        output filename
+    """
+    data = load_json(json_filename)
+    df = json_to_dataframe(data)
+
+    # generate two subplots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+    # histogram of sub-subtypes
+    sns.countplot(x='Sub_Subtype', data=df, ax=ax1)
+    ax1.set_xticklabels(ax1.get_xticklabels(), rotation=90)
+    ax1.set_title('Sub-Subtype')
+    # histogram of subtypes
+    sns.countplot(x='Subtype', data=df, ax=ax2)
+    ax2.set_xticklabels(ax2.get_xticklabels(), rotation=90)
+    ax2.set_title('Subtype')
+    plt.tight_layout()
+    plt.savefig(fname_out, dpi=300)
+    # close the figure
+    plt.close(fig)
 
 
 
