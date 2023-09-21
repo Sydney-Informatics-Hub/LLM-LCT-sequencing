@@ -79,18 +79,33 @@ def json_to_dataframe_definitions(data):
     """
     rows = []
     for item in data['Sequencing_Types']:
+        row= {
+            'Type': item.get('Type', None),
+            'Subtype': None,
+            'Sub_Subtype': None,
+            'Description': item.get('Description', None),
+        }
+        rows.append(row)
         for subtype in item['Subtypes']:
+            row = {
+                'Type': item.get('Type', None),
+                'Subtype': subtype.get('Subtype', None),
+                'Sub_Subtype': None,
+                'Description': subtype.get('Description', None),
+            }
+            rows.append(row)
             for subsubtype in subtype['Sub_Subtypes']:
                 row = {
                     'Type': item.get('Type', None),
                     'Subtype': subtype.get('Subtype', None),
                     'Sub_Subtype': subsubtype.get('Sub_Subtype', None),
                     'Description': subsubtype.get('Description', None),
-                    'Page_Number': subsubtype.get('Page_Number', None),
                 }
                 rows.append(row)
     df = pd.DataFrame(rows)
     return df
+
+
 
 def main():
     # Load the JSON data and schema
