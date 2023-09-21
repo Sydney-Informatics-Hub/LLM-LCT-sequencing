@@ -7,7 +7,7 @@ import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from load_schema_json import load_json, validate_json, json_to_dataframe
+from load_schema_json import load_json, validate_json, json_to_dataframe, json_to_dataframe_definitions
 from openpyxl.styles import PatternFill, Border, Side, Font
 
 def excel_to_json(excel_filename, json_filename_out):
@@ -22,7 +22,10 @@ def excel_to_json(excel_filename, json_filename_out):
         JSON filename
     """
     df = pd.read_excel(excel_filename)
-    data_dict = dataframe_to_json(df)
+    if df.shape[1] >= 6:
+        data_dict = dataframe_to_json(df)
+    else:
+        data_dict = dataframe_to_json_definitions(df)
 
     # write dict to json
     data_json = json.dumps(data_dict, indent=2)
@@ -34,11 +37,12 @@ def excel_to_json(excel_filename, json_filename_out):
     with open(json_filename_out, 'w') as f:
         f.write(data_json)
 
-     # validate the data
-    json_schema = "../schemas/schema_sequencing_examples_reason.json"
-    schema = load_json(json_schema)
-    data_loaded = load_json(json_filename_out)
-    assert validate_json(data_loaded, schema), "JSON data is invalid!"
+    if df.shape[1] >= 6:
+        # validate the data
+        json_schema = "../schemas/schema_sequencing_examples_reason.json"
+        schema = load_json(json_schema)
+        data_loaded = load_json(json_filename_out)
+        assert validate_json(data_loaded, schema), "JSON data is invalid!"
 
 
 
@@ -76,6 +80,57 @@ def dataframe_to_json(df):
             item['Examples'].append(example)
         data['Data'].append(item)
     return data
+
+
+def dataframe_to_json_definitions(df):
+    """
+    Converts dataframe to json for the sequencing definitions.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        dataframe to convert
+
+    Returns
+    -------
+    data : dict
+        JSON data
+    """
+    result = {'Sequencing_Types': []}
+
+    for _, row in df.iterrows():
+        type_name = row['Type']
+        subtype_name = row['Subtype']
+        subsubtype_name = row['Sub_Subtype']
+        description = row['Description']
+
+        type_dict = next((item for item in result['Sequencing_Types'] if item['Type'] == type_name), None)
+        if not type_dict:
+            type_dict = {'Type': type_name}
+            result['Sequencing_Types'].append(type_dict)
+
+        if pd.notna(subtype_name):
+            if 'Subtypes' not in type_dict:
+                type_dict['Subtypes'] = []
+            subtype_dict = next((item for item in type_dict['Subtypes'] if item['Subtype'] == subtype_name), None)
+            if not subtype_dict:
+                subtype_dict = {'Subtype': subtype_name}
+                type_dict['Subtypes'].append(subtype_dict)
+        else:
+            type_dict['Description'] = description
+            continue
+
+        if pd.notna(subsubtype_name):
+            if 'Sub_Subtypes' not in subtype_dict:
+                subtype_dict['Sub_Subtypes'] = []
+            subsubtype_dict = {'Sub_Subtype': subsubtype_name, 'Description': description}
+            subtype_dict['Sub_Subtypes'].append(subsubtype_dict)
+        else:
+            subtype_dict['Description'] = description
+
+    return result
+
+
 
 
 def json_to_excel(
@@ -120,9 +175,10 @@ def json_to_excel_definitions(
     data = load_json(json_filename)
     
     df = json_to_dataframe_definitions(data)
+    df = df[['Type', 'Subtype', 'Sub_Subtype', 'Description']]
     
-    df.to_excel(excel_filename, index=False)
-    #write_excel_formatting(df, excel_filename)
+    #df.to_excel(excel_filename, index=False)
+    write_excel_formatting(df, excel_filename)
 
 
 def write_excel_formatting(df, path):
@@ -154,16 +210,24 @@ def write_excel_formatting(df, path):
             cell.font = header_font
         
         # Set column widths (adjust as necessary)
-        col_widths = {
-            'A': 20,
-            'B': 20,
-            'C': 20,
-            'D': 80,
-            'E': 80,
-            'F': 20
-        }
+        if df.shape[1] >= 6:
+            col_widths = {
+                'A': 22,
+                'B': 22,
+                'C': 22,
+                'D': 80,
+                'E': 80,
+                'F': 20
+            }
+        else:
+            col_widths = {
+                'A': 22,
+                'B': 22,
+                'C': 22,
+                'D': 140,
+            }
         for col, width in col_widths.items():
-            worksheet.column_dimensions[col].width = width
+                worksheet.column_dimensions[col].width = width
 
 
 def plot_classes(json_filename, fname_out):
@@ -215,5 +279,8 @@ def test_excel_to_json():
     excel_to_json(excel_filename, json_filename_out)
 
 
-def test_excel_to_json_definitions():
+def test_json_to_excel_definitions():
     json_to_excel_definitions("../schemas/sequencing_types.json", "../schemas/sequencing_types.xlsx")
+
+def test_excel_to_json_definitions():
+    excel_to_json("../schemas/sequencing_types.xlsx", "../schemas/sequencing_types_recovered.json")
