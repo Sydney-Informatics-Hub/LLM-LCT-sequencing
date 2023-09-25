@@ -2,14 +2,14 @@ from enum import Enum
 
 
 class Classification(Enum):
-    CLASS = 1
-    COMP = 2
-    CAUS = 3
-    CORR = 4
-    DISP = 5
-    DRAM = 6
-    PTION = 7
-    POSIT = 8
+    INT = 1
+    SUB = 2
+    CON = 3
+    SEQ = 4
+    REI = 5
+    REP = 6
+    COH = 7
+    INC = 8
 
 
 class ClassificationContainer:
