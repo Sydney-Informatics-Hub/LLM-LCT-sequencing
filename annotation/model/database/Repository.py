@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class DocumentRepository(ABC):
+class Repository(ABC):
 
     @abstractmethod
     def read_all(self) -> list:
