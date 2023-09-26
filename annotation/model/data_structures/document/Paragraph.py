@@ -15,4 +15,3 @@ class Paragraph:
     def add_clause(self, start_idx: int, end_idx: int):
         new_clause: Clause = Clause(start_idx, end_idx)
         self.clauses.append(new_clause)
-
