@@ -12,6 +12,7 @@ import random
 import pandas as pd
 
 from load_schema_json import load_json, validate_json, json_to_dataframe
+from utils_llm import count_tokens
 
 # some paths and filenames
 path_schema = "../schemas/"
@@ -197,6 +198,10 @@ def exp_pipe():
     """
     This pipe function is used to generate the prompts for the experiment.
     """
+    # initialize token_counter
+    tokens_request = 0
+    tokens_response = 0
+
     examples = load_json(os.path.join(path_schema, filename_examples))
     schema = load_json(os.path.join(path_schema, filename_schema))
     assert validate_json(examples, schema), "JSON data is invalid!"
@@ -242,3 +247,7 @@ def exp_pipe():
     filename_prompt = 'prompt.txt'
     os.makedirs(outpath, exist_ok=True)
     save_text(prompt, os.path.join(outpath, filename_prompt))
+
+    # tokens_used
+    tokens_request += count_tokens(prompt, encoding_name="gpt-3.5-turbo")
+
