@@ -29,9 +29,10 @@ class Clause:
         return self.end
 
 
-class ClausePair:
-    def __init__(self, clause_a: Clause, clause_b: Clause):
-        self.clauses: set[Clause] = {clause_a, clause_b}
+class ClauseSequence:
+    def __init__(self, first_clause: Clause, second_clause: Clause):
+        self.first_clause: Clause = first_clause
+        self.second_clause: Clause = second_clause
         self.classification_cont: ClassificationContainer = ClassificationContainer()
 
     def get_classifications(self) -> set[Classification]:

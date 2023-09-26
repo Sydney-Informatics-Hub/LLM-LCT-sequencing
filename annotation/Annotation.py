@@ -10,4 +10,4 @@ class Annotation:
         self.view = AnnotationViewWrapper(self.controller)
 
     def run(self):
-        return self.view.get_widgets().servable()
+        return self.view.get_layout().servable()
