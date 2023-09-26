@@ -1,3 +1,5 @@
+from typing import Callable, Optional
+
 from annotation.model import AnnotationService
 
 # Type alias for complex tuples - only applies for this document
@@ -12,6 +14,17 @@ class AnnotationController:
         self.curr_paragraph_id: int = 0
         self.curr_sequence_id: int = 0
 
+        self._update_text_display_callable: Optional[Callable] = None
+
+    def set_update_text_display_callable(self, update_text_display_callable: Optional[Callable]):
+        if (type(update_text_display_callable) is not None) and (not callable(update_text_display_callable)):
+            raise TypeError("update_text_display_callable must be either None or a callable")
+        self._update_text_display_callable = update_text_display_callable
+
+    def update_text_display(self):
+        if self._update_text_display_callable is not None:
+            self._update_text_display_callable()
+
     # Data access methods
 
     def get_next_paragraph_text(self) -> str:
@@ -22,12 +35,6 @@ class AnnotationController:
 
     def get_curr_paragraph_text(self) -> str:
         return ""
-
-    def get_prev_sequence(self) -> ClauseSequenceTuple:
-        return (0, 1), (2, 3)
-
-    def get_next_sequence(self) -> ClauseSequenceTuple:
-        return (0, 1), (2, 3)
 
     def get_curr_sequence(self) -> ClauseSequenceTuple:
         return (0, 1), (2, 3)
@@ -41,16 +48,16 @@ class AnnotationController:
     # Data control methods
 
     def next_paragraph(self):
-        pass
+        self.update_text_display()
 
     def prev_paragraph(self):
-        pass
+        self.update_text_display()
 
     def next_clause_sequence(self):
-        pass
+        self.update_text_display()
 
     def prev_clause_sequence(self):
-        pass
+        self.update_text_display()
 
     def set_curr_classifications(self, classifications: ClassificationTuple):
         pass
