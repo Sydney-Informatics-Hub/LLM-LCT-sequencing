@@ -1,5 +1,11 @@
 # Python utility functions for LLM handling and tokenisation such as OpenAI
 
+"""
+For OpenAI pricing, see https://openai.com/pricing
+For OpenAI API documentation, see https://beta.openai.com/docs/api-reference/completions/create
+
+"""
+
 import os
 import tiktoken
 import openai
@@ -104,9 +110,7 @@ class LLM:
         - int: The number of tokens used.
         - str: The completion id.
         - dict: The response message.
-
         """
-       
         if messages is None:
             messages = []
          # check if prompt follows chat completion format
@@ -133,9 +137,11 @@ class LLM:
         return completion_text, tokens_used, completion_id, message_response
 
 
+# test the LLM class (see also tests/test_utils_llm.py)
+
 def test_llm_completion():
     """
-    test the LLM class
+    test the LLM class with a completion
     """
     prompt = """What sequencing class is the following example? If you don't know answer with 'None'.
     example: Testing and LLM is fun or not!\n
@@ -150,7 +156,7 @@ def test_llm_completion():
 
 def test_llm_chatcompletion():
     """
-    test the LLM class
+    test the LLM class with a chat completion
     """
     prompt = """What sequencing class is the following example?
     example: Testing and LLM is fun or not!\n
