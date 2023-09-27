@@ -8,7 +8,7 @@ class LLM:
     """
     A class to handle the LLM API.
     """
-    def __init__(self, filename_openai_key='../../openai_key.txt', model_name = 'gpt-3.5-turbo-instruct'):
+    def __init__(self, filename_openai_key='../../openai_key.txt', model_name = 'gpt-3.5-turbo'):
         """
         Initialize the LLM object with the API key and model name
 
@@ -41,22 +41,31 @@ class LLM:
         return num_tokens
 
 
-    def request_completion(self, 
-        prompt, temperature = 0, 
-        max_tokens = 3000,
-        logprobs = 1):
+    def request_completion(self, prompt, temperature = 0, max_tokens = 4000, get_logprobs = True):
         """
         Request a completion from the LLM API.
 
         Parameters:
         ----------
         - prompt (str): The input text string.
+        - temperature (float): The sampling temperature.
+        - max_tokens (int): The maximum number of tokens to generate.
 
         Returns:
         ----------
         - str: The completion text.
         - int: The number of tokens used.
+        - str: The completion id.
+        - list: The log probabilities for each token.
         """
+        if get_logprobs:
+            logprobs = 1
+        else:
+            logprobs = None
+        model_name = self.model_name
+        if model_name == 'gpt-3.5-turbo':
+            print("Warning: gpt-3.5-turbo is not available for completions API. Using gpt-3.5-turbo-instruct instead.")
+            model_name = 'gpt-3.5-turbo-instruct'
         completion_response = openai.Completion.create(
                                 prompt=prompt,
                                 temperature=temperature,
@@ -75,10 +84,56 @@ class LLM:
         completion_id = completion_response['id']
         # Get log probabilities (list for each token)
         logprobs = completion_response['choices'][0]['logprobs']['token_logprobs']
-        return completion_text, tokens_used, logprobs, completion_id 
+        return completion_text, tokens_used, completion_id, logprobs 
 
 
-def test_llm():
+    def request_chatcompletion(self, prompt, messages = None, temperature=0, max_tokens = 4000):
+        """
+        Use OpenAI's Chat completions API
+
+        Parameters:
+        ----------
+        - prompt (str): The input text string.
+        - messages (list): A list of messages in the chat. Each message is a dictionary with keys 'role' and 'content'.
+        - temperature (float): The temperature of the completion. Higher values mean the model will take more risks.
+        - max_tokens (int): The maximum number of tokens to generate.
+
+        Returns:
+        ----------
+        - str: The completion text.
+        - int: The number of tokens used.
+        - str: The completion id.
+        - dict: The response message.
+
+        """
+       
+        if messages is None:
+            messages = []
+         # check if prompt follows chat completion format
+        if isinstance(prompt, dict):
+            if not (prompt['role'] == 'user' or prompt['role'] == 'system'):
+                raise ValueError("Prompt does not follow chat completion format. See https://beta.openai.com/docs/api-reference/completions/create#chat-format")
+        else:
+            prompt = {"role": "user", "content": prompt}
+        messages.append(prompt)
+        completion_response = openai.ChatCompletion.create(
+                                messages = messages,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                                model=self.model_name,
+                                stop=['\n']
+                                )
+        # Get the completion text
+        message_response = completion_response['choices'][0]['message']
+        completion_text = message_response['content']
+        # Get the number of tokens used
+        tokens_used = completion_response['usage']['total_tokens']
+        # Get id of the completion
+        completion_id = completion_response['id']
+        return completion_text, tokens_used, completion_id, message_response
+
+
+def test_llm_completion():
     """
     test the LLM class
     """
@@ -87,6 +142,21 @@ def test_llm():
     Answer: """
     llm = LLM()
     print(f'prompt: {prompt}')
-    completion_text, tokens_used = llm.request_completion(prompt)
+    completion_text, tokens_used, chat_id, logprobs = llm.request_completion(prompt)
+    print(f'completion_text: {completion_text}')
+    print(f'tokens_used: {tokens_used}')
+    print(f'token logprobs: {logprobs}')
+
+
+def test_llm_chatcompletion():
+    """
+    test the LLM class
+    """
+    prompt = """What sequencing class is the following example?
+    example: Testing and LLM is fun or not!\n
+    Answer: """
+    llm = LLM()
+    print(f'prompt: {prompt}')
+    completion_text, tokens_used, chat_id, message = llm.request_chatcompletion(prompt)
     print(f'completion_text: {completion_text}')
     print(f'tokens_used: {tokens_used}')
