@@ -8,11 +8,12 @@ ToDo:
 
 """
 import os
+import json
 import random
 import pandas as pd
 
 from load_schema_json import load_json, validate_json, json_to_dataframe
-from utils_llm import count_tokens
+from utils_llm import LLM
 
 # some paths and filenames
 path_schema = "../schemas/"
@@ -199,8 +200,8 @@ def exp_pipe():
     This pipe function is used to generate the prompts for the experiment.
     """
     # initialize token_counter
-    tokens_request = 0
-    tokens_response = 0
+    token_count = 0
+    modelname_llm = 'gpt-3.5-turbo'
 
     examples = load_json(os.path.join(path_schema, filename_examples))
     schema = load_json(os.path.join(path_schema, filename_schema))
@@ -234,20 +235,81 @@ def exp_pipe():
     sequencing_classes = ', '.join(f"'{item}'" for item in sequencing_classes)
 
     sequencing_dict = load_json(os.path.join(path_schema, filename_definitions))
+    
     # convert dict to string
     sequencing_definition = json.dumps(sequencing_dict, indent=2)
 
     # load prompt string from instruction text file
     zero_shot_prompt= load_text(os.path.join(path_schema, filename_zero_prompt))
 
-    # generate prompt
-    prompt = gen_prompt(zero_shot_prompt, sequencing_classes, sequencing_definition, example_string, list_test_str[0])
-
-    # save prompt to file
-    filename_prompt = 'prompt.txt'
     os.makedirs(outpath, exist_ok=True)
-    save_text(prompt, os.path.join(outpath, filename_prompt))
 
-    # tokens_used
-    tokens_request += count_tokens(prompt, encoding_name="gpt-3.5-turbo")
+    # initiate results dataframe
+    df_results = pd.DataFrame(columns=[
+        'test_str', 
+        'test_class', 
+        'test_linkage', 
+        'pred_class', 
+        'pred_class_prob',  
+        'pred_linkage', 
+        'prompt_id', 
+        'filename_prompt', 
+        'filename_response', 
+        'tokens', 
+        'modelname_llm', 
+        'reasoning'])
+
+    # Loop over test sample in list_test_str
+    for test_str, test_class, test_linkage in zip(list_test_str, list_test_class, list_test_linkage):
+        # generate prompt
+        prompt = gen_prompt(zero_shot_prompt, sequencing_classes, sequencing_definition, example_string, test_str)
+
+        # call OPenAi API with prompt
+        llm = LLM(filename_openai_key='../../openai_key.txt', model_name = modelname_llm)
+        completion_text, tokens_used, chat_id, logprobs = llm.request_completion(prompt, max_tokens = 300)
+
+         # tokens_used
+        token_count += tokens_used
+
+        # save prompt to file
+        filename_prompt = f'prompt_{chat_id}.txt'
+        save_text(prompt, os.path.join(outpath, filename_prompt))
+
+        # save response to file
+        filename_response = f'response_{chat_id}.txt'
+        save_text(completion_text, os.path.join(outpath, filename_response))
+
+        # class of test sample
+        class_predicted = completion_text.split('\n')[1].split(':')[1].strip()
+
+        # lingage word of test sample
+        linkage_predicted = completion_text.split('\n')[2].split(':')[1].strip()
+
+        # get reasoning
+        reasoning = completion_text.split('\n')[3].split(':')[1].strip()
+
+        # probability of predicted class
+        class_prob = logprobs[3]
+
+        #add a new row to df_results
+        row = [
+            test_str, 
+            test_class, 
+            test_linkage, 
+            class_predicted, 
+            class_prob, 
+            linkage_predicted, 
+            chat_id, 
+            filename_prompt, 
+            filename_response, 
+            tokens_used, 
+            modelname_llm, 
+            reasoning]
+        df_results.loc[len(df_results)] = row
+
+    # save results to csv file
+    filename_results = f'results_{modelname_llm}.csv'
+    df_results.to_csv(os.path.join(outpath, filename_results), index=False)
+
+
 
