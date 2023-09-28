@@ -5,6 +5,10 @@ import json
 import random
 import pandas as pd
 import numpy as np
+import json
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 
 from load_schema_json import load_json, validate_json, json_to_dataframe
 #import importlib
@@ -190,22 +194,125 @@ def get_sequencing_classes():
                     sub_subtypes.append(subsubtype['Sub_Subtype'])
     return sub_subtypes
 
-def eval_exp(df):
+
+def gen_confusion_matrix(classes_test, classes_pred, class_labels, outfname_plot, plot_show = True):
+    """
+    generate confusion matrix and plots it.
+
+    Parameters
+    ----------
+    classes_test: list of true classes
+    classes_pred: list of predicted classes
+    class_labels: list of all class labels
+    outfname_plot: path + filename for output plot
+    plot_show: if True show plot
+
+    Return
+    ----------
+    array: 2D confusion matrix
+    """
+
+    matrix = pd.crosstab(pd.Series(classes_test, name='Actual'),
+                         pd.Series(classes_pred, name='Predicted'),
+                         dropna=False)
+    
+    # Reindex the matrix to ensure all classes are present
+    matrix = matrix.reindex(index=class_labels + [np.nan], columns=seq_classes + [np.nan], fill_value=0)
+
+    # plot matrix
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(matrix, annot=True, cmap='Blues', fmt='g')
+    plt.savefig(outfname_plot, dpi=300)
+    if plot_show:
+        plt.show()
+    return matrix
+
+
+def metrics_from_confusion_matrix(confusion_matrix, outfname=None):
+    """
+    Calculate accuracy, recall, and precision from a confusion matrix.
+    
+    Parameters:
+    - confusion_matrix: DataFrame representing the confusion matrix
+    - outfname: json filename to save metrics. If None provided, metrics will not be saved
+    
+    Returns:
+    - accuracy, recall, precision dictionaries for each class and their macro-averages
+    """
+    
+    # Removing the 'nan' columns and rows for metric calculations
+    matrix_no_nan = confusion_matrix.drop(index=np.nan, columns=np.nan, errors='ignore')
+
+    # True Positives (diagonal of the confusion matrix)
+    TP = matrix_no_nan.values.diagonal()
+
+    # False Positives (sum of columns minus TP)
+    FP = matrix_no_nan.sum(axis=0) - TP
+
+    # False Negatives (sum of rows minus TP)
+    FN = matrix_no_nan.sum(axis=1) - TP
+
+    # True Negatives (total samples minus TP + FP + FN)
+    total_samples = matrix_no_nan.sum(axis=1)#.sum()
+    TN = FN * 0
+    #TN = total_samples - TP - FP - FN
+    # for single-class classification, TN is always 0
+
+    # Calculating metrics for each class
+    accuracy = ((TP + TN)  / total_samples).to_dict()
+    recall = (TP / (TP + FN)).to_dict()
+    precision = (TP / (TP + FP)).to_dict()
+
+    # Calculating mean-averages 
+    macro_accuracy = np.round(np.nanmean(np.array(list(accuracy.values()))),4)
+    macro_recall =  np.round(np.nanmean(np.array(list(recall.values()))),4)
+    macro_precision = np.round(np.nanmean(np.array(list(precision.values()))),4)
+
+    metrics = {
+        'accuracy': accuracy,
+        'recall': recall,
+        'precision': precision,
+        'mean_accuracy': macro_accuracy,
+        'mean_recall': macro_recall,
+        'mean_precision': macro_precision
+    }
+
+    for metric, values in metrics.items():
+        print(f"{metric}: {values}")
+
+    if outfname is not None:
+        with open(outfname, 'w') as file:
+            json.dump(metrics, file, indent=2)
+
+    return metrics
+
+
+
+def eval_exp(df, outpath_exp):
     """
     generate confusion matrix from dataframe
     compare predicted labels (pred_class) with true labels (test_class)
+
+    Parameters:
+    -----------
+    - df (pd.DataFrame): The dataframe with results from the experiment, including:
+        - pred_class (str): The predicted class.
+        - test_class (str): The true class.
     """
-    # initialize confusion matrix
-    sequencing_classes = get_sequencing_classes()
-    confusion_matrix = np.zeros((len(df['test_class'].unique()), len(df['test_class'].unique())))
-    # loop over rows in dataframe
-    for index, row in df.iterrows():
-        # find index of test_class and pred_class
-        test_class_idx = np.where(df['test_class'].unique() == row['test_class'])[0][0]
-        pred_class_idx = np.where(df['test_class'].unique() == row['pred_class'])[0][0]
-        # add one to confusion matrix
-        confusion_matrix[test_class_idx, pred_class_idx] += 1
-    return confusion_matrix
+    seq_classes = get_sequencing_classes()
+    seq_classes = [seq_class[:3].upper() for seq_class in seq_classes]
+    classes_test = df['test_class'].values
+    if len(classes_test[0])>3:
+        classes_test = [class_[:3].upper() for class_ in classes_test]
+    classes_pred = df['pred_class'].values
+    if len(classes_pred[0])>3:
+        classes_pred = [class_[:3].upper() for class_ in classes_pred]
+
+    outfname_plot = os.path.join(outpath_exp, 'confusion_matrix.png')
+    confusion_matrix = gen_confusion_matrix(classes_test, classes_pred, seq_classes, outfname_plot)
+    # calculate accuracy
+    metrics = metrics_from_confusion_matrix(confusion_matrix, outfname = os.path.join(outpath_exp, 'metrics.json'))
+
 
 
 def exp_pipe():
@@ -362,7 +469,7 @@ def exp_pipe():
         print(f'Tested class: {test_class}')
         print(f'Predicted class: {class_predicted}')
         print(f'Predicted class probability: {class_prob}')
-        print(f'Used tokens totoal: {token_count}')
+        print(f'Used tokens: {token_count}')
 
         #add a new row to df_results
         row = [
