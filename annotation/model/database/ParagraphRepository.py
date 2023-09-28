@@ -5,7 +5,6 @@ from numpy import ndarray
 
 
 class ParagraphRepository(ABC):
-
     @abstractmethod
     def read_all(self) -> ndarray:
         """

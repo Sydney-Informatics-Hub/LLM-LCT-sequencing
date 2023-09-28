@@ -1,17 +1,18 @@
-from annotation.model.data_structures.document.Clause import Clause
+from annotation.model.data_structures.document.Clause import Clause, ClauseSequence
 
 
 class Paragraph:
-    def __init__(self, text: str):
+    def __init__(self, paragraph_id: int, text: str):
+        self.paragraph_id: int = paragraph_id
         self.text: str = text
-        self.clauses: list[Clause] = []
+
+    def __eq__(self, other) -> bool:
+        if type(other) is not Paragraph:
+            return False
+        return (self.paragraph_id == other.get_id()) and (self.text == other.get_text())
 
     def get_text(self) -> str:
         return self.text
 
-    def get_all_clauses(self) -> list[Clause]:
-        return self.clauses.copy()
-
-    def add_clause(self, start_idx: int, end_idx: int):
-        new_clause: Clause = Clause(start_idx, end_idx)
-        self.clauses.append(new_clause)
+    def get_id(self) -> int:
+        return self.paragraph_id

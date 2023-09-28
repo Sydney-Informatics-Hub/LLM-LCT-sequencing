@@ -1,3 +1,5 @@
+import os
+
 from numpy import ndarray
 from pandas import read_csv
 from pandas.core.frame import DataFrame
@@ -12,6 +14,7 @@ class ParagraphCSVRepository(ParagraphRepository):
     ID_FIELD: str = "paragraph_id"
     TEXT_FIELD: str = "paragraph_text"
     REQUIRED_FIELDS: list[str, ...] = [ID_FIELD, TEXT_FIELD]
+    FIELD_DTYPES: dict = {ID_FIELD: int, TEXT_FIELD: 'string'}
 
     def __init__(self, database_csv_filename: str):
         self._database_filename: str = database_csv_filename
@@ -19,7 +22,11 @@ class ParagraphCSVRepository(ParagraphRepository):
         self._cache_updated: bool = False
 
         # Validate the file can be opened with read and write permissions
-        open(self._database_filename, 'rw')
+        if not (os.access(self._database_filename, os.R_OK)):
+            raise PermissionError(f"No permissions to read the file: {self._database_filename}")
+        if not (os.access(self._database_filename, os.W_OK)):
+            raise PermissionError(f"No permissions to write to the file: {self._database_filename}")
+
         self._read_database_into_cache()
 
     def _validate_database_fields(self):
@@ -41,7 +48,8 @@ class ParagraphCSVRepository(ParagraphRepository):
         self._validate_database_fields()
         self._database_cache = read_csv(filepath_or_buffer=self._database_filename,
                                         names=ParagraphCSVRepository.REQUIRED_FIELDS,
-                                        header=0)
+                                        header=0,
+                                        dtype=ParagraphCSVRepository.FIELD_DTYPES)
 
         self._cache_updated = True
 
@@ -66,7 +74,7 @@ class ParagraphCSVRepository(ParagraphRepository):
         matches = self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]].values
 
         if len(matches) == 1:
-            return matches[0]
+            return str(matches[0][0])
         elif len(matches) > 1:
             raise DatabaseEntryError(f"There are more than one entries for the paragraph id: {paragraph_id}")
 
