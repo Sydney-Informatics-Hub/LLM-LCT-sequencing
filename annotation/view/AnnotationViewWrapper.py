@@ -1,9 +1,7 @@
 import panel as pn
-from panel import Row, Column
-from panel.widgets import StaticText, Button
+from panel import Row
 
 from annotation.controller.AnnotationController import AnnotationController
-from annotation.view import dummy_data
 from annotation.view.gui.widgets.Controls import Controls
 from annotation.view.gui.widgets.TextDisplay import TextDisplay
 

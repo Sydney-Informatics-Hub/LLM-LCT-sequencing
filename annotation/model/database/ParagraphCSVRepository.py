@@ -6,7 +6,7 @@ from pandas.core.frame import DataFrame
 from csv import DictReader
 from typing import Optional
 
-from annotation.model.database.DatabaseExceptions import DatabaseStateError, DatabaseFieldError, DatabaseEntryError
+from annotation.model.database.DatabaseExceptions import DatabaseFieldError, DatabaseEntryError
 from annotation.model.database.ParagraphRepository import ParagraphRepository
 
 

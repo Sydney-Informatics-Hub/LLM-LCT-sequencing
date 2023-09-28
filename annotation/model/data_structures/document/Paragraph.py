@@ -1,6 +1,3 @@
-from annotation.model.data_structures.document.Clause import Clause, ClauseSequence
-
-
 class Paragraph:
     def __init__(self, paragraph_id: int, text: str):
         self.paragraph_id: int = paragraph_id
