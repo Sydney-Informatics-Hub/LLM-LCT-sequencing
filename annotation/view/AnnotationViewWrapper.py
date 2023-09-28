@@ -13,26 +13,21 @@ pn.extension()
 class AnnotationViewWrapper:
     def __init__(self, controller: AnnotationController):
         self.controller = controller
-        self.controller.set_update_text_display_callable(self.update_text_display)
 
-        self.text_display = TextDisplay()
+        self.text_display = TextDisplay(controller)
         #####
         # TODO: Replace with controller bindings
-        self.text_display.set_prev_paragraph_text(dummy_data.prev_para)
-        self.text_display.set_next_paragraph_text(dummy_data.next_para)
-        self.text_display.set_curr_paragraph_text(dummy_data.curr_para)
+        # self.text_display.set_prev_paragraph_text(dummy_data.prev_para)
+        # self.text_display.set_next_paragraph_text(dummy_data.next_para)
+        # self.text_display.set_curr_paragraph_text(dummy_data.curr_para)
+        # self.text_display.set_clause_a_range((0, 40))
+        # self.text_display.set_clause_b_range((30, 50))
         #####
-        self.controls = Controls()
+        self.controls = Controls(controller)
         primary_row = Row(self.text_display.get_component(), self.controls.get_component())
         self.layout = primary_row
 
-    def update_text_display(self):
-        self.text_display.set_next_paragraph_text(self.controller.get_next_paragraph_text())
-        self.text_display.set_prev_paragraph_text(self.controller.get_prev_paragraph_text())
-        self.text_display.set_curr_paragraph_text(self.controller.get_curr_paragraph_text())
-        clause_a_range, clause_b_range = self.controller.get_curr_sequence()
-        self.text_display.set_clause_b_range(clause_a_range)
-        self.text_display.set_clause_b_range(clause_b_range)
+        self.controller.update_displays()
 
     def get_layout(self):
         return self.layout

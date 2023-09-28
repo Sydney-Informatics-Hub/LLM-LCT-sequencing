@@ -2,6 +2,7 @@ import panel as pn
 from panel import Column
 from panel.pane import HTML
 
+from annotation.controller.AnnotationController import AnnotationController
 from .styles import curr_paragraph_style, context_paragraph_style, text_display_style, clause_stylesheet
 
 
@@ -15,10 +16,13 @@ class ContextParagraph:
 
     def set_text(self, text: str):
         if type(text) is not str:
-            raise TypeError("text must be str")
+            raise TypeError(f"text must be str, but got {type(text)}")
         self.text = text
 
     def _repr_html_(self) -> str:
+        if self.text == "":
+            # This check is necessary because the HTML pane does not register the change in text if the string is empty
+            return " "
         return self.text
 
 
@@ -36,7 +40,7 @@ class CurrentParagraph:
 
     def set_text(self, text: str):
         if type(text) is not str:
-            raise TypeError("text must be str")
+            raise TypeError(f"text must be str, but got {type(text)}")
         self.raw_text = text
 
     def do_clauses_overlap(self) -> bool:
@@ -151,29 +155,41 @@ class TextDisplay:
     """
     Controls the text view and rendering
     """
-    def __init__(self):
+    def __init__(self, controller: AnnotationController):
+        self.controller: AnnotationController = controller
         self.prev_paragraph = ContextParagraph()
         self.next_paragraph = ContextParagraph()
         self.curr_paragraph = CurrentParagraph()
-        self.component = Column(
-            HTML(self.prev_paragraph, styles=context_paragraph_style),
-            HTML(self.curr_paragraph, styles=curr_paragraph_style, stylesheets=[clause_stylesheet]),
-            HTML(self.next_paragraph, styles=context_paragraph_style),
-            styles=text_display_style,
-            sizing_mode="stretch_width"
-        )
+        self.prev_html = HTML(self.prev_paragraph, styles=context_paragraph_style)
+        self.next_html = HTML(self.next_paragraph, styles=context_paragraph_style)
+        self.curr_html = HTML(self.curr_paragraph, styles=curr_paragraph_style, stylesheets=[clause_stylesheet])
+        self.component = Column(self.prev_html, self.curr_html, self.next_html,
+                                styles=text_display_style, sizing_mode="stretch_width")
+
+        self.controller.add_update_text_display_callable(self.update_display)
+
+    def update_display(self):
+        self.set_next_paragraph_text(self.controller.get_next_paragraph_text())
+        self.set_prev_paragraph_text(self.controller.get_prev_paragraph_text())
+        self.set_curr_paragraph_text(self.controller.get_curr_paragraph_text())
+        clause_a_range, clause_b_range = self.controller.get_curr_sequence()
+        self.set_clause_b_range(clause_a_range)
+        self.set_clause_b_range(clause_b_range)
 
     def get_component(self):
         return self.component
 
     def set_curr_paragraph_text(self, text: str):
         self.curr_paragraph.set_text(text)
+        self.curr_html.object = self.curr_paragraph
 
     def set_prev_paragraph_text(self, text: str):
         self.prev_paragraph.set_text(text)
+        self.prev_html.object = self.prev_paragraph
 
     def set_next_paragraph_text(self, text: str):
         self.next_paragraph.set_text(text)
+        self.next_html.object = self.next_paragraph
 
     def set_clause_a_range(self, clause_a_range: tuple[int, int] | None):
         """

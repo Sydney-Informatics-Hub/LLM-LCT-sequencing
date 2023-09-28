@@ -19,12 +19,14 @@ clause_stylesheet = """
 
 curr_paragraph_style = {
     "color": "rgba(0, 0, 0, 1)",
-    "margin": "30px 10px"
+    "margin": "30px 10px",
+    "min-height": "150px"
 }
 
 context_paragraph_style = {
     "color": "rgba(0, 0, 0, 0.3)",
-    "margin": "0px 10px"
+    "margin": "0px 10px",
+    "min-height": "100px"
 }
 
 controls_style = {
