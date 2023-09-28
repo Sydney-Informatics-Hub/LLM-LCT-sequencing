@@ -1,18 +1,14 @@
 # Prompt experimenting for sequencing classification of text data
 
-"""
-ToDo:
-- add tokenizer counter
-- add API calls
-- add evaluation
-
-"""
 import os
 import json
 import random
 import pandas as pd
+import numpy as np
 
 from load_schema_json import load_json, validate_json, json_to_dataframe
+#import importlib
+#importlib.reload(utils_llm)
 from utils_llm import LLM
 
 # some paths and filenames
@@ -194,6 +190,23 @@ def get_sequencing_classes():
                     sub_subtypes.append(subsubtype['Sub_Subtype'])
     return sub_subtypes
 
+def eval_exp(df):
+    """
+    generate confusion matrix from dataframe
+    compare predicted labels (pred_class) with true labels (test_class)
+    """
+    # initialize confusion matrix
+    sequencing_classes = get_sequencing_classes()
+    confusion_matrix = np.zeros((len(df['test_class'].unique()), len(df['test_class'].unique())))
+    # loop over rows in dataframe
+    for index, row in df.iterrows():
+        # find index of test_class and pred_class
+        test_class_idx = np.where(df['test_class'].unique() == row['test_class'])[0][0]
+        pred_class_idx = np.where(df['test_class'].unique() == row['pred_class'])[0][0]
+        # add one to confusion matrix
+        confusion_matrix[test_class_idx, pred_class_idx] += 1
+    return confusion_matrix
+
 
 def exp_pipe():
     """
@@ -201,7 +214,7 @@ def exp_pipe():
     """
     # initialize token_counter
     token_count = 0
-    modelname_llm = 'gpt-3.5-turbo'
+    modelname_llm = 'gpt-3.5-turbo-instruct'
 
     examples = load_json(os.path.join(path_schema, filename_examples))
     schema = load_json(os.path.join(path_schema, filename_schema))
@@ -210,6 +223,9 @@ def exp_pipe():
 
     # Select examples for each type
     example_types = df['Sub_Subtype'].unique()
+
+    # get first three letter characters of example types and write in captial letters
+    example_types_short = [example_type[:3].upper() for example_type in example_types]
 
     # split in train and test samples
     train_df, test_df = example_train_test_split(df, Nsel=1)
@@ -220,6 +236,10 @@ def exp_pipe():
         example_string += f"""classification: {row['Sub_Subtype']}\n"""
         example_string += f"""linkage word: {row['Linkage_Word']}\n"""
         example_string += f"""\n"""
+
+    # replace example_types with example_types_short in example_string
+    for example_type, example_type_short in zip(example_types, example_types_short):
+        example_string = example_string.replace(example_type, example_type_short)
 
     list_test_str = []
     list_test_class = []
@@ -242,7 +262,21 @@ def exp_pipe():
     # load prompt string from instruction text file
     zero_shot_prompt= load_text(os.path.join(path_schema, filename_zero_prompt))
 
+    # generate outpath
     os.makedirs(outpath, exist_ok=True)
+    # check if outpath includes a folder that starts with string 'exp'
+    # if so, add 1 to the number of the folder
+    # if not, create folder 'exp1'
+    list_folders = os.listdir(outpath)
+    list_exp_folders = [folder for folder in list_folders if folder.startswith('exp')]
+    if len(list_exp_folders) == 0:
+        outpath_exp = os.path.join(outpath, 'exp1')
+    else:
+        list_exp_folders.sort()
+        last_exp_folder = list_exp_folders[-1]
+        last_exp_folder_number = int(last_exp_folder[3:])
+        outpath_exp = os.path.join(outpath, f'exp{last_exp_folder_number+1}')
+    os.makedirs(outpath_exp, exist_ok=True)
 
     # initiate results dataframe
     df_results = pd.DataFrame(columns=[
@@ -260,36 +294,75 @@ def exp_pipe():
         'reasoning'])
 
     # Loop over test sample in list_test_str
+    n_test = 0
     for test_str, test_class, test_linkage in zip(list_test_str, list_test_class, list_test_linkage):
+        print(f"Test sample {n_test} of {len(list_test_str)}")
         # generate prompt
         prompt = gen_prompt(zero_shot_prompt, sequencing_classes, sequencing_definition, example_string, test_str)
+
+        # replace in prompt all occurences of example_types with f'{example_type} (example_type_short)'
+        for example_type, example_type_short in zip(example_types, example_types_short):
+            prompt = prompt.replace(example_type, f'{example_type} ({example_type_short})')
 
         # call OPenAi API with prompt
         llm = LLM(filename_openai_key='../../openai_key.txt', model_name = modelname_llm)
         completion_text, tokens_used, chat_id, logprobs = llm.request_completion(prompt, max_tokens = 300)
+        # for gpt-4:
+        #completion_text, tokens_used, chat_id, message_response = llm.request_chatcompletion(prompt, max_tokens = 300)
+        #logprobs = None
 
          # tokens_used
         token_count += tokens_used
 
         # save prompt to file
         filename_prompt = f'prompt_{chat_id}.txt'
-        save_text(prompt, os.path.join(outpath, filename_prompt))
+        save_text(prompt, os.path.join(outpath_exp, filename_prompt))
 
         # save response to file
         filename_response = f'response_{chat_id}.txt'
-        save_text(completion_text, os.path.join(outpath, filename_response))
+        save_text(completion_text, os.path.join(outpath_exp, filename_response))
 
-        # class of test sample
-        class_predicted = completion_text.split('\n')[1].split(':')[1].strip()
+        if completion_text.startswith('\n'):
+            completion_text = completion_text[1:]
 
-        # lingage word of test sample
-        linkage_predicted = completion_text.split('\n')[2].split(':')[1].strip()
+        # check if there are 3 lines in completion_text
+        if len(completion_text.split('\n')) == 3:
+            # class of test sample
+            class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
 
-        # get reasoning
-        reasoning = completion_text.split('\n')[3].split(':')[1].strip()
+            # lingage word of test sample
+            linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
 
-        # probability of predicted class
-        class_prob = logprobs[3]
+            # get reasoning
+            reasoning = completion_text.split('\n')[2].split(':')[1].strip()
+
+            # probability of predicted class
+            if logprobs is not None:
+                class_prob = logprobs[3]
+            else:
+                class_prob = 0
+        elif (len(completion_text.split('\n')) == 2) and completion_text.split('\n')[0].startswith('classification'):
+            print('WARNING: completion_text has only 2 lines! Skipping reasoning')
+            class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
+            linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
+            reasoning = 'NA'
+            if logprobs is not None:
+                class_prob = logprobs[3]
+            else:
+                class_prob = 0
+        else:
+            print('WARNING: completion_text has not not enough lines!')
+            print(completion_text)
+            class_predicted = 'NA'
+            linkage_predicted = 'NA'
+            reasoning = 'NA'
+            class_prob = 0
+
+        #print results
+        print(f'Tested class: {test_class}')
+        print(f'Predicted class: {class_predicted}')
+        print(f'Predicted class probability: {class_prob}')
+        print(f'Used tokens totoal: {token_count}')
 
         #add a new row to df_results
         row = [
@@ -307,9 +380,15 @@ def exp_pipe():
             reasoning]
         df_results.loc[len(df_results)] = row
 
+        # increase n_test
+        n_test += 1
+
+    # convert class_prob from log to prob
+    df_results['pred_class_prob'] = df_results['pred_class_prob'].apply(lambda x: np.exp(x))
+
     # save results to csv file
     filename_results = f'results_{modelname_llm}.csv'
-    df_results.to_csv(os.path.join(outpath, filename_results), index=False)
-
-
-
+    df_results.to_csv(os.path.join(outpath_exp, filename_results), index=False)
+    # Write token count to file
+    filename_token_count = f'token_count_{modelname_llm}.txt'
+    save_text(str(token_count), os.path.join(outpath_exp, filename_token_count))
