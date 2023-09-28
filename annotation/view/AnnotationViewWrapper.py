@@ -15,14 +15,6 @@ class AnnotationViewWrapper:
         self.controller = controller
 
         self.text_display = TextDisplay(controller)
-        #####
-        # TODO: Replace with controller bindings
-        # self.text_display.set_prev_paragraph_text(dummy_data.prev_para)
-        # self.text_display.set_next_paragraph_text(dummy_data.next_para)
-        # self.text_display.set_curr_paragraph_text(dummy_data.curr_para)
-        # self.text_display.set_clause_a_range((0, 40))
-        # self.text_display.set_clause_b_range((30, 50))
-        #####
         self.controls = Controls(controller)
         primary_row = Row(self.text_display.get_component(), self.controls.get_component())
         self.layout = primary_row
