@@ -47,7 +47,7 @@ class LLM:
         return num_tokens
 
 
-    def request_completion(self, prompt, temperature = 0, max_tokens = 4000, get_logprobs = True):
+    def request_completion(self, prompt, temperature = 0, max_tokens = 1000, get_logprobs = True):
         """
         Request a completion from the LLM API.
 
@@ -93,7 +93,7 @@ class LLM:
         return completion_text, tokens_used, completion_id, logprobs 
 
 
-    def request_chatcompletion(self, prompt, messages = None, temperature=0, max_tokens = 4000):
+    def request_chatcompletion(self, prompt, messages = None, temperature=0, max_tokens = 1000):
         """
         Use OpenAI's Chat completions API
 
@@ -125,7 +125,6 @@ class LLM:
                                 temperature=temperature,
                                 max_tokens=max_tokens,
                                 model=self.model_name,
-                                stop=['\n']
                                 )
         # Get the completion text
         message_response = completion_response['choices'][0]['message']
