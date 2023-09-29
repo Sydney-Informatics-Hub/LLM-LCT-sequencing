@@ -6,10 +6,11 @@ from annotation.controller.AnnotationController import AnnotationController
 from .styles import curr_paragraph_style, context_paragraph_style, text_display_style, clause_stylesheet
 
 
-class ContextParagraph:
+class PrevParagraph:
     """
-    Defines a paragraph of text
+    Defines the previous paragraph of text as context
     """
+    CHAR_SUBSET: int = 200
 
     def __init__(self, text: str = ""):
         self.text: str = text
@@ -21,9 +22,37 @@ class ContextParagraph:
 
     def _repr_html_(self) -> str:
         if self.text == "":
-            # This check is necessary because the HTML pane does not register the change in text if the string is empty
+            # Returning a space character is necessary because the HTML pane does not register the change in text if
+            # the string is empty
             return " "
-        return self.text
+
+        # Returns the last CHAR_SUBSET characters to prevent overflow
+        idx_start = len(self.text) - NextParagraph.CHAR_SUBSET
+        return self.text[idx_start:]
+
+
+class NextParagraph:
+    """
+    Defines the next paragraph of text as context
+    """
+    CHAR_SUBSET: int = 200
+
+    def __init__(self, text: str = ""):
+        self.text: str = text
+
+    def set_text(self, text: str):
+        if type(text) is not str:
+            raise TypeError(f"text must be str, but got {type(text)}")
+        self.text = text
+
+    def _repr_html_(self) -> str:
+        if self.text == "":
+            # Returning a space character is necessary because the HTML pane does not register the change in text if
+            # the string is empty
+            return " "
+
+        # Returns the first CHAR_SUBSET characters to prevent overflow
+        return self.text[:NextParagraph.CHAR_SUBSET]
 
 
 class CurrentParagraph:
@@ -155,10 +184,11 @@ class TextDisplay:
     """
     Controls the text view and rendering
     """
+
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
-        self.prev_paragraph = ContextParagraph()
-        self.next_paragraph = ContextParagraph()
+        self.prev_paragraph = PrevParagraph()
+        self.next_paragraph = NextParagraph()
         self.curr_paragraph = CurrentParagraph()
         self.prev_html = HTML(self.prev_paragraph, styles=context_paragraph_style)
         self.next_html = HTML(self.next_paragraph, styles=context_paragraph_style)
@@ -169,12 +199,12 @@ class TextDisplay:
         self.controller.add_update_text_display_callable(self.update_display)
 
     def update_display(self):
+        clause_a_range, clause_b_range = self.controller.get_curr_sequence()
+        self.set_clause_a_range(clause_a_range)
+        self.set_clause_b_range(clause_b_range)
         self.set_next_paragraph_text(self.controller.get_next_paragraph_text())
         self.set_prev_paragraph_text(self.controller.get_prev_paragraph_text())
         self.set_curr_paragraph_text(self.controller.get_curr_paragraph_text())
-        clause_a_range, clause_b_range = self.controller.get_curr_sequence()
-        self.set_clause_b_range(clause_a_range)
-        self.set_clause_b_range(clause_b_range)
 
     def get_component(self):
         return self.component

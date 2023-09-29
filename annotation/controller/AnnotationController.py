@@ -12,7 +12,7 @@ class AnnotationController:
     def __init__(self, service: AnnotationService):
         self.annotation_service: AnnotationService = service
         self.curr_paragraph_id: int = 1
-        self.curr_sequence_id: int = 0
+        self.curr_sequence_idx: int = 0
 
         self._update_display_callables: list[Callable] = []
 
@@ -40,10 +40,10 @@ class AnnotationController:
         return self.annotation_service.get_paragraph_text(self.curr_paragraph_id)
 
     def get_curr_sequence(self) -> ClauseSequenceTuple:
-        return (0, 1), (2, 3)
+        return self.annotation_service.get_sequence_clause_ranges(self.curr_paragraph_id, self.curr_sequence_idx)
 
     def get_curr_set_classifications(self) -> ClassificationTuple:
-        return "INT", "SUB"
+        return self.annotation_service.get_sequence_classifications(self.curr_paragraph_id, self.curr_sequence_idx)
 
     def get_curr_unset_classifications(self) -> ClassificationTuple:
         return "SEQ", "REI", "REP", "COH", "INC"
@@ -53,19 +53,26 @@ class AnnotationController:
     def next_paragraph(self):
         if self.curr_paragraph_id < self.annotation_service.get_paragraph_count():
             self.curr_paragraph_id += 1
+        self.curr_sequence_idx = 0
 
         self.update_displays()
 
     def prev_paragraph(self):
         if self.curr_paragraph_id > 1:
             self.curr_paragraph_id -= 1
+        self.curr_sequence_idx = 0
 
         self.update_displays()
 
     def next_sequence(self):
+        num_sequences: int = self.annotation_service.get_paragraph_sequence_count(self.curr_paragraph_id)
+        if self.curr_sequence_idx < (num_sequences - 1):
+            self.curr_sequence_idx += 1
         self.update_displays()
 
     def prev_sequence(self):
+        if self.curr_sequence_idx > 0:
+            self.curr_sequence_idx -= 1
         self.update_displays()
 
     def set_curr_classifications(self, classifications: ClassificationTuple):

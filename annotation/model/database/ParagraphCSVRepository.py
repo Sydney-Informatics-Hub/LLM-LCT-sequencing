@@ -1,8 +1,7 @@
 import os
 
 from numpy import ndarray
-from pandas import read_csv
-from pandas.core.frame import DataFrame
+from pandas import DataFrame, read_csv
 from csv import DictReader
 from typing import Optional
 
@@ -13,8 +12,8 @@ from annotation.model.database.ParagraphRepository import ParagraphRepository
 class ParagraphCSVRepository(ParagraphRepository):
     ID_FIELD: str = "paragraph_id"
     TEXT_FIELD: str = "paragraph_text"
-    REQUIRED_FIELDS: list[str, ...] = [ID_FIELD, TEXT_FIELD]
     FIELD_DTYPES: dict = {ID_FIELD: int, TEXT_FIELD: 'string'}
+    REQUIRED_FIELDS: list[str, ...] = [field for field in FIELD_DTYPES.keys()]
 
     def __init__(self, database_csv_filename: str):
         self._database_filename: str = database_csv_filename
@@ -46,17 +45,15 @@ class ParagraphCSVRepository(ParagraphRepository):
             return
 
         self._validate_database_fields()
-        self._database_cache = read_csv(filepath_or_buffer=self._database_filename,
+        self._database_cache = read_csv(filepath_or_buffer=self._database_filename, header=0,
                                         names=ParagraphCSVRepository.REQUIRED_FIELDS,
-                                        header=0,
                                         dtype=ParagraphCSVRepository.FIELD_DTYPES)
 
         self._cache_updated = True
 
     def _write_cache_to_database(self):
-        self._database_cache.to_csv(path_or_buf=self._database_filename,
-                                    columns=ParagraphCSVRepository.REQUIRED_FIELDS,
-                                    index=False)
+        self._database_cache.to_csv(path_or_buf=self._database_filename, index=False,
+                                    columns=ParagraphCSVRepository.REQUIRED_FIELDS)
 
         self._cache_updated = True
 

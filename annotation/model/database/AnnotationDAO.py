@@ -2,6 +2,8 @@ from typing import Optional
 
 from numpy import ndarray
 
+from annotation.model.data_structures.classification.Classification import Classification
+from annotation.model.data_structures.document.Clause import ClauseSequence, Clause
 from annotation.model.data_structures.document.Paragraph import Paragraph
 from annotation.model.database.ClauseSequenceCSVRepository import ClauseSequenceCSVRepository
 from annotation.model.database.ClauseSequenceRepository import ClauseSequenceRepository
@@ -30,3 +32,26 @@ class AnnotationDAO:
         if paragraph_text is None:
             return None
         return Paragraph(paragraph_id, paragraph_text)
+
+    def get_paragraph_sequence_count(self, paragraph_id: int):
+        paragraph_sequences = self.clause_sequence_repository.read_all_by_paragraph(paragraph_id)
+        return paragraph_sequences.shape[0]
+
+    def get_sequences_all_paragraph(self, paragraph_id: int) -> list[ClauseSequence]:
+        paragraph_sequences = self.clause_sequence_repository.read_all_by_paragraph(paragraph_id)
+        sequence_ls: list[ClauseSequence] = []
+        sequence: ClauseSequence
+        for sequence_data in paragraph_sequences:
+            sequence = ClauseSequence(Clause(sequence_data[0], sequence_data[1]),
+                                      Clause(sequence_data[2], sequence_data[3]))
+            classification = sequence_data[4]
+            sequence.add_classification(Classification(classification))
+            sequence_ls.append(sequence)
+
+        return sequence_ls
+
+    def get_sequence_by_paragraph_idx(self, paragraph_id: int, sequence_idx: int) -> Optional[ClauseSequence]:
+        paragraph_sequences = self.get_sequences_all_paragraph(paragraph_id)
+        if len(paragraph_sequences) == 0:
+            return None
+        return paragraph_sequences[sequence_idx]

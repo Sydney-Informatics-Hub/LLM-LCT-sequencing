@@ -10,7 +10,7 @@ class ClauseSequenceRepository(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_by_id(self, paragraph_id: int, clause_id: int):
+    def read_all_by_paragraph(self, paragraph_id: int):
         raise NotImplementedError()
 
     @abstractmethod
