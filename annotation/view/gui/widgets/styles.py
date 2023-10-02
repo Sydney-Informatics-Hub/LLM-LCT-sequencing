@@ -43,7 +43,10 @@ paragraph_heading_style = {
 }
 
 paragraph_id_style = {
-    "font": "1em \"Courier New\", monospace"
+    "font": "1em \"Arial\", sans-serif",
+    "text-align": "center",
+    "width": "100px",
+    "margin": "auto"
 }
 
 controls_navigation_button_style = {

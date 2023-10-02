@@ -149,6 +149,9 @@ class ClauseSequenceControls:
         self.controller.delete_curr_sequence()
 
 
+# class
+
+
 class Controls:
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
