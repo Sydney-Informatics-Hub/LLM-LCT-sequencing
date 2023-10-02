@@ -1,12 +1,14 @@
 from typing import Optional
 
 from panel import Row, Column
+from panel.layout import Divider
 from panel.widgets import Button
 from panel.pane import Str, HTML
 
 from annotation.controller.AnnotationController import AnnotationController
 from .styles import controls_style, paragraph_heading_style, controls_navigation_button_style, paragraph_id_style, \
-    sequence_heading_style, delete_sequence_button_style, add_sequence_button_style, clause_stylesheet
+    sequence_heading_style, delete_sequence_button_style, add_sequence_button_style, clause_stylesheet, \
+    sequence_info_style, paragraph_controls_style
 
 
 class ParagraphControls:
@@ -15,21 +17,23 @@ class ParagraphControls:
 
         self.title = Str("Paragraph", styles=paragraph_heading_style)
         self.curr_paragraph_id = Str("1", styles=paragraph_id_style)
-        self.prev_paragraph_button = Button(name="\N{LEFTWARDS ARROW TO BAR} Previous", styles=controls_navigation_button_style)
-        self.next_paragraph_button = Button(name="Next \N{RIGHTWARDS ARROW TO BAR}", styles=controls_navigation_button_style)
+        self.prev_paragraph_button = Button(name="\N{LEFTWARDS ARROW TO BAR} PREV", button_type="default")
+        self.next_paragraph_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="default")
 
         self.prev_paragraph_button.on_click(self.prev_paragraph)
         self.next_paragraph_button.on_click(self.next_paragraph)
 
         self.component = Column(
-            self.title,
+            Row(self.title,
+                align="center"),
             Row(
                 self.prev_paragraph_button,
                 self.curr_paragraph_id,
-                self.next_paragraph_button,
-                sizing_mode="stretch_width"
+                self.next_paragraph_button
             ),
-            sizing_mode="stretch_width"
+            Divider(),
+            styles=paragraph_controls_style,
+            align="center"
         )
 
         self.controller.add_update_text_display_callable(self.update_display)
@@ -55,12 +59,10 @@ class ClauseSequenceControls:
         self.clause_a_info = HTML(ClauseSequenceControls.format_first_clause_str(), stylesheets=[clause_stylesheet])
         self.clause_overlap_info = HTML(ClauseSequenceControls.format_overlap_str(), stylesheets=[clause_stylesheet])
         self.clause_b_info = HTML(ClauseSequenceControls.format_second_clause_str(), stylesheets=[clause_stylesheet])
-        self.prev_sequence_button = Button(name="\N{LEFTWARDS ARROW TO BAR} Previous",
-                                           styles=controls_navigation_button_style)
-        self.next_sequence_button = Button(name="Next \N{RIGHTWARDS ARROW TO BAR}",
-                                           styles=controls_navigation_button_style)
-        self.delete_sequence_button = Button(name="Delete", styles=delete_sequence_button_style)
-        self.add_sequence_button = Button(name="Add", styles=add_sequence_button_style)
+        self.prev_sequence_button = Button(name="\N{LEFTWARDS ARROW TO BAR} PREV", button_type="primary", button_style="outline")
+        self.next_sequence_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="primary", button_style="outline")
+        self.delete_sequence_button = Button(name="Delete", button_type="danger", styles=delete_sequence_button_style)
+        self.add_sequence_button = Button(name="Add", button_type="success", styles=add_sequence_button_style)
 
         self.prev_sequence_button.on_click(self.prev_sequence)
         self.next_sequence_button.on_click(self.next_sequence)
@@ -68,24 +70,24 @@ class ClauseSequenceControls:
         self.add_sequence_button.on_click(self.add_sequence)
 
         self.component = Column(
-            self.title,
+            Row(self.title,
+                align="center"),
             Row(
                 self.prev_sequence_button,
                 Column(
                     self.clause_a_info,
                     self.clause_b_info,
-                    self.clause_overlap_info
+                    self.clause_overlap_info,
+                    styles=sequence_info_style
                 ),
-                self.next_sequence_button,
-                styles={"min-height": "90px"},
-                sizing_mode="stretch_width"
+                self.next_sequence_button
             ),
             Row(
                 self.delete_sequence_button,
                 self.add_sequence_button,
-                sizing_mode="stretch_width"
+                align="center"
             ),
-            sizing_mode="stretch_width"
+            align="center"
         )
 
         self.controller.add_update_text_display_callable(self.update_display)
