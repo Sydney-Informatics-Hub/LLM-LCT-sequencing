@@ -28,6 +28,24 @@
                 "Reasoning": "The use of the linkage word 'This' refers back to previously mentioned sentence.",
                 "Linkage_Word": "this",
                 "Page_Number": "A2"
+              },
+              {
+                "Example": "The basketball was really flat. That means we can’t play today." ,
+                "Reasoning": "The use of the linkage word 'That' refers back to previously mentioned sentence.",
+                "Linkage_Word": "that",
+                "Page_Number": ""
+              },
+              {
+                "Example": "Curtsey while you’re thinking what to say. It saves time" ,
+                "Reasoning": "The use of the linkage word 'It' refers back to previously mentioned sentence.",
+                "Linkage_Word": "It",
+                "Page_Number": ""
+              },
+              {
+                "Example": "First we need to build a tool to do it. This involves a lot of work." ,
+                "Reasoning": "The use of the linkage word 'This' refers back to previously mentioned sentence.",
+                "Linkage_Word": "This",
+                "Page_Number": ""
               }
           ]
     },
@@ -94,12 +112,6 @@
           "Example": "If you are disappointed with the number, then it means you probably could have tried a little bit harder, ",
           "Reasoning": "The example establishes a conditional cause-and-effect relationship. The conditional cause is 'you are disappointed with the number,' and the effect or result of that condition being met is 'it means you probably could have tried a little bit harder.' The linkers 'If' and 'then' work together to form a consequential sequence, indicating that the realization or feeling of disappointment (cause) leads to the conclusion or implication about one's effort (effect)",
           "Linkage_Word": "If ... then",
-          "Page_Number": "A3"
-        },
-        {
-          "Example": "If you are disappointed with the number, then it means you probably could have tried a little bit harder, ",
-          "Reasoning": "The example implies a cause-and-effect relationship between the two statements. The action 'We went slowly' (effect) is a result of the intention or reason 'We wanted to make it easy for them' (cause). Even though an explicit linker like 'because' or 'so' isn't used, the context suggests that the decision to go slowly was influenced by the desire to make things easy for 'them.'' The sequence of actions and intentions presented makes the relationship between the two ideas consequential.",
-          "Linkage_Word": null,
           "Page_Number": "A3"
         }
       ]
