@@ -19,7 +19,7 @@ from utils_llm import LLM
 path_schema = "../schemas/"
 filename_examples = "sequencing_examples_reason.json"
 filename_schema = "schema_sequencing_examples_reason.json"
-filename_definitions = "sequencing_types_clean.json"
+filename_definitions = "sequencing_types.json"
 filename_zero_prompt = "instruction_prompt.txt"
 outpath = "../results/"
 
@@ -217,7 +217,7 @@ def gen_confusion_matrix(classes_test, classes_pred, class_labels, outfname_plot
                          dropna=False)
     
     # Reindex the matrix to ensure all classes are present
-    matrix = matrix.reindex(index=class_labels + [np.nan], columns=seq_classes + [np.nan], fill_value=0)
+    matrix = matrix.reindex(index=class_labels + [np.nan], columns=class_labels + [np.nan], fill_value=0)
 
     # plot matrix
     plt.figure(figsize=(10, 7))
@@ -435,13 +435,27 @@ def exp_pipe():
         # check if there are 3 lines in completion_text
         if len(completion_text.split('\n')) == 3:
             # class of test sample
-            class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
-
+            try:
+                class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
+            except:
+                print('WARNING: completion_text not correct format! Skipping test sample')
+                print(completion_text)
+                completion_text = completion_text.split('\n')[0]
             # lingage word of test sample
-            linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
+            try:
+                linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
+            except:
+                print('WARNING: completion_text not correct format for linkage word!')
+                print(completion_text)
+                linkage_predicted = 'NA'
 
             # get reasoning
-            reasoning = completion_text.split('\n')[2].split(':')[1].strip()
+            try:
+                reasoning = completion_text.split('\n')[2].split(':')[1].strip()
+            except:
+                print('WARNING: completion_text not correct format for reasoning!')
+                print(completion_text)
+                reasoning = 'NA'
 
             # probability of predicted class
             if logprobs is not None:
@@ -450,8 +464,17 @@ def exp_pipe():
                 class_prob = 0
         elif (len(completion_text.split('\n')) == 2) and completion_text.split('\n')[0].startswith('classification'):
             print('WARNING: completion_text has only 2 lines! Skipping reasoning')
-            class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
-            linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
+            try:
+                class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
+            except:
+                print('WARNING: completion_text not correct format! Skipping test sample')
+                print(completion_text)
+                completion_text = completion_text.split('\n')[0]
+            try:
+                linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
+            except:
+                print('WARNING: completion_text not correct format for linkage word!')
+                linkage_predicted = 'NA'
             reasoning = 'NA'
             if logprobs is not None:
                 class_prob = logprobs[3]
@@ -499,3 +522,6 @@ def exp_pipe():
     # Write token count to file
     filename_token_count = f'token_count_{modelname_llm}.txt'
     save_text(str(token_count), os.path.join(outpath_exp, filename_token_count))
+
+    # evaluate results and save to fiile
+    eval_exp(df_results, outpath_exp)
