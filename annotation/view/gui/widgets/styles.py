@@ -69,3 +69,11 @@ delete_sequence_button_style = {
 add_sequence_button_style = {
     "width": "65px"
 }
+
+sequence_classification_style = {
+
+}
+
+classification_heading_style = {
+    "font": "bold 1.1em \"Arial\", sans-serif"
+}
