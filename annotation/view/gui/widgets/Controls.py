@@ -1,14 +1,14 @@
 from typing import Optional
 
-from panel import Row, Column
+from panel import Row, Column, bind
 from panel.layout import Divider
-from panel.widgets import Button
+from panel.widgets import Button, RadioButtonGroup
 from panel.pane import Str, HTML
 
 from annotation.controller.AnnotationController import AnnotationController
-from .styles import controls_style, paragraph_heading_style, controls_navigation_button_style, paragraph_id_style, \
+from .styles import controls_style, paragraph_heading_style, paragraph_id_style, \
     sequence_heading_style, delete_sequence_button_style, add_sequence_button_style, clause_stylesheet, \
-    sequence_info_style, paragraph_controls_style
+    sequence_info_style, paragraph_controls_style, classification_heading_style, sequence_classification_style
 
 
 class ParagraphControls:
@@ -149,7 +149,36 @@ class ClauseSequenceControls:
         self.controller.delete_curr_sequence()
 
 
-# class
+class SequenceClassificationControls:
+    def __init__(self, controller: AnnotationController):
+        self.controller: AnnotationController = controller
+
+        self.title = Str("Sequence Classification", styles=classification_heading_style)
+        self.classification_selector = RadioButtonGroup(
+            name="Sequence Classifications",
+            options=self.controller.get_all_classifications(),
+            button_type="light", button_style="outline"
+        )
+        selector_bound_fn = bind(self.set_classification, classification=self.classification_selector)
+
+        self.component = Column(
+            self.title,
+            self.classification_selector,
+            selector_bound_fn,
+            styles=sequence_classification_style,
+            align="center"
+        )
+
+        self.controller.add_update_text_display_callable(self.update_display)
+
+    def get_component(self):
+        return self.component
+
+    def update_display(self):
+        self.classification_selector.value = self.controller.get_curr_classification()
+
+    def set_classification(self, classification):
+        self.controller.set_curr_classifications(classification)
 
 
 class Controls:
@@ -157,10 +186,12 @@ class Controls:
         self.controller: AnnotationController = controller
         self.paragraph_controls = ParagraphControls(self.controller)
         self.clause_sequence_controls = ClauseSequenceControls(self.controller)
+        self.sequence_classification_controls = SequenceClassificationControls(self.controller)
 
         self.component = Column(
             self.paragraph_controls.get_component(),
             self.clause_sequence_controls.get_component(),
+            self.sequence_classification_controls.get_component(),
             styles=controls_style,
             sizing_mode="stretch_width"
         )
