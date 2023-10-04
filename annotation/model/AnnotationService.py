@@ -28,8 +28,24 @@ class AnnotationService:
 
         return sequence.get_clause_ranges()
 
-    def get_sequence_classifications(self, paragraph_id: int, sequence_idx: int) -> list[str]:
-        sequence: ClauseSequence = self.annotation_dao.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
-        classifications: set[Classification] = sequence.get_classifications()
+    def get_all_sequence_classifications(self) -> list[str]:
+        return [c.name for c in Classification]
 
-        return [c.name for c in classifications]
+    def get_sequence_classification(self, paragraph_id: int, sequence_idx: int) -> str:
+        sequence: ClauseSequence = self.annotation_dao.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
+        classification: Optional[Classification] = sequence.get_classification()
+        if classification is None:
+            return ""
+        else:
+            return classification.name
+
+    def set_sequence_classification(self, paragraph_id: int, sequence_idx: int, classification: str):
+        try:
+            classification: Classification = Classification[classification]
+        except ValueError:
+            return
+
+        sequence: ClauseSequence = self.annotation_dao.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
+        sequence.set_classification(classification)
+
+        self.annotation_dao.update_sequence_classification_by_paragraph_idx(paragraph_id, sequence_idx, sequence)

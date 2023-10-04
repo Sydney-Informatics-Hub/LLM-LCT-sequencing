@@ -5,7 +5,6 @@ from annotation.model import AnnotationService
 # Type alias for complex tuples - only applies for this document
 ClauseTuple = tuple[int, int]
 ClauseSequenceTuple = tuple[ClauseTuple, ClauseTuple]
-ClassificationTuple = tuple[str, ...]
 
 
 class AnnotationController:
@@ -42,11 +41,11 @@ class AnnotationController:
     def get_curr_sequence(self) -> ClauseSequenceTuple:
         return self.annotation_service.get_sequence_clause_ranges(self.curr_paragraph_id, self.curr_sequence_idx)
 
-    def get_curr_set_classifications(self) -> ClassificationTuple:
-        return self.annotation_service.get_sequence_classifications(self.curr_paragraph_id, self.curr_sequence_idx)
+    def get_all_classifications(self) -> list[str]:
+        return self.annotation_service.get_all_sequence_classifications()
 
-    def get_curr_unset_classifications(self) -> ClassificationTuple:
-        return "SEQ", "REI", "REP", "COH", "INC"
+    def get_curr_classification(self) -> str:
+        return self.annotation_service.get_sequence_classification(self.curr_paragraph_id, self.curr_sequence_idx)
 
     # Data control methods
 
@@ -75,8 +74,8 @@ class AnnotationController:
             self.curr_sequence_idx -= 1
         self.update_displays()
 
-    def set_curr_classifications(self, classifications: ClassificationTuple):
-        pass
+    def set_curr_classifications(self, classification: str):
+        self.annotation_service.set_sequence_classification(self.curr_paragraph_id, self.curr_sequence_idx, classification)
 
     def add_sequence(self, clause_a_range: ClauseTuple, clause_b_range: ClauseTuple):
         pass

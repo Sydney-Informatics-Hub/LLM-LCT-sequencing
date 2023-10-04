@@ -42,10 +42,13 @@ class AnnotationDAO:
         sequence_ls: list[ClauseSequence] = []
         sequence: ClauseSequence
         for sequence_data in paragraph_sequences:
+            try:
+                classification = Classification(sequence_data[4])
+            except ValueError:
+                classification = None
             sequence = ClauseSequence(Clause(sequence_data[0], sequence_data[1]),
-                                      Clause(sequence_data[2], sequence_data[3]))
-            classification = sequence_data[4]
-            sequence.add_classification(Classification(classification))
+                                      Clause(sequence_data[2], sequence_data[3]),
+                                      classification)
             sequence_ls.append(sequence)
 
         return sequence_ls
@@ -55,3 +58,7 @@ class AnnotationDAO:
         if len(paragraph_sequences) == 0:
             return None
         return paragraph_sequences[sequence_idx]
+
+    def update_sequence_classification_by_paragraph_idx(self, paragraph_id: int, sequence_idx: int, sequence: ClauseSequence):
+        self.clause_sequence_repository.update(
+            paragraph_id, sequence_idx, sequence.get_clause_ranges(), sequence.get_classification().value)

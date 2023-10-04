@@ -1,3 +1,5 @@
+from typing import Optional
+
 from annotation.model.data_structures.classification.Classification import Classification
 
 
@@ -33,19 +35,16 @@ class Clause:
 
 
 class ClauseSequence:
-    def __init__(self, first_clause: Clause, second_clause: Clause):
+    def __init__(self, first_clause: Clause, second_clause: Clause, classification: Optional[Classification] = None):
         self.first_clause: Clause = first_clause
         self.second_clause: Clause = second_clause
-        self.classification_cont: set[Classification] = set()
+        self.classification: Classification = classification
 
     def get_clause_ranges(self) -> tuple[tuple[int, int], tuple[int, int]]:
         return tuple(self.first_clause.get_range()), tuple(self.second_clause.get_range())
 
-    def get_classifications(self) -> set[Classification]:
-        return self.classification_cont.copy()
+    def get_classification(self) -> Classification:
+        return self.classification
 
-    def add_classification(self, classification: Classification):
-        self.classification_cont.add(classification)
-
-    def remove_classification(self, classification: Classification):
-        self.classification_cont.remove(classification)
+    def set_classification(self, classification: Optional[Classification]):
+        self.classification = classification
