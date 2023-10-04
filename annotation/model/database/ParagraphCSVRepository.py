@@ -79,7 +79,7 @@ class ParagraphCSVRepository(ParagraphRepository):
         id_field = ParagraphCSVRepository.ID_FIELD
         text_field = ParagraphCSVRepository.TEXT_FIELD
 
-        self._validate_database_fields()
+        self._read_database_into_cache()
 
         existing_ids = self._database_cache[id_field].values
         if len(existing_ids) == 0:
@@ -99,7 +99,7 @@ class ParagraphCSVRepository(ParagraphRepository):
         id_field = ParagraphCSVRepository.ID_FIELD
         text_field = ParagraphCSVRepository.TEXT_FIELD
 
-        self._validate_database_fields()
+        self._read_database_into_cache()
 
         matches = self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]].values
 
@@ -116,7 +116,7 @@ class ParagraphCSVRepository(ParagraphRepository):
         id_field = ParagraphCSVRepository.ID_FIELD
         text_field = ParagraphCSVRepository.TEXT_FIELD
 
-        self._validate_database_fields()
+        self._read_database_into_cache()
 
         matches = self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]].values
 
