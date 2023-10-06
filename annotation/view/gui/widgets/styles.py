@@ -1,6 +1,6 @@
 text_display_style = {
-    "border-right": "1px solid black",
     "padding": "20px",
+    "width": "60%",
     "min_width": "400px"
 }
 
@@ -30,6 +30,7 @@ context_paragraph_style = {
 }
 
 controls_style = {
+    "border-left": "1px solid black",
     "padding": "20px",
     "min_width": "400px"
 }
@@ -71,7 +72,6 @@ add_sequence_button_style = {
 }
 
 sequence_classification_style = {
-    "text-align": "center"
 }
 
 classification_heading_style = {
@@ -83,5 +83,6 @@ classification_subheading_style = {
 }
 
 llm_class_display_style = {
-
+    "padding": "5px 20px",
+    "border": "1px solid black"
 }

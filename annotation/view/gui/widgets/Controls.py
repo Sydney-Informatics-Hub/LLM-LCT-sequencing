@@ -167,16 +167,21 @@ class SequenceClassificationControls:
         self.classification_selector = RadioButtonGroup(
             name="Sequence Classifications",
             options=classification_options,
-            button_type="light", button_style="outline"
+            button_type="primary", button_style="outline"
         )
         selector_bound_fn = bind(self.set_correct_classification, classification=self.classification_selector)
 
         self.component = Column(
-            self.title,
-            self.llm_class_title,
-            self.llm_class_display,
-            self.user_class_title,
-            self.classification_selector,
+            Row(self.title,
+                align="center"),
+            Row(self.llm_class_title,
+                align="center"),
+            Row(self.llm_class_display,
+                align="center"),
+            Row(self.user_class_title,
+                align="center"),
+            Row(self.classification_selector,
+                align="center"),
             selector_bound_fn,
             styles=sequence_classification_style,
             align="center"

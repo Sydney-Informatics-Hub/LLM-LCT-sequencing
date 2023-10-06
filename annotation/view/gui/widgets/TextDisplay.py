@@ -194,7 +194,7 @@ class TextDisplay:
         self.next_html = HTML(self.next_paragraph, styles=context_paragraph_style)
         self.curr_html = HTML(self.curr_paragraph, styles=curr_paragraph_style, stylesheets=[clause_stylesheet])
         self.component = Column(self.prev_html, self.curr_html, self.next_html,
-                                styles=text_display_style, sizing_mode="stretch_width")
+                                styles=text_display_style, sizing_mode="stretch_height")
 
         self.controller.add_update_text_display_callable(self.update_display)
 
