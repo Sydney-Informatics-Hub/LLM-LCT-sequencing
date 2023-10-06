@@ -12,7 +12,7 @@ class ParagraphRepository(ABC):
         Each tuple contains the integer id of the paragraph and the text as a string.
         Returns
         -------
-        all_paragraphs: list[tuple[int, str], ...] - all paragraphs found in the database
+        all_paragraphs: ndarray[tuple[int, str]] - all paragraphs found in the database
         """
         raise NotImplementedError()
 

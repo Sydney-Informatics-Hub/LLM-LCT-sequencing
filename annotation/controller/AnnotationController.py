@@ -44,8 +44,11 @@ class AnnotationController:
     def get_all_classifications(self) -> list[str]:
         return self.annotation_service.get_all_sequence_classifications()
 
-    def get_curr_classification(self) -> str:
-        return self.annotation_service.get_sequence_classification(self.curr_paragraph_id, self.curr_sequence_idx)
+    def get_predicted_classification(self) -> str:
+        return self.annotation_service.get_sequence_predict_class(self.curr_paragraph_id, self.curr_sequence_idx)
+
+    def get_correct_classification(self) -> str:
+        return self.annotation_service.get_sequence_correct_class(self.curr_paragraph_id, self.curr_sequence_idx)
 
     # Data control methods
 
@@ -74,8 +77,9 @@ class AnnotationController:
             self.curr_sequence_idx -= 1
         self.update_displays()
 
-    def set_curr_classifications(self, classification: str):
-        self.annotation_service.set_sequence_classification(self.curr_paragraph_id, self.curr_sequence_idx, classification)
+    def set_correct_classification(self, classification: str):
+        self.annotation_service.set_sequence_correct_class(self.curr_paragraph_id, self.curr_sequence_idx,
+                                                           classification)
 
     def add_sequence(self, clause_a_range: ClauseTuple, clause_b_range: ClauseTuple):
         pass

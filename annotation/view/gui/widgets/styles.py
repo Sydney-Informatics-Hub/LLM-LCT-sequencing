@@ -71,9 +71,17 @@ add_sequence_button_style = {
 }
 
 sequence_classification_style = {
-
+    "text-align": "center"
 }
 
 classification_heading_style = {
     "font": "bold 1.1em \"Arial\", sans-serif"
+}
+
+classification_subheading_style = {
+    "font": "bold 1em \"Arial\", sans-serif"
+}
+
+llm_class_display_style = {
+
 }

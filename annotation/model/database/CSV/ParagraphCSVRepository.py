@@ -6,7 +6,7 @@ from csv import DictReader
 from typing import Optional
 
 from annotation.model.database.DatabaseExceptions import DatabaseFieldError, DatabaseEntryError
-from annotation.model.database.ParagraphRepository import ParagraphRepository
+from annotation.model.database.interfaces.ParagraphRepository import ParagraphRepository
 
 
 class ParagraphCSVRepository(ParagraphRepository):
@@ -21,9 +21,11 @@ class ParagraphCSVRepository(ParagraphRepository):
         self._cache_updated: bool = False
 
         # Validate the file can be opened with read and write permissions
-        if not (os.access(self._database_filename, os.R_OK)):
+        if not os.path.exists(self._database_filename):
+            raise FileNotFoundError(f"No database file found at: {self._database_filename}")
+        if not os.access(self._database_filename, os.R_OK):
             raise PermissionError(f"No permissions to read the file: {self._database_filename}")
-        if not (os.access(self._database_filename, os.W_OK)):
+        if not os.access(self._database_filename, os.W_OK):
             raise PermissionError(f"No permissions to write to the file: {self._database_filename}")
 
         self._read_database_into_cache()
@@ -68,7 +70,7 @@ class ParagraphCSVRepository(ParagraphRepository):
 
         self._read_database_into_cache()
 
-        matches = self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]].values
+        matches: ndarray = self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]].values
 
         if len(matches) == 1:
             return str(matches[0][0])
@@ -101,7 +103,7 @@ class ParagraphCSVRepository(ParagraphRepository):
 
         self._read_database_into_cache()
 
-        matches = self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]].values
+        matches: ndarray = self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]].values
 
         if len(matches) == 0:
             return False
@@ -109,6 +111,7 @@ class ParagraphCSVRepository(ParagraphRepository):
             raise DatabaseEntryError(f"There are more than one entries for the paragraph id: {paragraph_id}")
         else:
             self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]] = updated_text
+
             self._write_cache_to_database()
             return True
 
@@ -118,7 +121,7 @@ class ParagraphCSVRepository(ParagraphRepository):
 
         self._read_database_into_cache()
 
-        matches = self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]].values
+        matches: ndarray = self._database_cache.loc[(self._database_cache[id_field] == paragraph_id), [text_field]].values
 
         if len(matches) == 0:
             return False
@@ -126,5 +129,6 @@ class ParagraphCSVRepository(ParagraphRepository):
             raise DatabaseEntryError(f"There are more than one entries for the paragraph id: {paragraph_id}")
         else:
             self._database_cache = self._database_cache.loc[~(self._database_cache[id_field] == paragraph_id)]
+
             self._write_cache_to_database()
             return True

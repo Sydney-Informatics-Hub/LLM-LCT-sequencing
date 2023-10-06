@@ -5,16 +5,19 @@ from numpy import ndarray
 from annotation.model.data_structures.classification.Classification import Classification
 from annotation.model.data_structures.document.Clause import ClauseSequence, Clause
 from annotation.model.data_structures.document.Paragraph import Paragraph
-from annotation.model.database.ClauseSequenceCSVRepository import ClauseSequenceCSVRepository
-from annotation.model.database.ClauseSequenceRepository import ClauseSequenceRepository
-from annotation.model.database.ParagraphCSVRepository import ParagraphCSVRepository
-from annotation.model.database.ParagraphRepository import ParagraphRepository
+from annotation.model.database.CSV.ClauseCSVRepository import ClauseCSVRepository
+from annotation.model.database.CSV.SequenceCSVRepository import SequenceCSVRepository
+from annotation.model.database.interfaces.ClauseRepository import ClauseRepository
+from annotation.model.database.CSV.ParagraphCSVRepository import ParagraphCSVRepository
+from annotation.model.database.interfaces.ParagraphRepository import ParagraphRepository
+from annotation.model.database.interfaces.SequenceRepository import SequenceRepository
 
 
 class AnnotationDAO:
-    def __init__(self, paragraph_database_fn: str, clause_database_fn: str):
+    def __init__(self, paragraph_database_fn: str, clause_database_fn: str, sequence_db_path: str):
         self.paragraph_repository: ParagraphRepository = ParagraphCSVRepository(paragraph_database_fn)
-        self.clause_sequence_repository: ClauseSequenceRepository = ClauseSequenceCSVRepository(clause_database_fn)
+        self.clause_repository: ClauseRepository = ClauseCSVRepository(clause_database_fn)
+        self.sequence_repository: SequenceRepository = SequenceCSVRepository(sequence_db_path)
 
     def get_paragraph_count(self) -> int:
         paragraph_data: ndarray = self.paragraph_repository.read_all()
@@ -33,32 +36,64 @@ class AnnotationDAO:
             return None
         return Paragraph(paragraph_id, paragraph_text)
 
-    def get_paragraph_sequence_count(self, paragraph_id: int):
-        paragraph_sequences = self.clause_sequence_repository.read_all_by_paragraph(paragraph_id)
-        return paragraph_sequences.shape[0]
+    def get_paragraph_sequence_count(self, paragraph_id: int) -> int:
+        return len(self.get_all_sequences_by_paragraph(paragraph_id))
 
-    def get_sequences_all_paragraph(self, paragraph_id: int) -> list[ClauseSequence]:
-        paragraph_sequences = self.clause_sequence_repository.read_all_by_paragraph(paragraph_id)
-        sequence_ls: list[ClauseSequence] = []
-        sequence: ClauseSequence
-        for sequence_data in paragraph_sequences:
-            try:
-                classification = Classification(sequence_data[4])
-            except ValueError:
-                classification = None
-            sequence = ClauseSequence(Clause(sequence_data[0], sequence_data[1]),
-                                      Clause(sequence_data[2], sequence_data[3]),
-                                      classification)
-            sequence_ls.append(sequence)
+    def get_all_sequences_by_paragraph(self, paragraph_id: int) -> list[ClauseSequence]:
+        all_paragraph_clauses: ndarray = self.clause_repository.read_all_by_paragraph(paragraph_id)
+        clause_map: dict[int, Clause] = {}
+        for clause_data in all_paragraph_clauses:
+            clause_id = clause_data[0]
+            clause = Clause(clause_data[2], clause_data[3])
+            clause_map[clause_id] = clause
 
-        return sequence_ls
+        sequence_map: dict[int, ClauseSequence] = {}
+        for clause_id in clause_map:
+            sequence_data_ls = self.sequence_repository.read_by_clause_id(clause_id)
+            for sequence_data in sequence_data_ls:
+                sequence_id = sequence_data[0]
+                if sequence_map.get(sequence_id) is not None:
+                    continue
+
+                clause_a_id = sequence_data[1]
+                clause_a = clause_map.get(clause_a_id)
+                if clause_a is None:
+                    clause_data = self.clause_repository.read_by_id(clause_a_id)
+                    clause = Clause(clause_data[2], clause_data[3])
+                    clause_map[clause_a_id] = clause
+                    clause_a = clause
+
+                clause_b_id = sequence_data[2]
+                clause_b = clause_map.get(clause_b_id)
+                if clause_b is None:
+                    clause_data = self.clause_repository.read_by_id(clause_b_id)
+                    clause = Clause(clause_data[2], clause_data[3])
+                    clause_map[clause_b_id] = clause
+                    clause_b = clause
+
+                try:
+                    predicted_class = Classification(sequence_data[3])
+                except ValueError:
+                    predicted_class = None
+                try:
+                    correct_class = Classification(sequence_data[4])
+                except ValueError:
+                    correct_class = None
+
+                sequence = ClauseSequence(sequence_id, clause_a, clause_b, predicted_class, correct_class)
+
+                sequence_map[sequence_id] = sequence
+
+        return list(sequence_map.values())
 
     def get_sequence_by_paragraph_idx(self, paragraph_id: int, sequence_idx: int) -> Optional[ClauseSequence]:
-        paragraph_sequences = self.get_sequences_all_paragraph(paragraph_id)
+        paragraph_sequences = self.get_all_sequences_by_paragraph(paragraph_id)
         if len(paragraph_sequences) == 0:
             return None
         return paragraph_sequences[sequence_idx]
 
-    def update_sequence_classification_by_paragraph_idx(self, paragraph_id: int, sequence_idx: int, sequence: ClauseSequence):
-        self.clause_sequence_repository.update(
-            paragraph_id, sequence_idx, sequence.get_clause_ranges(), sequence.get_classification().value)
+    def update_sequence_classification_by_paragraph_idx(self, paragraph_id: int, sequence_idx: int, correct_class: int):
+        sequence = self.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
+        if sequence is None:
+            return
+        self.sequence_repository.update(sequence.get_id(), correct_class)

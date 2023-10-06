@@ -8,7 +8,8 @@ from panel.pane import Str, HTML
 from annotation.controller.AnnotationController import AnnotationController
 from .styles import controls_style, paragraph_heading_style, paragraph_id_style, \
     sequence_heading_style, delete_sequence_button_style, add_sequence_button_style, clause_stylesheet, \
-    sequence_info_style, paragraph_controls_style, classification_heading_style, sequence_classification_style
+    sequence_info_style, paragraph_controls_style, classification_heading_style, sequence_classification_style, \
+    classification_subheading_style, llm_class_display_style
 
 
 class ParagraphControls:
@@ -59,8 +60,10 @@ class ClauseSequenceControls:
         self.clause_a_info = HTML(ClauseSequenceControls.format_first_clause_str(), stylesheets=[clause_stylesheet])
         self.clause_overlap_info = HTML(ClauseSequenceControls.format_overlap_str(), stylesheets=[clause_stylesheet])
         self.clause_b_info = HTML(ClauseSequenceControls.format_second_clause_str(), stylesheets=[clause_stylesheet])
-        self.prev_sequence_button = Button(name="\N{LEFTWARDS ARROW TO BAR} PREV", button_type="primary", button_style="outline")
-        self.next_sequence_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="primary", button_style="outline")
+        self.prev_sequence_button = Button(name="\N{LEFTWARDS ARROW TO BAR} PREV", button_type="primary",
+                                           button_style="outline")
+        self.next_sequence_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="primary",
+                                           button_style="outline")
         self.delete_sequence_button = Button(name="Delete", button_type="danger", styles=delete_sequence_button_style)
         self.add_sequence_button = Button(name="Add", button_type="success", styles=add_sequence_button_style)
 
@@ -120,7 +123,8 @@ class ClauseSequenceControls:
         return f"<span class=\"clause_overlap\"><strong>Overlap:</strong> {overlap_range[0]} - {overlap_range[1]}</span>"
 
     @staticmethod
-    def get_clause_overlap(clause_a_range: tuple[int, int], clause_b_range: tuple[int, int]) -> Optional[tuple[int, int]]:
+    def get_clause_overlap(clause_a_range: tuple[int, int], clause_b_range: tuple[int, int]) -> Optional[
+        tuple[int, int]]:
         if (clause_a_range[0] <= clause_b_range[0]) and (clause_b_range[0] <= clause_a_range[1]):
             return clause_b_range[0], clause_a_range[1]
         elif (clause_b_range[0] <= clause_a_range[0]) and (clause_a_range[0] <= clause_b_range[1]):
@@ -150,19 +154,28 @@ class ClauseSequenceControls:
 
 
 class SequenceClassificationControls:
+    UNSELECTED: str = "Unselected"
+
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
 
         self.title = Str("Sequence Classification", styles=classification_heading_style)
+        self.llm_class_title = Str("LLM", styles=classification_subheading_style)
+        self.llm_class_display = Str("", styles=llm_class_display_style)
+        self.user_class_title = Str("User", styles=classification_subheading_style)
+        classification_options = [SequenceClassificationControls.UNSELECTED] + self.controller.get_all_classifications()
         self.classification_selector = RadioButtonGroup(
             name="Sequence Classifications",
-            options=self.controller.get_all_classifications(),
+            options=classification_options,
             button_type="light", button_style="outline"
         )
-        selector_bound_fn = bind(self.set_classification, classification=self.classification_selector)
+        selector_bound_fn = bind(self.set_correct_classification, classification=self.classification_selector)
 
         self.component = Column(
             self.title,
+            self.llm_class_title,
+            self.llm_class_display,
+            self.user_class_title,
             self.classification_selector,
             selector_bound_fn,
             styles=sequence_classification_style,
@@ -175,10 +188,14 @@ class SequenceClassificationControls:
         return self.component
 
     def update_display(self):
-        self.classification_selector.value = self.controller.get_curr_classification()
+        curr_correct_class = self.controller.get_correct_classification()
+        if curr_correct_class not in self.controller.get_all_classifications():
+            curr_correct_class = SequenceClassificationControls.UNSELECTED
+        self.classification_selector.value = curr_correct_class
+        self.llm_class_display.object = self.controller.get_predicted_classification()
 
-    def set_classification(self, classification):
-        self.controller.set_curr_classifications(classification)
+    def set_correct_classification(self, classification):
+        self.controller.set_correct_classification(classification)
 
 
 class Controls:
