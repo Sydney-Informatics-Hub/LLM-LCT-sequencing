@@ -5,12 +5,8 @@ from numpy import ndarray
 from annotation.model.data_structures.classification.Classification import Classification
 from annotation.model.data_structures.document.Clause import ClauseSequence, Clause
 from annotation.model.data_structures.document.Paragraph import Paragraph
-from annotation.model.database.CSV.ClauseCSVRepository import ClauseCSVRepository
-from annotation.model.database.CSV.SequenceCSVRepository import SequenceCSVRepository
-from annotation.model.database.interfaces.ClauseRepository import ClauseRepository
-from annotation.model.database.CSV.ParagraphCSVRepository import ParagraphCSVRepository
-from annotation.model.database.interfaces.ParagraphRepository import ParagraphRepository
-from annotation.model.database.interfaces.SequenceRepository import SequenceRepository
+from annotation.model.database.interfaces import ClauseRepository, SequenceRepository, ParagraphRepository
+from annotation.model.database.CSV import ClauseCSVRepository, SequenceCSVRepository, ParagraphCSVRepository
 
 
 class AnnotationDAO:
@@ -97,3 +93,12 @@ class AnnotationDAO:
         if sequence is None:
             return
         self.sequence_repository.update(sequence.get_id(), correct_class)
+
+    def create_sequence(self, sequence: ClauseSequence):
+        pass
+
+    def delete_sequence(self, paragraph_id: int, sequence_idx: int):
+        sequence = self.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
+        if sequence is None:
+            return
+        self.sequence_repository.delete(sequence.get_id())

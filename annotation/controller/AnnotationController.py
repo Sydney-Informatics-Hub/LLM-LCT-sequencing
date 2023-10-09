@@ -2,7 +2,7 @@ from typing import Callable, Optional
 
 from annotation.model import AnnotationService
 
-# Type alias for complex tuples - only applies for this document
+# Type alias for complex tuples
 ClauseTuple = tuple[int, int]
 ClauseSequenceTuple = tuple[ClauseTuple, ClauseTuple]
 
@@ -85,4 +85,11 @@ class AnnotationController:
         pass
 
     def delete_curr_sequence(self):
-        pass
+        self.annotation_service.delete_sequence(self.curr_paragraph_id, self.curr_sequence_idx)
+
+        # The sequence index must be decreased if the deleted sequence was not the first sequence
+        if self.curr_sequence_idx > 0:
+            self.curr_sequence_idx -= 1
+
+        # The display must be updated to reflect the deletion
+        self.update_displays()

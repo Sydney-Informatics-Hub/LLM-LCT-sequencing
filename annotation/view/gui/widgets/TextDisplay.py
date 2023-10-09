@@ -1,3 +1,5 @@
+from typing import Optional
+
 import panel as pn
 from panel import Column
 from panel.pane import HTML
@@ -135,7 +137,7 @@ class CurrentParagraph:
 
         return html_text
 
-    def set_clause_a_range(self, clause_a_range: tuple[int, int] | None):
+    def set_clause_a_range(self, clause_a_range: Optional[tuple[int, int]]):
         """
         Sets the character index range for Clause A.
         The range defined is inclusive. The second integer must be greater than the first.
@@ -157,7 +159,7 @@ class CurrentParagraph:
 
         self.clause_a_range = clause_a_range
 
-    def set_clause_b_range(self, clause_b_range: tuple[int, int] | None):
+    def set_clause_b_range(self, clause_b_range: Optional[tuple[int, int]]):
         """
         Sets the character index range for Clause B.
         The range defined is inclusive. The second integer must be greater than the first.
@@ -199,7 +201,11 @@ class TextDisplay:
         self.controller.add_update_text_display_callable(self.update_display)
 
     def update_display(self):
-        clause_a_range, clause_b_range = self.controller.get_curr_sequence()
+        clause_ranges = self.controller.get_curr_sequence()
+        if clause_ranges is None:
+            clause_a_range, clause_b_range = None, None
+        else:
+            clause_a_range, clause_b_range = clause_ranges
         self.set_clause_a_range(clause_a_range)
         self.set_clause_b_range(clause_b_range)
         self.set_next_paragraph_text(self.controller.get_next_paragraph_text())
@@ -221,14 +227,14 @@ class TextDisplay:
         self.next_paragraph.set_text(text)
         self.next_html.object = self.next_paragraph
 
-    def set_clause_a_range(self, clause_a_range: tuple[int, int] | None):
+    def set_clause_a_range(self, clause_a_range: Optional[tuple[int, int]]):
         """
         Calls the method of the same name on the current paragraph object (unless curr_paragraph is None)
         """
         if self.curr_paragraph is not None:
             self.curr_paragraph.set_clause_a_range(clause_a_range)
 
-    def set_clause_b_range(self, clause_b_range: tuple[int, int] | None):
+    def set_clause_b_range(self, clause_b_range: Optional[tuple[int, int]]):
         """
         Calls the method of the same name on the current paragraph object (unless curr_paragraph is None)
         """

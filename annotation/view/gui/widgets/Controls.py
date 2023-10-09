@@ -70,7 +70,7 @@ class ClauseSequenceControls:
         self.prev_sequence_button.on_click(self.prev_sequence)
         self.next_sequence_button.on_click(self.next_sequence)
         self.delete_sequence_button.on_click(self.delete_sequence)
-        self.add_sequence_button.on_click(self.add_sequence)
+        self.add_sequence_button.on_click(self.show_add_sequence_pane)
 
         self.component = Column(
             Row(self.title,
@@ -123,8 +123,9 @@ class ClauseSequenceControls:
         return f"<span class=\"clause_overlap\"><strong>Overlap:</strong> {overlap_range[0]} - {overlap_range[1]}</span>"
 
     @staticmethod
-    def get_clause_overlap(clause_a_range: tuple[int, int], clause_b_range: tuple[int, int]) -> Optional[
-        tuple[int, int]]:
+    def get_clause_overlap(clause_a_range: tuple[int, int], clause_b_range: tuple[int, int]) -> Optional[tuple[int, int]]:
+        if (clause_a_range is None) or (clause_b_range is None):
+            return
         if (clause_a_range[0] <= clause_b_range[0]) and (clause_b_range[0] <= clause_a_range[1]):
             return clause_b_range[0], clause_a_range[1]
         elif (clause_b_range[0] <= clause_a_range[0]) and (clause_a_range[0] <= clause_b_range[1]):
@@ -134,7 +135,11 @@ class ClauseSequenceControls:
         return self.component
 
     def update_display(self):
-        clause_a_range, clause_b_range = self.controller.get_curr_sequence()
+        clause_ranges = self.controller.get_curr_sequence()
+        if clause_ranges is None:
+            clause_a_range, clause_b_range = None, None
+        else:
+            clause_a_range, clause_b_range = clause_ranges
         self.clause_a_info.object = ClauseSequenceControls.format_first_clause_str(clause_a_range)
         self.clause_b_info.object = ClauseSequenceControls.format_second_clause_str(clause_b_range)
         overlap_range = ClauseSequenceControls.get_clause_overlap(clause_a_range, clause_b_range)
@@ -145,6 +150,9 @@ class ClauseSequenceControls:
 
     def prev_sequence(self, event):
         self.controller.prev_sequence()
+
+    def show_add_sequence_pane(self, event):
+        pass
 
     def add_sequence(self, event):
         pass

@@ -5,6 +5,10 @@ from annotation.model.data_structures.document.Clause import ClauseSequence
 from annotation.model.data_structures.document.Paragraph import Paragraph
 from annotation.model.database.AnnotationDAO import AnnotationDAO
 
+# Type alias for complex tuples
+ClauseTuple = tuple[int, int]
+ClauseSequenceTuple = tuple[ClauseTuple, ClauseTuple]
+
 
 class AnnotationService:
     def __init__(self, paragraph_database_fn: str, clause_database_fn: str, sequence_db_path: str):
@@ -22,9 +26,10 @@ class AnnotationService:
     def get_paragraph_sequence_count(self, paragraph_id: int):
         return self.annotation_dao.get_paragraph_sequence_count(paragraph_id)
 
-    def get_sequence_clause_ranges(self, paragraph_id: int, sequence_idx: int) -> tuple[tuple[int, int], tuple[int, int]]:
-        sequence: ClauseSequence = self.annotation_dao.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
-        # TODO: Add check for None and handle at some point in the communication chain
+    def get_sequence_clause_ranges(self, paragraph_id: int, sequence_idx: int) -> Optional[ClauseSequenceTuple]:
+        sequence: Optional[ClauseSequence] = self.annotation_dao.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
+        if sequence is None:
+            return None
 
         return sequence.get_clause_ranges()
 
@@ -32,7 +37,10 @@ class AnnotationService:
         return [c.name for c in Classification]
 
     def get_sequence_predict_class(self, paragraph_id: int, sequence_idx: int) -> str:
-        sequence: ClauseSequence = self.annotation_dao.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
+        sequence: Optional[ClauseSequence] = self.annotation_dao.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
+        if sequence is None:
+            return ""
+
         classification: Optional[Classification] = sequence.get_predicted_class()
         if classification is None:
             return ""
@@ -40,7 +48,10 @@ class AnnotationService:
             return classification.name
 
     def get_sequence_correct_class(self, paragraph_id: int, sequence_idx: int) -> str:
-        sequence: ClauseSequence = self.annotation_dao.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
+        sequence: Optional[ClauseSequence] = self.annotation_dao.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)
+        if sequence is None:
+            return ""
+
         classification: Optional[Classification] = sequence.get_correct_class()
         if classification is None:
             return ""
@@ -55,3 +66,9 @@ class AnnotationService:
             correct_class = 0
 
         self.annotation_dao.update_sequence_classification_by_paragraph_idx(paragraph_id, sequence_idx, correct_class)
+
+    def create_sequence(self):
+        pass
+
+    def delete_sequence(self, paragraph_id: int, sequence_idx: int):
+        self.annotation_dao.delete_sequence(paragraph_id, sequence_idx)
