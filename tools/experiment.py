@@ -462,9 +462,9 @@ def run_pipe(
     if len(list_exp_folders) == 0:
         outpath_exp = os.path.join(outpath, 'exp1')
     else:
-        list_exp_folders.sort()
-        last_exp_folder = list_exp_folders[-1]
-        last_exp_folder_number = int(last_exp_folder[3:])
+        exp_folder_numbers = [int(folder[3:]) for folder in list_exp_folders]
+        exp_folder_numbers.sort()
+        last_exp_folder_number = exp_folder_numbers[-1]
         outpath_exp = os.path.join(outpath, f'exp{last_exp_folder_number+1}')
     os.makedirs(outpath_exp, exist_ok=True)
 
