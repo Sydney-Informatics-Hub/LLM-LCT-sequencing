@@ -2,11 +2,11 @@ from typing import Optional
 
 from panel import Row, Column, bind
 from panel.layout import Divider
-from panel.widgets import Button, RadioButtonGroup
+from panel.widgets import Button, RadioButtonGroup, IntInput
 from panel.pane import Str, HTML
 
 from annotation.controller.AnnotationController import AnnotationController
-from .styles import controls_style, paragraph_heading_style, paragraph_id_style, \
+from .styles import controls_style, paragraph_heading_style, \
     sequence_heading_style, delete_sequence_button_style, add_sequence_button_style, clause_stylesheet, \
     sequence_info_style, paragraph_controls_style, classification_heading_style, sequence_classification_style, \
     classification_subheading_style, llm_class_display_style, manage_sequence_button_style
@@ -17,9 +17,12 @@ class ParagraphControls:
         self.controller: AnnotationController = controller
 
         self.title = Str("Paragraph", styles=paragraph_heading_style)
-        self.curr_paragraph_id = Str("1", styles=paragraph_id_style)
-        self.prev_paragraph_button = Button(name="\N{LEFTWARDS ARROW TO BAR} PREV", button_type="default")
-        self.next_paragraph_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="default")
+        self.curr_paragraph_id = IntInput(start=1, placeholder="1", align="center")
+        self.curr_paragraph_id.width = 60
+        self.prev_paragraph_button = Button(name="\N{LEFTWARDS ARROW TO BAR} PREV", button_type="default", align="start")
+        self.next_paragraph_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="default", align="end")
+
+        paragraph_bound_fn = bind(self.set_paragraph, paragraph_id=self.curr_paragraph_id)
 
         self.prev_paragraph_button.on_click(self.prev_paragraph)
         self.next_paragraph_button.on_click(self.next_paragraph)
@@ -31,8 +34,10 @@ class ParagraphControls:
                 self.prev_paragraph_button,
                 self.curr_paragraph_id,
                 self.next_paragraph_button
+
             ),
             Divider(),
+            paragraph_bound_fn,
             styles=paragraph_controls_style,
             align="center"
         )
@@ -43,7 +48,12 @@ class ParagraphControls:
         return self.component
 
     def update_display(self):
-        self.curr_paragraph_id.object = str(self.controller.get_current_paragraph_id())
+        self.curr_paragraph_id.value = self.controller.get_current_paragraph_id()
+
+    def set_paragraph(self, paragraph_id):
+        if paragraph_id is None:
+            paragraph_id = 1
+        self.controller.set_curr_paragraph(paragraph_id)
 
     def next_paragraph(self, event):
         self.controller.next_paragraph()

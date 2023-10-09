@@ -43,13 +43,6 @@ paragraph_heading_style = {
     "font": "bold 1.3em \"Arial\", sans-serif"
 }
 
-paragraph_id_style = {
-    "font": "1em \"Arial\", sans-serif",
-    "text-align": "center",
-    "width": "100px",
-    "margin": "auto"
-}
-
 controls_navigation_button_style = {
     "width": "75px"
 }

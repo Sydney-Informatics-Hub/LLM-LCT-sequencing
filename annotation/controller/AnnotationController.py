@@ -52,6 +52,18 @@ class AnnotationController:
 
     # Data control methods
 
+    def set_curr_paragraph(self, paragraph_id: int):
+        if paragraph_id >= self.annotation_service.get_paragraph_count():
+            self.curr_paragraph_id = self.annotation_service.get_paragraph_count()
+            self.curr_sequence_idx = 0
+        elif paragraph_id < 1:
+            self.curr_paragraph_id = 1
+            self.curr_sequence_idx = 0
+        else:
+            self.curr_paragraph_id = paragraph_id
+
+        self.update_displays()
+
     def next_paragraph(self):
         if self.curr_paragraph_id < self.annotation_service.get_paragraph_count():
             self.curr_paragraph_id += 1
