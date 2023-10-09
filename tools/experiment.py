@@ -400,6 +400,9 @@ def exp_pipe():
         'modelname_llm', 
         'reasoning'])
 
+    # Intiate LLM with API key
+    llm = LLM(filename_openai_key='../../openai_key.txt', model_name = modelname_llm)
+
     # Loop over test sample in list_test_str
     n_test = 0
     for test_str, test_class, test_linkage in zip(list_test_str, list_test_class, list_test_linkage):
@@ -412,7 +415,6 @@ def exp_pipe():
             prompt = prompt.replace(example_type, f'{example_type} ({example_type_short})')
 
         # call OPenAi API with prompt
-        llm = LLM(filename_openai_key='../../openai_key.txt', model_name = modelname_llm)
         completion_text, tokens_used, chat_id, logprobs = llm.request_completion(prompt, max_tokens = 300)
         # for gpt-4:
         #completion_text, tokens_used, chat_id, message_response = llm.request_chatcompletion(prompt, max_tokens = 300)
