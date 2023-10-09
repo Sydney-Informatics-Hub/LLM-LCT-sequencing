@@ -1,4 +1,14 @@
-# Prompt experimenting for sequencing classification of text data
+""" Main module for prompt experimenting for sequencing classification of text data
+
+This module contains the main functions for running the experiment pipeline for the sequencing classification of text data.
+
+Example:
+    Clone the repo and run the following command from the command line:
+        $ python experiment.py --outpath ../results/
+    
+    To run the experiment with different parameters, use the following command:
+        $ python experiment.py --outpath ../results/ --path_schema ../schemas --filename_examples sequencing_examples_reason.json --filename_schema schema_sequencing_examples_reason.json --filename_definitions sequencing_types.json --filename_zero_prompt instruction_prompt.txt --modelname_llm gpt-3.5-turbo-instruct
+"""
 
 import os
 import json
@@ -6,6 +16,7 @@ import random
 import pandas as pd
 import numpy as np
 import json
+import argparse
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -15,6 +26,7 @@ from load_schema_json import load_json, validate_json, json_to_dataframe
 #importlib.reload(utils_llm)
 from utils_llm import LLM
 
+"""
 # some paths and filenames
 path_schema = "../schemas/"
 filename_examples = "sequencing_examples_reason.json"
@@ -22,6 +34,10 @@ filename_schema = "schema_sequencing_examples_reason.json"
 filename_definitions = "sequencing_types.json"
 filename_zero_prompt = "instruction_prompt.txt"
 outpath = "../results/"
+
+# LLM modelname
+modelname_llm = 'gpt-3.5-turbo-instruct'
+"""
 
 # 
 def load_text(filename):
@@ -182,7 +198,7 @@ def gen_prompt(zero_shot_prompt, sequencing_classes, description_classes, exampl
     zero_shot_prompt = zero_shot_prompt.replace('TEXT_TO_CLASSIFY', text_to_classify)
     return zero_shot_prompt
 
-def get_sequencing_classes():
+def get_sequencing_classes(path_schema, filename_definitions):
     definitions = load_json(os.path.join(path_schema, filename_definitions))
     # find all sub_subtypes in definitions
     sub_subtypes = []
@@ -277,8 +293,10 @@ def metrics_from_confusion_matrix(confusion_matrix, outfname=None):
         'mean_precision': macro_precision
     }
 
+    print("------ Experiment Results ------")
     for metric, values in metrics.items():
         print(f"{metric}: {values}")
+    print("--------------------------------")
 
     if outfname is not None:
         with open(outfname, 'w') as file:
@@ -288,7 +306,7 @@ def metrics_from_confusion_matrix(confusion_matrix, outfname=None):
 
 
 
-def eval_exp(df, outpath_exp):
+def eval_exp(df, outpath_exp, seq_classes):
     """
     generate confusion matrix from dataframe
     compare predicted labels (pred_class) with true labels (test_class)
@@ -299,8 +317,8 @@ def eval_exp(df, outpath_exp):
         - pred_class (str): The predicted class.
         - test_class (str): The true class.
     """
-    seq_classes = get_sequencing_classes()
-    seq_classes = [seq_class[:3].upper() for seq_class in seq_classes]
+    if len(seq_classes[0])>3:
+        seq_classes = [seq_class[:3].upper() for seq_class in seq_classes]
     classes_test = df['test_class'].values
     if len(classes_test[0])>3:
         classes_test = [class_[:3].upper() for class_ in classes_test]
@@ -314,14 +332,54 @@ def eval_exp(df, outpath_exp):
     metrics = metrics_from_confusion_matrix(confusion_matrix, outfname = os.path.join(outpath_exp, 'metrics.json'))
 
 
-
-def exp_pipe():
+def run_pipe(
+        outpath = "../results/", 
+        path_schema = '../schemas', 
+        filename_examples = "sequencing_examples_reason.json", 
+        filename_schema = "schema_sequencing_examples_reason.json", 
+        filename_definitions = "sequencing_types.json", 
+        filename_zero_prompt = "instruction_prompt.txt", 
+        modelname_llm = 'gpt-3.5-turbo-instruct'):
     """
-    This pipe function is used to generate the prompts for the experiment.
+    This experiment pipeline includes the following main steps:
+    - load examples from json file
+    - split examples in train and test samples
+    - generate prompt string
+    - call OpenAI API
+    - save prompt and response to file
+    - save results to csv file
+
+    Parameters:
+    -----------
+    - outpath (str): The path to the output folder.
+    - path_schema (str): The path to the schema folder.
+    - filename_examples (str): The filename of the examples json file.
+    - filename_schema (str): The filename of the schema json file.
+    - filename_definitions (str): The filename of the definitions json file.
+    - filename_zero_prompt (str): The filename of the zero-shot instruction prompt text file.
+    - modelname_llm (str): The name of the LLM model to use.
+
+    Returns:
+    --------
+    - df_results (pd.DataFrame): The dataframe with results from the experiment, including:
+        - test_str (str): The test sample.
+        - test_class (str): The true class.
+        - test_linkage (str): The true linkage word.
+        - pred_class (str): The predicted class.
+        - pred_class_prob (float): The probability of the predicted class.
+        - pred_linkage (str): The predicted linkage word.
+        - prompt_id (str): The prompt id.
+        - filename_prompt (str): The filename of the prompt text file.
+        - filename_response (str): The filename of the response text file.
+        - tokens (int): The number of tokens used.
+        - modelname_llm (str): The name of the LLM model used.
+        - reasoning (str): The reasoning for the predicted class.
+    - outpath_exp (str): The path to the output folder for this experiment.
+    - seq_classes (list): The list of sequencing classes.
+
     """
     # initialize token_counter
     token_count = 0
-    modelname_llm = 'gpt-3.5-turbo-instruct'
 
     examples = load_json(os.path.join(path_schema, filename_examples))
     schema = load_json(os.path.join(path_schema, filename_schema))
@@ -357,7 +415,11 @@ def exp_pipe():
         list_test_linkage.append(row['Linkage_Word'])
 
     # load definitions from json file
-    sequencing_classes = get_sequencing_classes()
+    sequencing_classes = get_sequencing_classes(path_schema, filename_definitions)
+
+    # add also a three letter characters and write in captial letters
+    seq_classes = [seq_class[:3].upper() for seq_class in sequencing_classes]
+
     # convert list to string
     sequencing_classes = ', '.join(f"'{item}'" for item in sequencing_classes)
 
@@ -491,10 +553,7 @@ def exp_pipe():
             class_prob = 0
 
         #print results
-        print(f'Tested class: {test_class}')
-        print(f'Predicted class: {class_predicted}')
-        print(f'Predicted class probability: {class_prob}')
-        print(f'Used tokens: {token_count}')
+        print(f'Test class: {test_class} | Prediction: {class_predicted} | Probability: {round(np.exp(class_prob),3)} | Used tokens: {tokens_used} ')
 
         #add a new row to df_results
         row = [
@@ -525,5 +584,39 @@ def exp_pipe():
     filename_token_count = f'token_count_{modelname_llm}.txt'
     save_text(str(token_count), os.path.join(outpath_exp, filename_token_count))
 
-    # evaluate results and save to fiile
+    print(f'Experiment finished! Results saved to folder {outpath_exp}')
+
+    return df_results, outpath_exp, seq_classes
+
+
+def test_pipe():
+    # run experiment pipeline
+    df_results, outpath_exp = exp_pipe()
+
+    # evaluate results and save to file
     eval_exp(df_results, outpath_exp)
+
+if __name__ == "__main__":
+    # get arguments from command line
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--outpath', type=str, default="../results/", help='The path to the output folder.', required=False)
+    parser.add_argument('--path_schema', type=str, default='../schemas', help='The path to the schema folder.', required=False)
+    parser.add_argument('--filename_examples', type=str, default="sequencing_examples_reason.json", help='The filename of the examples json file.', required=False)
+    parser.add_argument('--filename_schema', type=str, default="schema_sequencing_examples_reason.json", help='The filename of the schema json file.', required=False)
+    parser.add_argument('--filename_definitions', type=str, default="sequencing_types.json", help='The filename of the definitions json file.', required=False)
+    parser.add_argument('--filename_zero_prompt', type=str, default="instruction_prompt.txt", help='The filename of the zero-shot instruction prompt text file.', required=False)
+    parser.add_argument('--modelname_llm', type=str, default='gpt-3.5-turbo-instruct', help='The name of the LLM model to use.', required=False)
+    args = parser.parse_args()
+
+    # run experiment pipeline
+    df_results, outpath_exp, seq_classes = run_pipe(
+        outpath = args.outpath, 
+        path_schema = args.path_schema, 
+        filename_examples = args.filename_examples, 
+        filename_schema = args.filename_schema, 
+        filename_definitions = args.filename_definitions, 
+        filename_zero_prompt = args.filename_zero_prompt, 
+        modelname_llm = args.modelname_llm)
+    
+    # evaluate results and save to file
+    eval_exp(df_results, outpath_exp, seq_classes)
