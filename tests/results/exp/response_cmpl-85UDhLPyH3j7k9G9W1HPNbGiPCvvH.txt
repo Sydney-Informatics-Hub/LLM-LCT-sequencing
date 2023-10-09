@@ -1,0 +1,4 @@
+
+classification: INC
+linkage word: None
+reason: The two clauses do not have a clear relation to each other and do not add any significant meaning. They are simply mentioning two different topics.

@@ -1,0 +1,4 @@
+
+classification: SEQ
+linkage word: by
+reason: The clauses are linked by the word "by" which indicates a sequential relationship, as the second clause explains the result of the action described in the first clause.

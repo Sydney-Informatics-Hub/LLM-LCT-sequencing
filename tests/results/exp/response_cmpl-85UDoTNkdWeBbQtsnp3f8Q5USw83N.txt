@@ -1,0 +1,4 @@
+
+classification: SEQ
+linkage word: and
+reason: The clauses are linked by the temporal sequence of the corn being fried and then added to the mix.

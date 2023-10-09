@@ -1,0 +1,4 @@
+
+classification: COH
+linkage word: while
+reason: The clauses are linked by the temporal relation of 'while'.

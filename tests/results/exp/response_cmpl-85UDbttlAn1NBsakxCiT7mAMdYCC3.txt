@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: because
+reason: The second clause explains the reason for the first clause, indicating a consequential sequencing relationship.

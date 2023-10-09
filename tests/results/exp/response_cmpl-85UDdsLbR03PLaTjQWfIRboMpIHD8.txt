@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: if
+reason: The text uses a conditional relationship to indicate how the location of Italy is related to the location of Egypt.

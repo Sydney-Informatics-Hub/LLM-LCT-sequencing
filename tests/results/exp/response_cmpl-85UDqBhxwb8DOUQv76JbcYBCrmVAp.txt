@@ -1,0 +1,4 @@
+
+classification: COH
+linkage word: before
+reason: The clauses are linked by a temporal relationship, with the first clause happening before the second. This is characteristic of sequential sequencing.

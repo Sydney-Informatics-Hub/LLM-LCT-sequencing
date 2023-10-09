@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: that
+reason: The word "that" indicates a consequential relationship between the two clauses, suggesting that the findings may lead to a connection between innate immunity and cardioprotection.

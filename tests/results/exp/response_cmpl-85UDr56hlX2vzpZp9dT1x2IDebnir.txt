@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: So
+reason: The text uses the linker "so" to indicate a consequential relationship between the two clauses. The first clause (Egypt is part of the Roman Empire) is the cause for the second clause (massive amounts of trade going on).

@@ -1,0 +1,4 @@
+
+classification: SEQ
+linkage word: and
+reason: The clauses are linked by the conjunction "and" and indicate a sequential relationship between reading and being asked questions.

@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: That means
+reason: The second clause explains the consequence of the first clause, indicating a consequential sequencing.

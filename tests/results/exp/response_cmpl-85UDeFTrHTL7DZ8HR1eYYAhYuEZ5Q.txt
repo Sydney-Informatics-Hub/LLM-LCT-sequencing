@@ -1,0 +1,4 @@
+
+classification: REI
+linkage word: None
+reason: The two clauses repeat the same idea in different ways, indicating a reiterative sequencing.

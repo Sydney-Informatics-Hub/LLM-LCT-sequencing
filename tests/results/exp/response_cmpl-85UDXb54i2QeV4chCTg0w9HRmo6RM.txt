@@ -1,0 +1,4 @@
+
+classification: INT
+linkage word: at
+reason: The text refers back to the previous sentence using the demonstrative "this" and refers to a stretch of text rather than a specific noun.

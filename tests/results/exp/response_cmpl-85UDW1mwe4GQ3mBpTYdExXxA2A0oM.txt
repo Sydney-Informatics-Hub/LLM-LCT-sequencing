@@ -1,0 +1,4 @@
+
+classification: COH
+linkage word: and
+reason: The clauses are linked by the coordinating conjunction 'and', indicating a continuation of the same topic.

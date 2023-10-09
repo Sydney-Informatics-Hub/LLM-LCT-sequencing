@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: and
+reason: The second clause provides a consequence or result of the first clause, indicating a consequential sequencing. The linkage word "and" connects the two clauses.

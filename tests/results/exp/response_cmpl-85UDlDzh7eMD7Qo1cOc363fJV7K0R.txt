@@ -1,0 +1,3 @@
+ REI
+linkage word: None
+reason: The two clauses repeat the same idea in different ways, with the second clause adding clarification to the first. This is characteristic of reiterative sequencing.

@@ -1,0 +1,3 @@
+ CON
+linkage word: then
+reason: The text uses a conditional relationship to indicate that the number is a result of not trying hard enough.

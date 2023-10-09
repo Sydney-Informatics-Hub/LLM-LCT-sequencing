@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: for
+reason: The text uses the linker "for" to indicate the cause of the action in the second clause. This fits the definition of consequential sequencing, which involves indicating how meanings from different passages shape one another.

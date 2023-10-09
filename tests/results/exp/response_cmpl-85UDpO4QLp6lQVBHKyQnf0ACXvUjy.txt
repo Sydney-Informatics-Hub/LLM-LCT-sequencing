@@ -1,0 +1,3 @@
+ SEQ
+linkage word: for
+reason: The second clause is a sequential sequence as it indicates the temporal ordering of the actions in the first clause. The linkage word 'for' is used to indicate the purpose or reason for the action in the first clause.
