@@ -9,7 +9,7 @@ from annotation.controller.AnnotationController import AnnotationController
 from .styles import controls_style, paragraph_heading_style, paragraph_id_style, \
     sequence_heading_style, delete_sequence_button_style, add_sequence_button_style, clause_stylesheet, \
     sequence_info_style, paragraph_controls_style, classification_heading_style, sequence_classification_style, \
-    classification_subheading_style, llm_class_display_style
+    classification_subheading_style, llm_class_display_style, manage_sequence_button_style
 
 
 class ParagraphControls:
@@ -64,11 +64,13 @@ class ClauseSequenceControls:
                                            button_style="outline")
         self.next_sequence_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="primary",
                                            button_style="outline")
+        self.manage_sequence_button = Button(name="Manage sequence", button_type="primary", button_style="outline", styles=manage_sequence_button_style)
         self.delete_sequence_button = Button(name="Delete", button_type="danger", styles=delete_sequence_button_style)
         self.add_sequence_button = Button(name="Add", button_type="success", styles=add_sequence_button_style)
 
         self.prev_sequence_button.on_click(self.prev_sequence)
         self.next_sequence_button.on_click(self.next_sequence)
+        self.manage_sequence_button.on_click(self.toggle_show_manage_sequence_pane)
         self.delete_sequence_button.on_click(self.delete_sequence)
         self.add_sequence_button.on_click(self.show_add_sequence_pane)
 
@@ -86,8 +88,17 @@ class ClauseSequenceControls:
                 self.next_sequence_button
             ),
             Row(
-                self.delete_sequence_button,
-                self.add_sequence_button,
+                Column(
+                    Row(
+                        self.manage_sequence_button,
+                        align="center"
+                    ),
+                    Row(
+                        self.delete_sequence_button,
+                        self.add_sequence_button,
+                        align="center"
+                    )
+                ),
                 align="center"
             ),
             align="center"
@@ -144,12 +155,28 @@ class ClauseSequenceControls:
         self.clause_b_info.object = ClauseSequenceControls.format_second_clause_str(clause_b_range)
         overlap_range = ClauseSequenceControls.get_clause_overlap(clause_a_range, clause_b_range)
         self.clause_overlap_info.object = ClauseSequenceControls.format_overlap_str(overlap_range)
+        self.reset_manage_sequence_pane()
 
     def next_sequence(self, event):
         self.controller.next_sequence()
 
     def prev_sequence(self, event):
         self.controller.prev_sequence()
+
+    def toggle_show_manage_sequence_pane(self, event):
+        manage_button_style = self.manage_sequence_button.button_style
+        if manage_button_style == "outline":
+            self.manage_sequence_button.button_style = "solid"
+        elif manage_button_style == "solid":
+            self.manage_sequence_button.button_style = "outline"
+
+        self.delete_sequence_button.visible = not self.delete_sequence_button.visible
+        self.add_sequence_button.visible = not self.add_sequence_button.visible
+
+    def reset_manage_sequence_pane(self):
+        self.manage_sequence_button.button_style = "outline"
+        self.delete_sequence_button.visible = False
+        self.add_sequence_button.visible = False
 
     def show_add_sequence_pane(self, event):
         pass

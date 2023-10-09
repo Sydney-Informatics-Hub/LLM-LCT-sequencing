@@ -63,6 +63,9 @@ sequence_info_style = {
     "min-width": "150px"
 }
 
+manage_sequence_button_style = {
+}
+
 delete_sequence_button_style = {
     "width": "65px"
 }
