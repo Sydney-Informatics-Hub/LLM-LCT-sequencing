@@ -9,22 +9,35 @@ For OpenAI API documentation, see https://beta.openai.com/docs/api-reference/com
 import os
 import tiktoken
 import openai
+import panel as pn
 
 class LLM:
     """
     A class to handle the LLM API.
     """
-    def __init__(self, filename_openai_key='../../openai_key.txt', model_name = 'gpt-3.5-turbo'):
+    def __init__(self, filename_openai_key=None, model_name = 'gpt-3.5-turbo'):
         """
         Initialize the LLM object with the API key and model name
 
         Note: The API key is stored in a text file. Do not share this file with others or on Github.
         """
-        # Check if file exists
-        if not os.path.isfile(filename_openai_key):
-            raise FileNotFoundError("OpenAI key file does not exist: {}".format(filename_openai_key))
-        with open(filename_openai_key, 'r') as f:
-            openai.api_key = f.read()
+        # Manual API key input if no file is given
+        if filename_openai_key is None:
+            # Check if API key is already set
+            openai.api_key = os.environ.get("OPENAI_API_KEY")
+            # check if API key is valid
+            try:
+                ailist = openai.Model.list()
+            except openai.error.AuthenticationError:
+                print("No valid OpenAI API key found. Please enter your OpenAI API key.")
+            print('LLM initialized.')
+        else:
+            # Check if file exists
+            if not os.path.isfile(filename_openai_key):
+                raise FileNotFoundError("OpenAI key file does not exist: {}".format(filename_openai_key))
+            with open(filename_openai_key, 'r') as f:
+                openai.api_key = f.read()
+            print('LLM initialized with API key from file: {}'.format(filename_openai_key))
         self.model_name = model_name
 
 
@@ -135,6 +148,21 @@ class LLM:
         completion_id = completion_response['id']
         return completion_text, tokens_used, completion_id, message_response
 
+def openai_apikey_input():
+    pn.extension()
+    password_input = pn.widgets.PasswordInput(name='Enter your OpenAI API Key (then press enter):',
+                                            placeholder='<OpenAI API Key>')
+    def _cb_overwrite_api(key: str):
+        os.environ['OPENAI_API_KEY'] = key
+        if len(os.environ['OPENAI_API_KEY']) == 51:
+            return "Valid API Key. Please continue."
+        elif len(os.environ['OPENAI_API_KEY']) == 0:
+            return "Please enter your OpenAI API Key."
+        else:
+            return "Invalid API Key."
+
+    iobject = pn.bind(_cb_overwrite_api, password_input.param.value, watch=False)
+    return pn.Row(password_input, pn.pane.Markdown(iobject))  
 
 # test the LLM class (see also tests/test_utils_llm.py)
 
