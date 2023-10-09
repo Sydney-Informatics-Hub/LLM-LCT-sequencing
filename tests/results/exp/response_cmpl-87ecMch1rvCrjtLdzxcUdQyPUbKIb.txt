@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: and
+reason: The second clause is a consequence of the first clause, indicating that completing the service only takes one day.

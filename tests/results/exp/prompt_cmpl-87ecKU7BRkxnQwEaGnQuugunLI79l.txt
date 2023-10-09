@@ -1,0 +1,128 @@
+You are a linguistic research assistant. You are analysing the relationships between text clauses and classifying them into one of eight sequencing categories. 
+The eight sequencing classes are 'Integrative Sequencing (INT)', 'Subsumptive Sequencing (SUB)', 'Consequential Sequencing (CON)', 'Sequential Sequencing (SEQ)', 'Incoherent Sequencing (INC)', 'Coherent Sequencing (COH)', 'Repetitive Sequencing (REP)', 'Reiterative Sequencing (REI)'. These are sub-subtypes of higher level classes.
+A detailed description of each sequencing class is given below in the dictionary. 
+You are also given a list of examples for each class.
+
+You are given a text below Text-to-classify that includes at least two clauses and you are asked to classify this text into one of the eight sequencing classes.
+
+You are given the following instructions:
+If you can tell what the classification is, respond in same format as the examples, i.e. say 'classification:' followed by the class name. Only use the 3 character abbreviation of the class name.
+If you can't tell what it is, say 'class: None'.
+Next, extract the linkage word for the given text that is characteristic of the sequencing type, i.e. say 'linkage word:' followed by a word that links the clauses. 
+The linkage word must be a word that is included in the given text.
+If you can't find of a linkage word, say 'linkage word: None'.
+Next, give a reason for your classification, i.e. say 'reason:' followed by a reason. The reason should be brief and not more than 2 sentences.
+
+Dictionary of description of the eight sequencing classes:
+{
+  "Sequencing_Types": [
+    {
+      "Type": "Cumulative Sequencing",
+      "Description": "Explicitly relates terms from different passages, adding meaning. It creates more than the sum of its parts, enabling higher epistemological condensation.",
+      "Subtypes": [
+        {
+          "Subtype": "Vertical Sequencing",
+          "Description": "Condenses meanings from one or more passages and transports those meanings into another passage. Integrative and subsumptive sequencing is where a stretch of text is referred to and packed up into a single word or noun phrase. Note that integrative and subsumptive sequencing only involves instances where a word or phrase refers back to a full clause or larger stretch of text. It does not include anaphoric reference to another noun, such as it being used to refer to a frog in 'I saw a frog. It was very big.'. Characteristics are: 1) Reference Mechanism: Utilize demonstratives (e.g., this, that, these, those) and 3rd person non-gendered pronouns (it, they) to refer to prior text; 2) Nominalization: Often transform verbs into nouns, e.g., 'fuse' becomes 'fusion'; 3) Semiotic Entities: Use language constructs (e.g., arguments, issues. story) combined with definite determiners (this, those, such, the).",
+          "Sub_Subtypes": [
+            {
+              "Sub_Subtype": "Integrative Sequencing (INT)",
+              "Description": "Integrative sequences involving referring back to stretches of text, without there being any nominalisation of a verb or adjective from the previous sentence. Integrative sequences often: a) use demonstratives (e.g. this, that, these, those) and 3rd person non-gendered pronouns (it, they) to refer back or forward to text. b) use \u2018semiotic entities\u2019 referring to language (e.g. arguments, issues, story etc.) + definite determiners (this, those, such, the etc.). e.g. \u2018Such arguments are rubbish\u2019, \u2019All of the points we\u2019ve said\u2019, \u2019That last decision that you made', \u2019Those discussions\u2019, \u2019This argument\u2019, \u2019Examples such as these\u2019"
+            },
+            {
+              "Sub_Subtype": "Subsumptive Sequencing (SUB)",
+              "Description": "Subsumptive sequences involve the referring back to a stretch of text by virtue of a nominalisation of a verb or adjective from the previous sentence. E.g. the shift from fuse to fusion. Note that not all nominalisations will be subsumptive \u2013 it will only be subsumptive if: The nominalisation is of a verb or adjective from the previous sentence; and the nominalisation refers to the action of the verb or the quality of the adjective itself (what is known as grammatical metaphor in one branch of linguistics), not to some entity involved in the action or quality. For example, \u2018He ran\u2019 to \u2018This run\u2019 is a subsumptive example, because \u2018this run\u2019 refers to the action of running, but does so as a noun. Whereas \u2018He ran\u2019 to \u2018He is a runner\u2019 is not a subsumptive, as \u2018runner\u2019 refers to the person that does the run, rather than the action of running itself. Like for integratives, it will often use demonstratives  (e.g. this, that, these, those) to refer back to the previous text."
+            }
+          ]
+        },
+        {
+          "Subtype": "Horizontal Sequencing",
+          "Description": "Links passages without explicitly transporting meanings across passages.",
+          "Sub_Subtypes": [
+            {
+              "Sub_Subtype": "Consequential Sequencing (CON)",
+              "Description": "Indicates how meanings from different passages shape one another. Involves any sequence that indicates cause (e.g. because, therefore), condition (e.g. if/then), concession or counter-expectancy (e.g. but, even though, although, however), purpose (e.g. in order to) and a range of other relations aside from temporal sequence or simple listing. Consequentials may be marked by one of three different types of linker: 1) linker that occurs only between the passages being sequenced.Example linker words: But, Therefore, Thus, Or else, Nevertheless, And yet, Thereby, Wherebe, Hence, Accordingly, In conclusion, Consequently, After all, Even, Although, Despite, Without, Unless, Since, Provided that, In case; 2) linker may occur at the beginning of the sequence or between the passages within the sequence, such as 'because'; Example linker words: So, If, For, In order, So that, To, Though, As, Instead, Unless, By, As a result, Because of, In case of.; 3) linker may be marked twice, at the beginning and in the middle, such as 'if ... then'."
+            },
+            {
+              "Sub_Subtype": "Sequential Sequencing (SEQ)",
+              "Description": "Indicates the ordering of meanings from different passages. Adds only temporal or simultaneous relations.This may be through conjunctions and adverbs (e.g. after, when, then), or through the ordering of arguments in a text (e.g. First, Second, Finally). Sequential sequencing is generally marked by one of two different kinds of linkers: 1) linker always come between the two clauses or stretches being linked.; Example linker words: Then, and then, Second, Third, Lastly, Finally, Next, Previously, Meanwhile, Afterwards; 2) linker may come between the two stretches, or at the beginning of the entire sequence; Example linker words: While, As soon as, Until, Whilst, When, First, Once, After, Before, Up until, As long as, As soon as, Since, Before, Immediately, Whenever"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Type": "Segmental Sequencing",
+      "Description": "Does not explicitly relate terms from constitutive passages.",
+      "Subtypes": [
+        {
+          "Subtype": "Compartmental Sequencing",
+          "Description": "Brings together different passages.",
+          "Sub_Subtypes": [
+            {
+              "Sub_Subtype": "Incoherent Sequencing (INC)",
+              "Description": "Involves the sequencing of passages with no significant relation to each other. Incoherent sequencing are those where there is no clear relation. Usually clauses that in some sense interrupt what was being spoken about to mention some other topic. These will often begin with a continuative such as linker words: ok, now, so, ah, umm, well"
+            },
+            {
+              "Sub_Subtype": "Coherent Sequencing (COH)",
+              "Description": "Involves the sequencing of passages that offer continuity. Coherent sequencing is generally any stretch of text that uses only `and` or does not have any linkers or referring items used as subsumptive or integrative sequencing. Linker words that can occur with coherent sequencing include: And, Or, Whilst, While"
+            }
+          ]
+        },
+        {
+          "Subtype": "Sedimental Sequencing",
+          "Description": "Brings together similar or identical passages.",
+          "Sub_Subtypes": [
+            {
+              "Sub_Subtype": "Repetitive Sequencing (REP)",
+              "Description": "Involves practically identical passages or involves multiple clauses that are repeated entirely"
+            },
+            {
+              "Sub_Subtype": "Reiterative Sequencing (REI)",
+              "Description": "Involves similar passages with sufficient difference to add meanings. Involves two or more clauses repeat meanings in different ways, sometimes through the use of synonyms of the verbs or one of the noun phrases, other times with quite different wordings. It is a sequence that essentially says \u2018that is\u2019, or \u2018in other words\u2019. Examples of conjunctions that may be used in reiterative sequences are:  \u2018That is\u2019, \u2018In other words\u2019, \u2018i.e.\u2019, \u2018indeed\u2019, \u2018similarly\u2019"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+                      
+Examples for each class:
+ example: electrons can move to higher energy states by absorbing energy
+classification: CON
+linkage word: then
+
+example: if we started to look at all the things in Pompeii and Herculaneum, what objects may be showing Greek design? Or Egyptian design? Or Greek mythology? Or Egyptian mythology? Or what building techniques like columns?
+classification: CON
+linkage word: If
+
+example: It doesn’t always have to be eight, but atoms would like to have eight.
+classification: CON
+linkage word: but
+
+example: he worked late at night before sleeping in until lunchtime without attending lectures.
+classification: SEQ
+linkage word: before
+
+example: you’ve got a written source and you’ve got a picture source
+classification: COH
+linkage word: and
+
+example: hdl inhibits a subset of lipopolysaccharide-stimulated macrophage genes that regulate the type I interferon response, and it's action is independent of sterol metabolism.
+classification: COH
+linkage word: and
+
+example: Most of them weren’t deflected at all? They weren’t deflected at all.
+classification: REI
+linkage word: None
+
+example: Most of them weren’t deflected at all? They weren’t deflected at all.
+classification: REP
+linkage word: None
+
+
+
+Text-to-classify:
+he worked late at night before sleeping in until lunchtime
+
+The answer is:

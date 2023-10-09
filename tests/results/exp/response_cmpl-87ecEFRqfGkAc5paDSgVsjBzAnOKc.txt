@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: To
+reason: The text uses the linker word "To" to indicate the purpose or goal of the action in the first clause. This is a characteristic of consequential sequencing, which indicates how meanings from different passages shape one another.

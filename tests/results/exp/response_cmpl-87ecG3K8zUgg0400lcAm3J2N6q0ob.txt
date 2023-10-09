@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: then
+reason: The text uses the linker "then" to indicate a consequential relationship between the two clauses. The first clause (If you are disappointed with the number) sets up a condition, and the second clause (it means you probably could have tried a little bit harder) is the consequence of that condition.

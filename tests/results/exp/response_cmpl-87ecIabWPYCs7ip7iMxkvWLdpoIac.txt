@@ -1,0 +1,4 @@
+
+classification: SEQ
+linkage word: then
+reason: The first clause (reading) is a prerequisite for the second clause (answering questions), indicating a sequential relationship.

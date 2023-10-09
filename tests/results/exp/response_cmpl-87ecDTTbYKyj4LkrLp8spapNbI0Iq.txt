@@ -1,0 +1,3 @@
+ classification: CON
+linkage word: if
+reason: The text uses the conditional conjunction "if" to indicate a cause and effect relationship between the location of Italy and its proximity to Egypt. This fits the definition of consequential sequencing, which involves indicating how meanings from different passages shape one another.

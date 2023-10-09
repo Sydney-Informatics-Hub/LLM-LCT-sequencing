@@ -1,0 +1,3 @@
+ SEQ
+linkage word: for
+reason: The first clause gives a direction for the action in the second clause, indicating a sequential relationship.

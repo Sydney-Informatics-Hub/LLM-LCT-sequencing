@@ -1,0 +1,4 @@
+
+classification: INC
+linkage word: None
+reason: The two clauses do not have a clear relation to each other and are not connected by any specific word or phrase.

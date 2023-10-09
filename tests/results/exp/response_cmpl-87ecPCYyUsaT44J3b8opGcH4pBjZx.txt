@@ -1,0 +1,4 @@
+
+classification: CON
+linkage word: that
+reason: The word "that" indicates a consequential relationship between the two clauses, as the first clause raises a possibility and the second clause provides a potential explanation for that possibility.

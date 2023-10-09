@@ -1,0 +1,4 @@
+
+classification: SUB
+linkage word: called
+reason: The word "called" refers back to the previous sentence and nominalizes the verb "result" from the previous sentence, indicating subsumptive sequencing.

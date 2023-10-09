@@ -1,0 +1,4 @@
+
+classification: INT
+linkage word: at
+reason: The first sentence refers back to the example of carbon, indicating an integrative sequencing. The linkage word "at" is used to refer back to the previous sentence.

@@ -1,0 +1,4 @@
+
+classification: REI
+linkage word: That is
+reason: The two clauses repeat the same idea in different ways, with the second clause providing clarification or explanation for the first. This is characteristic of reiterative sequencing.

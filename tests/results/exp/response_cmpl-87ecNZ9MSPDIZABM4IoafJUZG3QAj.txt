@@ -1,0 +1,4 @@
+
+classification: SEQ
+linkage word: and
+reason: The clauses are in sequential order, with the first clause being the cause and the second clause being the effect. The word "and" links the two clauses together.

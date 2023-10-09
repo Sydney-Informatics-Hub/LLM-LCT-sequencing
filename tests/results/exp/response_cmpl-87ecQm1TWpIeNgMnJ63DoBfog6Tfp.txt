@@ -1,0 +1,4 @@
+
+classification: COH
+linkage word: This
+reason: The two clauses are connected by the demonstrative pronoun 'this', indicating a continuation of the same topic.

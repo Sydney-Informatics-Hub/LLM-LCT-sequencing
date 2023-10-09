@@ -1,0 +1,3 @@
+ SEQ
+linkage word: until
+reason: The clauses are linked by a temporal relationship, indicating the order of events. The word "until" is used to show the duration of the action of rocking and thinking.

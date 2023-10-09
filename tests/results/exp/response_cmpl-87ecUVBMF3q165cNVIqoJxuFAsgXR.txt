@@ -1,0 +1,3 @@
+ SEQ
+linkage word: and
+reason: The two clauses are linked by the conjunction "and", indicating a sequential relationship between the two events. The first clause states the team's success in their season opener, while the second clause explains how they achieved that success.

@@ -1,0 +1,3 @@
+ SEQ
+linkage word: This
+reason: The first clause introduces the need for a tool, while the second clause explains the process of building it. This sequential relationship is indicated by the use of the demonstrative "this" in the second clause, linking it back to the first clause.
