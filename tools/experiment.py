@@ -7,7 +7,14 @@ Example:
         $ python experiment.py --outpath ../results/
     
     To run the experiment with different parameters, use the following command:
-        $ python experiment.py --outpath ../results/ --path_schema ../schemas --filename_examples sequencing_examples_reason.json --filename_schema schema_sequencing_examples_reason.json --filename_definitions sequencing_types.json --filename_zero_prompt instruction_prompt.txt --modelname_llm gpt-3.5-turbo-instruct
+        $ python experiment.py --outpath ../results/ 
+                            --path_schema ../schemas 
+                            --filename_examples sequencing_examples_reason.json 
+                            --filename_schema schema_sequencing_examples_reason.json 
+                            --filename_definitions sequencing_types.json 
+                            --filename_zero_prompt instruction_prompt.txt 
+                            --modelname_llm gpt-3.5-turbo-instruct 
+                            --list_prompt_indices 0 1 2 3 4 5 6 7
 """
 
 import os
@@ -107,13 +114,14 @@ def select_examples_by_type(examples, example_type, n_examples, type_order = 'Su
     return example_list, reason_list, linkage_list
 
 
-def example_train_test_split(df, Nsel=1, type_order='Sub_Subtype', random_seed=42):
+def example_train_test_split(df, list_prompt_indices=None, Nsel=1, type_order='Sub_Subtype', random_seed=42):
     """
     Splits the example dataframe into training and testing sets, ensuring that each type has at least N examples in the training set.
 
     Parameters:
     -----------
     - df (pd.DataFrame): The input example dataframe.
+    - list_prompt_indices (list): A list of indices of examples to use in the prompt instruction. If None, the prompt/ test set will be randomly selected.
     - Nsel (int): The minimum number of examples for each type in the training set.
     - type_order (str): The order of the types to select from ('Type', 'Subtype', 'Sub_Subtype').
         Default is 'Sub_Subtype'.
@@ -128,17 +136,27 @@ def example_train_test_split(df, Nsel=1, type_order='Sub_Subtype', random_seed=4
     train_data = []
     test_data = []
 
-    for type_, group in df.groupby(type_order):
-        if len(group) <= Nsel:
-            train_data.append(group)
-        else:
-            train_data.append(group.sample(n=Nsel, random_state=random_seed))
-            test_data.append(group.drop(train_data[-1].index))
+    if (list_prompt_indices is not None) and (len(list_prompt_indices) > 0):
+        # Split the dataframe into training and testing sets based on the given indices
+        train_df = df.iloc[list_prompt_indices]
+        test_df = df.drop(list_prompt_indices)
+        # reindex the dataframes
+        train_df = train_df.reset_index(drop=True)
+        test_df = test_df.reset_index(drop=True)
+        return train_df, test_df
 
-    train_df = pd.concat(train_data).reset_index(drop=True)
-    test_df = pd.concat(test_data).reset_index(drop=True)
+    else:
+        for type_, group in df.groupby(type_order):
+            if len(group) <= Nsel:
+                train_data.append(group)
+            else:
+                train_data.append(group.sample(n=Nsel, random_state=random_seed))
+                test_data.append(group.drop(train_data[-1].index))
 
-    return train_df, test_df
+        train_df = pd.concat(train_data).reset_index(drop=True)
+        test_df = pd.concat(test_data).reset_index(drop=True)
+
+        return train_df, test_df
 
 
 def merge_definitions_examples(definitions, example_subset, linkage_subset):
@@ -339,7 +357,9 @@ def run_pipe(
         filename_schema = "schema_sequencing_examples_reason.json", 
         filename_definitions = "sequencing_types.json", 
         filename_zero_prompt = "instruction_prompt.txt", 
-        modelname_llm = 'gpt-3.5-turbo-instruct'):
+        modelname_llm = 'gpt-3.5-turbo-instruct',
+        list_prompt_indices = None
+        ):
     """
     This experiment pipeline includes the following main steps:
     - load examples from json file
@@ -358,6 +378,7 @@ def run_pipe(
     - filename_definitions (str): The filename of the definitions json file.
     - filename_zero_prompt (str): The filename of the zero-shot instruction prompt text file.
     - modelname_llm (str): The name of the LLM model to use.
+    - list_prompt_indices (list): A list of indices of examples to use in the prompt instruction. If None, the prompt/ test set will be randomly selected.
 
     Returns:
     --------
@@ -393,7 +414,7 @@ def run_pipe(
     example_types_short = [example_type[:3].upper() for example_type in example_types]
 
     # split in train and test samples
-    train_df, test_df = example_train_test_split(df, Nsel=1)
+    train_df, test_df = example_train_test_split(df, list_prompt_indices=list_prompt_indices, Nsel=1)
     # loop over train_df and add to example string
     example_string = """ """
     for index, row in train_df.iterrows():
@@ -606,6 +627,7 @@ if __name__ == "__main__":
     parser.add_argument('--filename_definitions', type=str, default="sequencing_types.json", help='The filename of the definitions json file.', required=False)
     parser.add_argument('--filename_zero_prompt', type=str, default="instruction_prompt.txt", help='The filename of the zero-shot instruction prompt text file.', required=False)
     parser.add_argument('--modelname_llm', type=str, default='gpt-3.5-turbo-instruct', help='The name of the LLM model to use.', required=False)
+    parser.add_argument('--list_prompt_indices', type=str, nargs='+', default=None, help='A list of indices of examples to use in the prompt instruction. If None, the prompt/test set will be randomly selected.', required=False)
     args = parser.parse_args()
 
     # run experiment pipeline
@@ -616,7 +638,9 @@ if __name__ == "__main__":
         filename_schema = args.filename_schema, 
         filename_definitions = args.filename_definitions, 
         filename_zero_prompt = args.filename_zero_prompt, 
-        modelname_llm = args.modelname_llm)
+        modelname_llm = args.modelname_llm,
+        list_prompt_indices = args.list_prompt_indices)
+    
     
     # evaluate results and save to file
     eval_exp(df_results, outpath_exp, seq_classes)
