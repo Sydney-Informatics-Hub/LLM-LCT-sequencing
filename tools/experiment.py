@@ -591,10 +591,10 @@ def run_pipe(
 
 def test_pipe():
     # run experiment pipeline
-    df_results, outpath_exp = exp_pipe()
+    df_results, outpath_exp, seq_classes = run_pipe()
 
     # evaluate results and save to file
-    eval_exp(df_results, outpath_exp)
+    eval_exp(df_results, outpath_exp, seq_classes)
 
 if __name__ == "__main__":
     # get arguments from command line
