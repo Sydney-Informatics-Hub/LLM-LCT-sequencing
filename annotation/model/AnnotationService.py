@@ -23,6 +23,19 @@ class AnnotationService:
             return ""
         return paragraph.get_text()
 
+    def get_all_paragraph_clauses(self, paragraph_id: int) -> list[tuple[int, str]]:
+        paragraph: Paragraph = self.annotation_dao.get_paragraph_by_id(paragraph_id)
+        if paragraph is None:
+            return []
+        paragraph_text = paragraph.get_text()
+
+        clauses: list[tuple[int, str]] = []
+        for clause in self.annotation_dao.get_all_clauses_by_paragraph(paragraph_id):
+            clause_text = paragraph_text[clause.start: clause.end+1]
+            data = (clause.clause_id, clause_text)
+            clauses.append(data)
+        return clauses
+
     def get_paragraph_sequence_count(self, paragraph_id: int):
         return self.annotation_dao.get_paragraph_sequence_count(paragraph_id)
 
@@ -67,8 +80,8 @@ class AnnotationService:
 
         self.annotation_dao.update_sequence_classification_by_paragraph_idx(paragraph_id, sequence_idx, correct_class)
 
-    def create_sequence(self):
-        pass
+    def create_sequence(self, clause_a_id: int, clause_b_id: int) -> int:
+        return self.annotation_dao.create_sequence(clause_a_id, clause_b_id)
 
     def delete_sequence(self, paragraph_id: int, sequence_idx: int):
         self.annotation_dao.delete_sequence(paragraph_id, sequence_idx)

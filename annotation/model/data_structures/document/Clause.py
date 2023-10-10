@@ -9,15 +9,17 @@ class Clause:
     This object contains a start index and end index of the substring relative to the start of the paragraph
     """
 
-    def __init__(self, start: int, end: int):
+    def __init__(self, start: int, end: int, clause_id: Optional[int] = None):
         """
         Parameters
         ----------
         start: int - the start index of the clause relative to the paragraph, beginning at 0
         end: int - the end index of the clause relative to the paragraph
+        clause_id: int - The database integer id of the clause. Can be None
         """
         self.start: int = int(start)
         self.end: int = int(end)
+        self.clause_id: Optional[int] = clause_id
 
     def __eq__(self, other) -> bool:
         if type(other) is not Clause:
@@ -26,6 +28,9 @@ class Clause:
 
     def __hash__(self):
         return hash((self.start, self.end))
+
+    def get_id(self) -> Optional[int]:
+        return self.clause_id
 
     def get_start(self) -> int:
         return self.start

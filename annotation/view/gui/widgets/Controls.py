@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Optional, Callable
 
+import panel as pn
 from panel import Row, Column, bind
 from panel.layout import Divider
-from panel.widgets import Button, RadioButtonGroup, IntInput
+from panel.widgets import Button, RadioButtonGroup, IntInput, CrossSelector
 from panel.pane import Str, HTML
 
 from annotation.controller.AnnotationController import AnnotationController
@@ -37,15 +38,19 @@ class ParagraphControls:
 
             ),
             Divider(),
-            paragraph_bound_fn,
+            Row(paragraph_bound_fn, visible=False),
             styles=paragraph_controls_style,
             align="center"
         )
 
-        self.controller.add_update_text_display_callable(self.update_display)
-
     def get_component(self):
         return self.component
+
+    def set_visibility(self, is_visible: bool):
+        self.component.visible = is_visible
+
+    def toggle_visibility(self):
+        self.component.visible = not self.component.visible
 
     def update_display(self):
         self.curr_paragraph_id.value = self.controller.get_current_paragraph_id()
@@ -63,8 +68,9 @@ class ParagraphControls:
 
 
 class ClauseSequenceControls:
-    def __init__(self, controller: AnnotationController):
+    def __init__(self, controller: AnnotationController, add_sequence_controls_fn: Callable):
         self.controller: AnnotationController = controller
+        self.add_sequence_controls_fn = add_sequence_controls_fn
 
         self.title = Str("Clause Pair Sequence", styles=sequence_heading_style)
         self.clause_a_info = HTML(ClauseSequenceControls.format_first_clause_str(), stylesheets=[clause_stylesheet])
@@ -114,8 +120,6 @@ class ClauseSequenceControls:
             align="center"
         )
 
-        self.controller.add_update_text_display_callable(self.update_display)
-
     @staticmethod
     def format_first_clause_str(clause_range: Optional[tuple[int, int]] = None) -> str:
         clause_str: str = f"<span class=\"first_clause\"><strong>Clause A:</strong> "
@@ -155,6 +159,12 @@ class ClauseSequenceControls:
     def get_component(self):
         return self.component
 
+    def set_visibility(self, is_visible: bool):
+        self.component.visible = is_visible
+
+    def toggle_visibility(self):
+        self.component.visible = not self.component.visible
+
     def update_display(self):
         clause_ranges = self.controller.get_curr_sequence()
         if clause_ranges is None:
@@ -189,17 +199,74 @@ class ClauseSequenceControls:
         self.add_sequence_button.visible = False
 
     def show_add_sequence_pane(self, event):
-        pass
-
-    def add_sequence(self, event):
-        pass
+        self.add_sequence_controls_fn()
 
     def delete_sequence(self, event):
         self.controller.delete_curr_sequence()
 
 
+class AddSequenceControls:
+    def __init__(self, controller: AnnotationController, reset_visibility_fn: Callable):
+        self.controller: AnnotationController = controller
+        self.reset_visibility_fn = reset_visibility_fn
+
+        self.back_button = Button(name="Back", button_type="danger", button_style="outline")
+        self.clause_selector = CrossSelector(name="Clauses", definition_order=False)
+        self.save_sequence_button = Button(name="Save", button_type="success", button_style="outline")
+
+        self.back_button.on_click(self.exit_pane)
+        self.save_sequence_button.on_click(self.save_sequence)
+
+        self.component = Column(
+            self.clause_selector,
+            self.back_button,
+            self.save_sequence_button,
+            align="center"
+        )
+
+    def get_component(self):
+        return self.component
+
+    def update_display(self):
+        if not self.component.visible:
+            return
+
+        clause_selector_options = {}
+        for clause_data in self.controller.get_curr_paragraph_clauses():
+            clause_id = clause_data[0]
+            clause_text = clause_data[1]
+            clause_selector_options[clause_text] = clause_id
+
+        self.clause_selector.options = clause_selector_options
+
+    def set_visibility(self, is_visible: bool):
+        self.component.visible = is_visible
+
+    def toggle_visibility(self):
+        self.component.visible = not self.component.visible
+
+    def save_sequence(self, event):
+        selections: list[int] = self.clause_selector.value
+        if len(selections) != 2:
+            pn.state.notifications.error('A clause sequence must contain exactly 2 clauses. '
+                                         'Please select 2 clauses in the clause selector', duration=5000)
+            return
+
+        new_id: int = self.controller.add_sequence(int(selections[0]), int(selections[1]))
+        if new_id == -1:
+            pn.state.notifications.error('Clause sequence already exists', duration=5000)
+            return
+        else:
+            self.exit_pane()
+
+    def exit_pane(self, event=None):
+        self.clause_selector.value = []
+        self.clause_selector.options = []
+        self.reset_visibility_fn()
+
+
 class SequenceClassificationControls:
-    UNSELECTED: str = "Unselected"
+    UNSELECTED: str = "No change"
 
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
@@ -227,15 +294,19 @@ class SequenceClassificationControls:
                 align="center"),
             Row(self.classification_selector,
                 align="center"),
-            selector_bound_fn,
+            Row(selector_bound_fn, visible=False),
             styles=sequence_classification_style,
             align="center"
         )
 
-        self.controller.add_update_text_display_callable(self.update_display)
-
     def get_component(self):
         return self.component
+
+    def set_visibility(self, is_visible: bool):
+        self.component.visible = is_visible
+
+    def toggle_visibility(self):
+        self.component.visible = not self.component.visible
 
     def update_display(self):
         curr_correct_class = self.controller.get_correct_classification()
@@ -252,20 +323,42 @@ class Controls:
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
         self.paragraph_controls = ParagraphControls(self.controller)
-        self.clause_sequence_controls = ClauseSequenceControls(self.controller)
+        self.clause_sequence_controls = ClauseSequenceControls(self.controller, self.add_sequence_controls)
         self.sequence_classification_controls = SequenceClassificationControls(self.controller)
+        self.add_sequence_controls = AddSequenceControls(self.controller, self.reset_visibility)
 
         self.component = Column(
             self.paragraph_controls.get_component(),
             self.clause_sequence_controls.get_component(),
             self.sequence_classification_controls.get_component(),
+            self.add_sequence_controls.get_component(),
             styles=controls_style,
             sizing_mode="stretch_width"
         )
 
+        self.reset_visibility()
+
+        self.controller.add_update_text_display_callable(self.update_display)
+
     def update_display(self):
         self.paragraph_controls.update_display()
         self.clause_sequence_controls.update_display()
+        self.sequence_classification_controls.update_display()
+        self.add_sequence_controls.update_display()
 
     def get_component(self):
         return self.component
+
+    def add_sequence_controls(self):
+        self.add_sequence_controls.set_visibility(True)
+        self.clause_sequence_controls.set_visibility(False)
+        self.sequence_classification_controls.set_visibility(False)
+
+        self.update_display()
+
+    def reset_visibility(self):
+        self.add_sequence_controls.set_visibility(False)
+        self.clause_sequence_controls.set_visibility(True)
+        self.sequence_classification_controls.set_visibility(True)
+
+        self.update_display()

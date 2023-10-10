@@ -5,7 +5,7 @@ from annotation.controller.AnnotationController import AnnotationController
 from annotation.view.gui.widgets.Controls import Controls
 from annotation.view.gui.widgets.TextDisplay import TextDisplay
 
-pn.extension()
+pn.extension(notifications=True)
 
 
 class AnnotationViewWrapper:

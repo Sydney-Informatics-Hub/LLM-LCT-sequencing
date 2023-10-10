@@ -66,21 +66,18 @@ class SequenceRepository(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def create(self, new_sequence: tuple[int, int, int, int]) -> int:
+    def create(self, clause_a_id: int, clause_b_id: int) -> int:
         """
-        Creates a new sequence in the database, according to the provided argument.
-        Returns the integer id of the new sequence, or -1 if the operation fails.
+        Creates a new sequence in the database with the provided clause ids.
+        Returns the integer id of the new sequence. IDs automatically increment by 1 from the max ID
         Parameters
         ----------
-        new_sequence: tuple[int, int, int, int] - the sequence to write as a tuple with the following values:
-         - integer id of the first clause
-         - integer id of the second clause
-         - the predicted class as an integer
-         - the corrected class as an integer
+        clause_a_id: int - the id of the first specified clause
+        clause_b_id: int - the id of the second specified clause
 
         Returns
         -------
-        sequence_id: int - The integer id of the new sequence, or -1 if the operation fails.
+        sequence_id: int - The integer id of the new sequence
         """
         raise NotImplementedError()
 

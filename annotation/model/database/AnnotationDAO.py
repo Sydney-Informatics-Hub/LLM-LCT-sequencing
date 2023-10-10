@@ -32,6 +32,16 @@ class AnnotationDAO:
             return None
         return Paragraph(paragraph_id, paragraph_text)
 
+    def get_all_clauses_by_paragraph(self, paragraph_id: int) -> list[Clause]:
+        clause_data: ndarray = self.clause_repository.read_all_by_paragraph(paragraph_id)
+        clauses: list[Clause] = []
+
+        for data in clause_data:
+            new_clause = Clause(data[2], data[3], clause_id=data[0])
+            clauses.append(new_clause)
+
+        return clauses
+
     def get_paragraph_sequence_count(self, paragraph_id: int) -> int:
         return len(self.get_all_sequences_by_paragraph(paragraph_id))
 
@@ -94,8 +104,8 @@ class AnnotationDAO:
             return
         self.sequence_repository.update(sequence.get_id(), correct_class)
 
-    def create_sequence(self, sequence: ClauseSequence):
-        pass
+    def create_sequence(self, clause_a_id: int, clause_b_id: int) -> int:
+        return self.sequence_repository.create(clause_a_id, clause_b_id)
 
     def delete_sequence(self, paragraph_id: int, sequence_idx: int):
         sequence = self.get_sequence_by_paragraph_idx(paragraph_id, sequence_idx)

@@ -1,6 +1,6 @@
 text_display_style = {
     "padding": "20px",
-    "width": "60%",
+    "width": "50%",
     "min_width": "400px"
 }
 
@@ -36,7 +36,6 @@ controls_style = {
 }
 
 paragraph_controls_style = {
-    "margin-bottom": "20px"
 }
 
 paragraph_heading_style = {
@@ -79,6 +78,8 @@ classification_subheading_style = {
 }
 
 llm_class_display_style = {
-    "padding": "5px 20px",
-    "border": "1px solid black"
+    "width": "60px",
+    "padding": "5px 10px",
+    "border": "1px solid black",
+    "text-align": "center"
 }

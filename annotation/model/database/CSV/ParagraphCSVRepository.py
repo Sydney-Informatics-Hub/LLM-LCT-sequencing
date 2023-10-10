@@ -84,12 +84,10 @@ class ParagraphCSVRepository(ParagraphRepository):
         self._read_database_into_cache()
 
         existing_ids = self._database_cache[id_field].values
-        if len(existing_ids) == 0:
-            highest_id: int = 0
-        else:
-            highest_id: int = existing_ids.max()
+        new_id: int = 1
+        if len(existing_ids) > 0:
+            new_id = existing_ids.max() + 1
 
-        new_id: int = highest_id + 1
         new_entry = {ParagraphCSVRepository.ID_FIELD: new_id, text_field: new_paragraph_text}
         self._database_cache.add(new_entry)
 

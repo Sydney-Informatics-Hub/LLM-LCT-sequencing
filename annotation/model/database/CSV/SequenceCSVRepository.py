@@ -1,6 +1,7 @@
 import os
 from csv import DictReader
 
+import numpy as np
 from numpy import ndarray
 from pandas import DataFrame, read_csv
 
@@ -91,8 +92,38 @@ class SequenceCSVRepository(SequenceRepository):
 
         return matches
 
-    def create(self, new_sequence: tuple[int, int, int, int]) -> bool:
-        raise NotImplementedError()
+    def create(self, clause_a_id: int, clause_b_id: int) -> int:
+        if type(clause_a_id) is not int:
+            return -1
+        if type(clause_b_id) is not int:
+            return -1
+
+        self._read_database_into_cache()
+
+        clause_a_id_field = SequenceCSVRepository.CLAUSE_A_ID_FIELD
+        clause_b_id_field = SequenceCSVRepository.CLAUSE_B_ID_FIELD
+        matches: ndarray = self._database_cache.loc[
+            ((self._database_cache[clause_a_id_field] == clause_a_id) &
+             (self._database_cache[clause_b_id_field] == clause_b_id))].values
+
+        if len(matches) > 0:
+            return -1
+
+        existing_ids: ndarray = self._database_cache['sequence_id']
+        new_id: int = 1
+        if len(existing_ids) > 0:
+            new_id = existing_ids.max() + 1
+
+        new_entry = [new_id, clause_a_id, clause_b_id, 0, 0]
+
+        if len(self._database_cache.index) > 0:
+            self._database_cache.loc[max(self._database_cache.index)+1] = new_entry
+        else:
+            self._database_cache.loc[len(self._database_cache)] = new_entry
+
+        self._write_cache_to_database()
+
+        return new_id
 
     def update(self, sequence_id: int, class_correct: int) -> bool:
         id_field = SequenceCSVRepository.SEQUENCE_ID_FIELD

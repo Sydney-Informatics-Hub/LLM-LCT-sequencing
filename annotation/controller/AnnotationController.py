@@ -38,6 +38,9 @@ class AnnotationController:
     def get_curr_paragraph_text(self) -> str:
         return self.annotation_service.get_paragraph_text(self.curr_paragraph_id)
 
+    def get_curr_paragraph_clauses(self) -> list[tuple[int, str]]:
+        return self.annotation_service.get_all_paragraph_clauses(self.curr_paragraph_id)
+
     def get_curr_sequence(self) -> ClauseSequenceTuple:
         return self.annotation_service.get_sequence_clause_ranges(self.curr_paragraph_id, self.curr_sequence_idx)
 
@@ -93,8 +96,9 @@ class AnnotationController:
         self.annotation_service.set_sequence_correct_class(self.curr_paragraph_id, self.curr_sequence_idx,
                                                            classification)
 
-    def add_sequence(self, clause_a_range: ClauseTuple, clause_b_range: ClauseTuple):
-        pass
+    def add_sequence(self, clause_a_id: int, clause_b_id: int):
+        new_id: int = self.annotation_service.create_sequence(clause_a_id, clause_b_id)
+        return new_id
 
     def delete_curr_sequence(self):
         self.annotation_service.delete_sequence(self.curr_paragraph_id, self.curr_sequence_idx)
