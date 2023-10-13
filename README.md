@@ -25,12 +25,15 @@ Expert --> Sequencing-Examples
 Sequencing-Examples --> Examples-Split
 Examples-Split --> Prompt-Examples
 Examples-Split --> Test-Examples
-Test-Examples --> LLM-Model
+Test-Examples --> True-Classification
+Test-Examples --> Test-text-input
+Test-text-input --> LLM-Model
 Prompt-Examples --> Prompt
 LLM-Instructions --> Prompt
 Sequencing-Definitions --> Prompt
 Prompt --> LLM-Model
 LLM-Model --> Test-Predictions
+True-Classification --> LLM-Optimisation
 Test-Predictions --> LLM-Optimisation
 LLM-Optimisation --> Expert
 LLM-Optimisation --> LLM-Model
