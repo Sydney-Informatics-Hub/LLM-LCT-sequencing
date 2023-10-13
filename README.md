@@ -9,7 +9,36 @@ SIH has previously completed the ‘clausing tool’ (project PIPE-156), i.e. co
 
 This project (SIH project PIPE-4038) focuses on implementing the next level of the epistemological condensation of the texts, “sequencing tool”. By combining more than one short passages (clauses), the sequencing patterns affects how the meanings are condensed from more than one passages and transported across passages. Similar to the clausing typology, the sequencing tool has a 3-level hierarchical system that consists of 8 sub-types of sequencing at the finest granularity.
 
-## Overview of Sequencing
+## Overview
+
+### Overview of LLM training and optimisation for development
+
+
+
+```mermaid
+graph TD
+
+
+Expert --> LLM-Instructions
+Expert --> Sequencing-Definitions
+Expert --> Sequencing-Examples
+Sequencing-Examples --> Examples-Split
+Examples-Split --> Prompt-Examples
+Examples-Split --> Test-Examples
+Prompt-Examples --> Prompt
+LLM-Instructions --> Prompt
+Sequencing-Definitions --> Prompt
+Prompt --> LLM-Model
+LLM-Model --> Test-Predictions
+Test-Predictions --> LLM-Optimisation
+LLM-Optimisation --> Expert
+LLM-Optimisation --> LLM-Model
+
+
+```
+
+### Overview of Sequencing tool for production
+
 
 
 ```mermaid
@@ -17,23 +46,17 @@ graph TD
 
 Input-text --> Clausing-Tool
 Clausing-Tool --> Clausing-Pairs
-Sequencing-Examples --> Examples-Split
-Examples-Split --> Prompt-Examples
-Examples-Split --> Test-Examples
-Prompt-Examples --> Prompt
-LLM-Instructions --> Prompt
-Sequencing-Defintiions --> Prompt
-Prompt --> LLM-Model
-Clausing-Pairs --> LLM-Model
+Optimised-LLM-Instructions --> LLM-Model
 LLM-Model --> Sequencing-Prediction
-LLM-Model --> Test-Predictions
-Test-Predictions --> LLM-Optimisation
-LLM-Optimisation --> LLM-Model
 Sequencing-Prediction --> Annotation-Tool
 Clausing-Pairs --> Annotation-Tool
 Annotation-Tool --> Sequencing-Classification
 User-Input --> Annotation-Tool
-Sequencing-Classification --> EC-Analysis
+Sequencing-Classification --> EC-Analysis 
+Annotation-Tool --> Clausing-Pairs
+
+
+
 ```
 
 ## Functionality
