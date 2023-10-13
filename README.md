@@ -50,6 +50,7 @@ Optimised-LLM-Instructions --> LLM-Model
 LLM-Model --> Sequencing-Prediction
 Sequencing-Prediction --> Annotation-Tool
 Clausing-Pairs --> Annotation-Tool
+Clausing-Pairs --> LLM-Model
 Annotation-Tool --> Sequencing-Classification
 User-Input --> Annotation-Tool
 Sequencing-Classification --> EC-Analysis 
