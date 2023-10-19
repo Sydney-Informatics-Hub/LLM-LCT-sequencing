@@ -10,6 +10,9 @@ import os
 import tiktoken
 import openai
 import panel as pn
+from openai.error import AuthenticationError, APIConnectionError
+import logging
+logger = logging.getLogger(__name__)
 
 class LLM:
     """
@@ -151,20 +154,38 @@ class LLM:
 def openai_apikey_input():
     pn.extension()
     password_input = pn.widgets.PasswordInput(name='Enter your OpenAI API Key (then press enter):',
-                                            placeholder='<OpenAI API Key>')
+                                              placeholder='<OpenAI API Key>')
+
     def _cb_overwrite_api(key: str):
-        os.environ['OPENAI_API_KEY'] = key
-        if len(os.environ['OPENAI_API_KEY']) == 51:
-            return "Valid API Key. Please continue."
-        elif len(os.environ['OPENAI_API_KEY']) == 0:
+        if len(key) == 0:
             return "Please enter your OpenAI API Key."
         else:
-            return "Invalid API Key."
+            if len(key) == 51:
+                try:
+                    openai.api_key = key
+                    _ = openai.Model.list()
+                    os.environ['OPENAI_API_KEY'] = key
+                    return "Valid API Key. Please continue."
+                except AuthenticationError as ae:
+                    return str(ae)
+                except APIConnectionError as ace:
+                    logger.debug(ace)
+                    return "Something is wrong with your network connection. Please try again."
+                except Exception as e:
+                    logger.debug(str(e))
+                    return "Something went wrong when validating API Key. Please try again."
+            return "Incorrect API key provided. Must be 51 characters."
 
-    iobject = pn.bind(_cb_overwrite_api, password_input.param.value, watch=False)
-    return pn.Row(password_input, pn.pane.Markdown(iobject))  
+    iobject = pn.bind(_cb_overwrite_api,
+                      password_input.param.value,
+                      watch=False)  # watch=False callback triggered with "Enter"
+    return pn.Row(password_input, pn.pane.Markdown(iobject))
 
-# test the LLM class (see also tests/test_utils_llm.py)
+
+def openai_models():
+    # return openai available models
+    return openai.Model.list()
+
 
 def test_llm_completion():
     """
