@@ -20,7 +20,7 @@ class AnnotationDAO:
 
     def get_all_clauses(self) -> list[Clause]:
         clause_data: ndarray = self.clause_repository.read_all()
-        clauses: list[Clause] = [Clause(data[2], data[3], clause_id=data[0]) for data in clause_data]
+        clauses: list[Clause] = [Clause(data[1], data[2], clause_id=data[0]) for data in clause_data]
 
         return clauses
 
@@ -63,7 +63,7 @@ class AnnotationDAO:
         clause_map: dict[int, Clause] = {}
         for clause_data in all_clauses:
             clause_id = clause_data[0]
-            clause = Clause(clause_data[2], clause_data[3])
+            clause = Clause(clause_data[1], clause_data[2])
             clause_map[clause_id] = clause
 
         sequence_data: ndarray = self.sequence_repository.read_all()

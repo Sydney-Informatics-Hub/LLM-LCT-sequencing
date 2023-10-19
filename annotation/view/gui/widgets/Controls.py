@@ -1,13 +1,13 @@
 from typing import Optional, Callable
 
-import panel as pn
 from panel import Row, Column, bind
 from panel.widgets import Button, RadioButtonGroup, CrossSelector
 from panel.pane import Str, HTML
 
 from annotation.controller.AnnotationController import AnnotationController
 from .styles import (controls_style, sequence_heading_style, delete_sequence_button_style, add_sequence_button_style,
-                     clause_stylesheet, sequence_info_style, classification_heading_style, sequence_classification_style,
+                     clause_stylesheet, sequence_info_style, classification_heading_style,
+                     sequence_classification_style,
                      classification_subheading_style, llm_class_display_style, manage_sequence_button_style)
 
 
@@ -24,7 +24,8 @@ class ClauseSequenceControls:
                                            button_style="outline")
         self.next_sequence_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="primary",
                                            button_style="outline")
-        self.manage_sequence_button = Button(name="Manage sequence", button_type="primary", button_style="outline", styles=manage_sequence_button_style)
+        self.manage_sequence_button = Button(name="Manage sequence", button_type="primary", button_style="outline",
+                                             styles=manage_sequence_button_style)
         self.delete_sequence_button = Button(name="Delete", button_type="danger", styles=delete_sequence_button_style)
         self.add_sequence_button = Button(name="Add", button_type="success", styles=add_sequence_button_style)
 
@@ -192,13 +193,13 @@ class AddSequenceControls:
     def save_sequence(self, event):
         selections: list[int] = self.clause_selector.value
         if len(selections) != 2:
-            pn.state.notifications.error('A clause sequence must contain exactly 2 clauses. '
-                                         'Please select 2 clauses in the clause selector', duration=5000)
+            self.controller.display_error('A clause sequence must contain exactly 2 clauses. '
+                                          'Please select 2 clauses in the clause selector')
             return
 
         new_id: int = self.controller.add_sequence(int(selections[0]), int(selections[1]))
         if new_id == -1:
-            pn.state.notifications.error('Clause sequence already exists', duration=5000)
+            self.controller.display_error('Clause sequence already exists')
             return
         else:
             self.exit_pane()
