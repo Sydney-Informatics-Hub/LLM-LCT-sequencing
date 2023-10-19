@@ -10,11 +10,9 @@ from annotation.model.database.DatabaseExceptions import DatabaseFieldError, Dat
 
 class ClauseCSVRepository(ClauseRepository):
     CLAUSE_ID_FIELD: str = "clause_id"
-    PARAGRAPH_ID_FIELD: str = "paragraph_id"
     CLAUSE_START_FIELD: str = "start"
     CLAUSE_END_FIELD: str = "end"
-    FIELD_DTYPES: dict = {CLAUSE_ID_FIELD: int, PARAGRAPH_ID_FIELD: int,
-                          CLAUSE_START_FIELD: int, CLAUSE_END_FIELD: int}
+    FIELD_DTYPES: dict = {CLAUSE_ID_FIELD: int, CLAUSE_START_FIELD: int, CLAUSE_END_FIELD: int}
     REQUIRED_FIELDS: list[str, ...] = [field for field in FIELD_DTYPES.keys()]
 
     def __init__(self, database_csv_filename: str):
@@ -76,15 +74,6 @@ class ClauseCSVRepository(ClauseRepository):
             return tuple(matches[0])
         else:
             raise DatabaseEntryError(f"More than one entry found for clause_id: {clause_id}")
-
-    def read_all_by_paragraph(self, paragraph_id: int) -> ndarray:
-        paragraph_field = ClauseCSVRepository.PARAGRAPH_ID_FIELD
-
-        self._read_database_into_cache()
-
-        matches: ndarray = self._database_cache.loc[(self._database_cache[paragraph_field] == paragraph_id)].values
-
-        return matches
 
     def create(self, clause) -> bool:
         raise NotImplementedError()

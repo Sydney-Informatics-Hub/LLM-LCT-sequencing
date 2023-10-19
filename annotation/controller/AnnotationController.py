@@ -10,8 +10,7 @@ ClauseSequenceTuple = tuple[ClauseTuple, ClauseTuple]
 class AnnotationController:
     def __init__(self, service: AnnotationService):
         self.annotation_service: AnnotationService = service
-        self.curr_paragraph_id: int = 1
-        self.curr_sequence_idx: int = 0
+        self.curr_sequence_id: int = 1
 
         self._update_display_callables: list[Callable] = []
 
@@ -26,86 +25,50 @@ class AnnotationController:
 
     # Data access methods
 
-    def get_current_paragraph_id(self) -> int:
-        return self.curr_paragraph_id
+    def get_text(self) -> str:
+        return self.annotation_service.get_text()
 
-    def get_next_paragraph_text(self) -> str:
-        return self.annotation_service.get_paragraph_text(self.curr_paragraph_id + 1)
-
-    def get_prev_paragraph_text(self) -> str:
-        return self.annotation_service.get_paragraph_text(self.curr_paragraph_id - 1)
-
-    def get_curr_paragraph_text(self) -> str:
-        return self.annotation_service.get_paragraph_text(self.curr_paragraph_id)
-
-    def get_curr_paragraph_clauses(self) -> list[tuple[int, str]]:
-        return self.annotation_service.get_all_paragraph_clauses(self.curr_paragraph_id)
+    def get_clauses(self) -> list[tuple[int, str]]:
+        return self.annotation_service.get_clauses()
 
     def get_curr_sequence(self) -> ClauseSequenceTuple:
-        return self.annotation_service.get_sequence_clause_ranges(self.curr_paragraph_id, self.curr_sequence_idx)
+        return self.annotation_service.get_sequence_clause_ranges(self.curr_sequence_id)
 
     def get_all_classifications(self) -> list[str]:
         return self.annotation_service.get_all_sequence_classifications()
 
     def get_predicted_classification(self) -> str:
-        return self.annotation_service.get_sequence_predict_class(self.curr_paragraph_id, self.curr_sequence_idx)
+        return self.annotation_service.get_sequence_predict_class(self.curr_sequence_id)
 
     def get_correct_classification(self) -> str:
-        return self.annotation_service.get_sequence_correct_class(self.curr_paragraph_id, self.curr_sequence_idx)
+        return self.annotation_service.get_sequence_correct_class(self.curr_sequence_id)
 
     # Data control methods
 
-    def set_curr_paragraph(self, paragraph_id: int):
-        if paragraph_id >= self.annotation_service.get_paragraph_count():
-            self.curr_paragraph_id = self.annotation_service.get_paragraph_count()
-            self.curr_sequence_idx = 0
-        elif paragraph_id < 1:
-            self.curr_paragraph_id = 1
-            self.curr_sequence_idx = 0
-        else:
-            self.curr_paragraph_id = paragraph_id
-
-        self.update_displays()
-
-    def next_paragraph(self):
-        if self.curr_paragraph_id < self.annotation_service.get_paragraph_count():
-            self.curr_paragraph_id += 1
-        self.curr_sequence_idx = 0
-
-        self.update_displays()
-
-    def prev_paragraph(self):
-        if self.curr_paragraph_id > 1:
-            self.curr_paragraph_id -= 1
-        self.curr_sequence_idx = 0
-
-        self.update_displays()
-
     def next_sequence(self):
-        num_sequences: int = self.annotation_service.get_paragraph_sequence_count(self.curr_paragraph_id)
-        if self.curr_sequence_idx < (num_sequences - 1):
-            self.curr_sequence_idx += 1
+        num_sequences: int = self.annotation_service.get_sequence_count()
+        if self.curr_sequence_id < (num_sequences - 1):
+            self.curr_sequence_id += 1
         self.update_displays()
 
     def prev_sequence(self):
-        if self.curr_sequence_idx > 0:
-            self.curr_sequence_idx -= 1
+        if self.curr_sequence_id > 1:
+            self.curr_sequence_id -= 1
         self.update_displays()
 
     def set_correct_classification(self, classification: str):
-        self.annotation_service.set_sequence_correct_class(self.curr_paragraph_id, self.curr_sequence_idx,
-                                                           classification)
+        self.annotation_service.set_sequence_correct_class(self.curr_sequence_id, classification)
 
-    def add_sequence(self, clause_a_id: int, clause_b_id: int):
+    def add_sequence(self, clause_a_id: int, clause_b_id: int) -> int:
         new_id: int = self.annotation_service.create_sequence(clause_a_id, clause_b_id)
         return new_id
 
     def delete_curr_sequence(self):
-        self.annotation_service.delete_sequence(self.curr_paragraph_id, self.curr_sequence_idx)
+        self.annotation_service.delete_sequence(self.curr_sequence_id)
 
         # The sequence index must be decreased if the deleted sequence was not the first sequence
-        if self.curr_sequence_idx > 0:
-            self.curr_sequence_idx -= 1
+        if self.curr_sequence_id > 0:
+            self.curr_sequence_id -= 1
 
         # The display must be updated to reflect the deletion
         self.update_displays()

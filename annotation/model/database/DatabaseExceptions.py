@@ -8,3 +8,7 @@ class DatabaseFieldError(DatabaseStateError):
 
 class DatabaseEntryError(DatabaseStateError):
     pass
+
+
+class DatabaseFileSizeError(DatabaseStateError):
+    pass

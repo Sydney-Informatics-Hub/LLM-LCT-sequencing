@@ -18,17 +18,6 @@ clause_stylesheet = """
 }
 """
 
-curr_paragraph_style = {
-    "margin": "0px",
-    "min-height": "150px"
-}
-
-context_paragraph_style = {
-    "opacity": "0.6",
-    "margin": "0px",
-    "min-height": "100px"
-}
-
 controls_style = {
     "border-left": "1px solid black",
     "padding": "20px",

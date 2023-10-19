@@ -4,8 +4,8 @@ from annotation.view.AnnotationViewWrapper import AnnotationViewWrapper
 
 
 class Annotation:
-    def __init__(self, paragraph_db_path: str, clause_db_path: str, sequence_db_path: str):
-        self.service: AnnotationService = AnnotationService(paragraph_db_path, clause_db_path, sequence_db_path)
+    def __init__(self, text_database_path: str, clause_db_path: str, sequence_db_path: str):
+        self.service: AnnotationService = AnnotationService(text_database_path, clause_db_path, sequence_db_path)
         self.controller: AnnotationController = AnnotationController(self.service)
         self.view: AnnotationViewWrapper = AnnotationViewWrapper(self.controller)
 

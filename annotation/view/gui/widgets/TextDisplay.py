@@ -1,68 +1,17 @@
 from typing import Optional
 
-import panel as pn
 from panel import Column
 from panel.pane import HTML
 
 from annotation.controller.AnnotationController import AnnotationController
-from .styles import curr_paragraph_style, context_paragraph_style, text_display_style, clause_stylesheet
+from .styles import text_display_style, clause_stylesheet
 
 
-class PrevParagraph:
+class TextRender:
     """
-    Defines the previous paragraph of text as context
-    """
-    CHAR_SUBSET: int = 200
-
-    def __init__(self, text: str = ""):
-        self.text: str = text
-
-    def set_text(self, text: str):
-        if type(text) is not str:
-            raise TypeError(f"text must be str, but got {type(text)}")
-        self.text = text
-
-    def _repr_html_(self) -> str:
-        if self.text == "":
-            # Returning a space character is necessary because the HTML pane does not register the change in text if
-            # the string is empty
-            return " "
-
-        # Returns the last CHAR_SUBSET characters to prevent overflow
-        idx_start = len(self.text) - NextParagraph.CHAR_SUBSET
-        return self.text[idx_start:]
-
-
-class NextParagraph:
-    """
-    Defines the next paragraph of text as context
-    """
-    CHAR_SUBSET: int = 200
-
-    def __init__(self, text: str = ""):
-        self.text: str = text
-
-    def set_text(self, text: str):
-        if type(text) is not str:
-            raise TypeError(f"text must be str, but got {type(text)}")
-        self.text = text
-
-    def _repr_html_(self) -> str:
-        if self.text == "":
-            # Returning a space character is necessary because the HTML pane does not register the change in text if
-            # the string is empty
-            return " "
-
-        # Returns the first CHAR_SUBSET characters to prevent overflow
-        return self.text[:NextParagraph.CHAR_SUBSET]
-
-
-class CurrentParagraph:
-    """
-    Defines a paragraph of text and up to two clauses to be highlighted with custom colours.
+    Defines text and up to two clauses to be highlighted with custom colours.
     clause_a_range and clause_b_range can be set using the setters. The ranges specified are inclusive
     """
-
     def __init__(self, text: str = ""):
         self.raw_text: str = text
 
@@ -149,13 +98,14 @@ class CurrentParagraph:
             self.clause_a_range = clause_a_range
             return
         if type(clause_a_range) is not tuple:
-            raise TypeError("clause_a_range must be a tuple")
+            raise TypeError(f"clause_a_range: expected type tuple, provided type {type(clause_a_range)}")
         if len(clause_a_range) != 2:
             raise ValueError("clause_a_range must contain exactly two elements")
         if (type(clause_a_range[0]) is not int) or (type(clause_a_range[1]) is not int):
             raise TypeError("clause_a_range must only contain integers")
         if clause_a_range[1] <= clause_a_range[0]:
-            raise ValueError("The second integer of clause_a_range must be greater than the second integer")
+            raise ValueError(f"The second integer of clause_a_range (provided: {clause_a_range[1]}) "
+                             f"must be greater than the first integer (provided: {clause_a_range[0]})")
 
         self.clause_a_range = clause_a_range
 
@@ -177,7 +127,8 @@ class CurrentParagraph:
         if (type(clause_b_range[0]) is not int) or (type(clause_b_range[1]) is not int):
             raise TypeError("clause_b_range must only contain integers")
         if clause_b_range[1] <= clause_b_range[0]:
-            raise ValueError("The second integer of clause_b_range must be greater than the second integer")
+            raise ValueError(f"The second integer of clause_b_range (provided: {clause_b_range[1]}) "
+                             f"must be greater than the first integer (provided: {clause_b_range[0]})")
 
         self.clause_b_range = clause_b_range
 
@@ -186,17 +137,11 @@ class TextDisplay:
     """
     Controls the text view and rendering
     """
-
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
-        self.prev_paragraph = PrevParagraph()
-        self.next_paragraph = NextParagraph()
-        self.curr_paragraph = CurrentParagraph()
-        self.prev_html = HTML(self.prev_paragraph, styles=context_paragraph_style)
-        self.next_html = HTML(self.next_paragraph, styles=context_paragraph_style)
-        self.curr_html = HTML(self.curr_paragraph, styles=curr_paragraph_style, stylesheets=[clause_stylesheet])
-        self.component = Column(self.prev_html, self.curr_html, self.next_html,
-                                styles=text_display_style, sizing_mode="stretch_height")
+        self.text_render: TextRender = TextRender()
+        self.text_html = HTML(TextRender, stylesheets=[clause_stylesheet])
+        self.component = Column(self.text_html, styles=text_display_style, sizing_mode="stretch_height")
 
         self.controller.add_update_text_display_callable(self.update_display)
 
@@ -208,35 +153,25 @@ class TextDisplay:
             clause_a_range, clause_b_range = clause_ranges
         self.set_clause_a_range(clause_a_range)
         self.set_clause_b_range(clause_b_range)
-        self.set_next_paragraph_text(self.controller.get_next_paragraph_text())
-        self.set_prev_paragraph_text(self.controller.get_prev_paragraph_text())
-        self.set_curr_paragraph_text(self.controller.get_curr_paragraph_text())
+        self.set_text(self.controller.get_text())
 
     def get_component(self):
         return self.component
 
-    def set_curr_paragraph_text(self, text: str):
-        self.curr_paragraph.set_text(text)
-        self.curr_html.object = self.curr_paragraph
-
-    def set_prev_paragraph_text(self, text: str):
-        self.prev_paragraph.set_text(text)
-        self.prev_html.object = self.prev_paragraph
-
-    def set_next_paragraph_text(self, text: str):
-        self.next_paragraph.set_text(text)
-        self.next_html.object = self.next_paragraph
+    def set_text(self, text: str):
+        self.text_render.set_text(text)
+        self.text_html.object = self.text_render
 
     def set_clause_a_range(self, clause_a_range: Optional[tuple[int, int]]):
         """
         Calls the method of the same name on the current paragraph object (unless curr_paragraph is None)
         """
-        if self.curr_paragraph is not None:
-            self.curr_paragraph.set_clause_a_range(clause_a_range)
+        if self.text_render is not None:
+            self.text_render.set_clause_a_range(clause_a_range)
 
     def set_clause_b_range(self, clause_b_range: Optional[tuple[int, int]]):
         """
         Calls the method of the same name on the current paragraph object (unless curr_paragraph is None)
         """
-        if self.curr_paragraph is not None:
-            self.curr_paragraph.set_clause_b_range(clause_b_range)
+        if self.text_render is not None:
+            self.text_render.set_clause_b_range(clause_b_range)

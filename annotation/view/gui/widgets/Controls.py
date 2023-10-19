@@ -2,69 +2,13 @@ from typing import Optional, Callable
 
 import panel as pn
 from panel import Row, Column, bind
-from panel.layout import Divider
-from panel.widgets import Button, RadioButtonGroup, IntInput, CrossSelector
+from panel.widgets import Button, RadioButtonGroup, CrossSelector
 from panel.pane import Str, HTML
 
 from annotation.controller.AnnotationController import AnnotationController
-from .styles import controls_style, paragraph_heading_style, \
-    sequence_heading_style, delete_sequence_button_style, add_sequence_button_style, clause_stylesheet, \
-    sequence_info_style, paragraph_controls_style, classification_heading_style, sequence_classification_style, \
-    classification_subheading_style, llm_class_display_style, manage_sequence_button_style
-
-
-class ParagraphControls:
-    def __init__(self, controller: AnnotationController):
-        self.controller: AnnotationController = controller
-
-        self.title = Str("Paragraph", styles=paragraph_heading_style)
-        self.curr_paragraph_id = IntInput(start=1, placeholder="1", align="center")
-        self.curr_paragraph_id.width = 60
-        self.prev_paragraph_button = Button(name="\N{LEFTWARDS ARROW TO BAR} PREV", button_type="default", align="start")
-        self.next_paragraph_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="default", align="end")
-
-        paragraph_bound_fn = bind(self.set_paragraph, paragraph_id=self.curr_paragraph_id)
-
-        self.prev_paragraph_button.on_click(self.prev_paragraph)
-        self.next_paragraph_button.on_click(self.next_paragraph)
-
-        self.component = Column(
-            Row(self.title,
-                align="center"),
-            Row(
-                self.prev_paragraph_button,
-                self.curr_paragraph_id,
-                self.next_paragraph_button
-
-            ),
-            Divider(),
-            Row(paragraph_bound_fn, visible=False),
-            styles=paragraph_controls_style,
-            align="center"
-        )
-
-    def get_component(self):
-        return self.component
-
-    def set_visibility(self, is_visible: bool):
-        self.component.visible = is_visible
-
-    def toggle_visibility(self):
-        self.component.visible = not self.component.visible
-
-    def update_display(self):
-        self.curr_paragraph_id.value = self.controller.get_current_paragraph_id()
-
-    def set_paragraph(self, paragraph_id):
-        if paragraph_id is None:
-            paragraph_id = 1
-        self.controller.set_curr_paragraph(paragraph_id)
-
-    def next_paragraph(self, event):
-        self.controller.next_paragraph()
-
-    def prev_paragraph(self, event):
-        self.controller.prev_paragraph()
+from .styles import (controls_style, sequence_heading_style, delete_sequence_button_style, add_sequence_button_style,
+                     clause_stylesheet, sequence_info_style, classification_heading_style, sequence_classification_style,
+                     classification_subheading_style, llm_class_display_style, manage_sequence_button_style)
 
 
 class ClauseSequenceControls:
@@ -232,7 +176,7 @@ class AddSequenceControls:
             return
 
         clause_selector_options = {}
-        for clause_data in self.controller.get_curr_paragraph_clauses():
+        for clause_data in self.controller.get_clauses():
             clause_id = clause_data[0]
             clause_text = clause_data[1]
             clause_selector_options[clause_text] = clause_id
@@ -322,13 +266,11 @@ class SequenceClassificationControls:
 class Controls:
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
-        self.paragraph_controls = ParagraphControls(self.controller)
         self.clause_sequence_controls = ClauseSequenceControls(self.controller, self.add_sequence_controls)
         self.sequence_classification_controls = SequenceClassificationControls(self.controller)
         self.add_sequence_controls = AddSequenceControls(self.controller, self.reset_visibility)
 
         self.component = Column(
-            self.paragraph_controls.get_component(),
             self.clause_sequence_controls.get_component(),
             self.sequence_classification_controls.get_component(),
             self.add_sequence_controls.get_component(),
@@ -341,7 +283,6 @@ class Controls:
         self.controller.add_update_text_display_callable(self.update_display)
 
     def update_display(self):
-        self.paragraph_controls.update_display()
         self.clause_sequence_controls.update_display()
         self.sequence_classification_controls.update_display()
         self.add_sequence_controls.update_display()

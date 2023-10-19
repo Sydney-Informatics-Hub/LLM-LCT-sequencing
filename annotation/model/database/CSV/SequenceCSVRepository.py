@@ -154,6 +154,7 @@ class SequenceCSVRepository(SequenceRepository):
             return False
         elif len(matches) == 1:
             self._database_cache = self._database_cache.loc[~(self._database_cache[id_field] == sequence_id)]
+            self._database_cache[id_field] = self._database_cache[id_field].apply(lambda x: x - 1 if x > sequence_id else x)
 
             self._write_cache_to_database()
             return True

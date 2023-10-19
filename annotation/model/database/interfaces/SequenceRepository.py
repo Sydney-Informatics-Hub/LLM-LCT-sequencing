@@ -36,12 +36,7 @@ class SequenceRepository(ABC):
 
         Returns
         -------
-        sequence: tuple[int, int, int, int] - the sequence to write as a tuple with the following values:
-         - integer id of the sequence
-         - integer id of the first clause
-         - integer id of the second clause
-         - the predicted class as an integer
-         - the corrected class as an integer
+        sequence: tuple - the sequence to write as a tuple with the following values
         """
         raise NotImplementedError()
 

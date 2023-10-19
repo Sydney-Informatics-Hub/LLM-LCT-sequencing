@@ -1,3 +1,3 @@
 from .ClauseRepository import ClauseRepository
 from .SequenceRepository import SequenceRepository
-from .ParagraphRepository import ParagraphRepository
+from .TextRepository import TextRepository

@@ -13,10 +13,6 @@ class ClauseRepository(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_all_by_paragraph(self, paragraph_id: int) -> ndarray:
-        raise NotImplementedError()
-
-    @abstractmethod
     def create(self, clause) -> int:
         raise NotImplementedError()
 
