@@ -1,7 +1,7 @@
 from typing import Optional, Callable
 
 from panel import Row, Column, bind
-from panel.widgets import Button, RadioButtonGroup, CrossSelector
+from panel.widgets import Button, CrossSelector, CheckButtonGroup
 from panel.pane import Str, HTML
 
 from annotation.controller.AnnotationController import AnnotationController
@@ -218,15 +218,16 @@ class SequenceClassificationControls:
 
         self.title = Str("Sequence Classification", styles=classification_heading_style)
         self.llm_class_title = Str("LLM", styles=classification_subheading_style)
-        self.llm_class_display = Str("", styles=llm_class_display_style)
+        self.llm_class_display = Row(Str("", styles=llm_class_display_style))
         self.user_class_title = Str("User", styles=classification_subheading_style)
         classification_options = [SequenceClassificationControls.UNSELECTED] + self.controller.get_all_classifications()
-        self.classification_selector = RadioButtonGroup(
+        self.classification_selector = CheckButtonGroup(
             name="Sequence Classifications",
             options=classification_options,
+            value=self.controller.get_correct_classifications(),
             button_type="primary", button_style="outline"
         )
-        selector_bound_fn = bind(self.set_correct_classification, classification=self.classification_selector)
+        selector_bound_fn = bind(self.set_correct_classification, classifications=self.classification_selector)
 
         self.component = Column(
             Row(self.title,
@@ -244,6 +245,8 @@ class SequenceClassificationControls:
             align="center"
         )
 
+        self.unselected_flag = SequenceClassificationControls.UNSELECTED in self.classification_selector.value
+
     def get_component(self):
         return self.component
 
@@ -254,14 +257,33 @@ class SequenceClassificationControls:
         self.component.visible = not self.component.visible
 
     def update_display(self):
-        curr_correct_class = self.controller.get_correct_classification()
-        if curr_correct_class not in self.controller.get_all_classifications():
-            curr_correct_class = SequenceClassificationControls.UNSELECTED
-        self.classification_selector.value = curr_correct_class
-        self.llm_class_display.object = self.controller.get_predicted_classification()
+        self._update_user_class_display()
+        self._update_llm_display()
 
-    def set_correct_classification(self, classification):
-        self.controller.set_correct_classification(classification)
+    def _update_user_class_display(self):
+        curr_correct_classes: list[str] = self.controller.get_correct_classifications()
+        if len(curr_correct_classes) == 0:
+            curr_correct_classes = [SequenceClassificationControls.UNSELECTED]
+        self.classification_selector.value = curr_correct_classes
+
+    def _update_llm_display(self):
+        curr_predict_classes: list[str] = self.controller.get_predicted_classifications()
+        if len(curr_predict_classes) == 0:
+            curr_predict_classes = [""]
+        self.llm_class_display.objects = [Str(class_str, styles=llm_class_display_style) for class_str in curr_predict_classes]
+
+    def set_correct_classification(self, classifications: list[str]):
+        if len(classifications) == 0:
+            self.classification_selector.value = [SequenceClassificationControls.UNSELECTED]
+
+        if (len(classifications) > 1) and (SequenceClassificationControls.UNSELECTED in classifications):
+            if self.unselected_flag:
+                self.classification_selector.value = [x for x in self.classification_selector.value if x != SequenceClassificationControls.UNSELECTED]
+            else:
+                self.classification_selector.value = [SequenceClassificationControls.UNSELECTED]
+        self.unselected_flag = SequenceClassificationControls.UNSELECTED in self.classification_selector.value
+
+        self.controller.set_correct_classifications(self.classification_selector.value)
 
 
 class Controls:

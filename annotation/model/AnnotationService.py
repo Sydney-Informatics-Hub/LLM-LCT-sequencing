@@ -41,36 +41,40 @@ class AnnotationService:
     def get_all_sequence_classifications(self) -> list[str]:
         return [c.name for c in Classification]
 
-    def get_sequence_predict_class(self, sequence_id: int) -> str:
+    def get_sequence_predict_classes(self, sequence_id: int) -> list[str]:
         sequence: Optional[ClauseSequence] = self.annotation_dao.get_sequence_by_id(sequence_id)
         if sequence is None:
-            return ""
+            return []
 
-        classification: Optional[Classification] = sequence.get_predicted_class()
-        if classification is None:
-            return ""
+        classifications: Optional[list[Classification]] = sequence.get_predicted_classes()
+        if classifications is None:
+            return []
         else:
-            return classification.name
+            return [c.name for c in classifications]
 
-    def get_sequence_correct_class(self, sequence_id: int) -> str:
+    def get_sequence_correct_classes(self, sequence_id: int) -> list[str]:
         sequence: Optional[ClauseSequence] = self.annotation_dao.get_sequence_by_id(sequence_id)
         if sequence is None:
-            return ""
+            return []
 
-        classification: Optional[Classification] = sequence.get_correct_class()
-        if classification is None:
-            return ""
+        classifications: Optional[list[Classification]] = sequence.get_correct_classes()
+        if classifications is None:
+            return []
         else:
-            return classification.name
+            return [c.name for c in classifications]
 
-    def set_sequence_correct_class(self, sequence_id: int, classification: str):
-        correct_class: int
-        try:
-            correct_class = Classification[classification].value
-        except KeyError:
-            correct_class = 0
+    def set_sequence_correct_classes(self, sequence_id: int, classifications: list[str]):
+        correct_classes: list[int] = []
+        for class_str in classifications:
+            try:
+                correct_class = Classification[class_str].value
+            except KeyError:
+                continue
+            correct_classes.append(correct_class)
+        if len(correct_classes) == 0:
+            correct_classes = [0]
 
-        self.annotation_dao.update_sequence_classification(sequence_id, correct_class)
+        self.annotation_dao.update_sequence_classifications(sequence_id, correct_classes)
 
     def create_sequence(self, clause_a_id: int, clause_b_id: int) -> int:
         return self.annotation_dao.create_sequence(clause_a_id, clause_b_id)

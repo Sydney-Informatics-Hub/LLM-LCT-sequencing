@@ -13,11 +13,13 @@ class SequenceCSVRepository(SequenceRepository):
     SEQUENCE_ID_FIELD: str = "sequence_id"
     CLAUSE_A_ID_FIELD: str = "c1_id"
     CLAUSE_B_ID_FIELD: str = "c2_id"
-    PREDICTED_CLASS: str = "class_predict"
-    CORRECTED_CLASS: str = "class_correct"
+    PREDICTED_CLASSES: str = "classes_predict"
+    CORRECTED_CLASSES: str = "classes_correct"
     FIELD_DTYPES: dict = {SEQUENCE_ID_FIELD: int, CLAUSE_A_ID_FIELD: int, CLAUSE_B_ID_FIELD: int,
-                          PREDICTED_CLASS: int, CORRECTED_CLASS: int}
+                          PREDICTED_CLASSES: str, CORRECTED_CLASSES: str}
     REQUIRED_FIELDS: list[str, ...] = [field for field in FIELD_DTYPES.keys()]
+
+    CLASS_LS_DELIMITER: str = ','
 
     def __init__(self, database_csv_filename: str):
         self._database_filename: str = database_csv_filename
@@ -59,6 +61,7 @@ class SequenceCSVRepository(SequenceRepository):
     def _write_cache_to_database(self):
         self._database_cache.to_csv(path_or_buf=self._database_filename, index=False,
                                     columns=SequenceCSVRepository.REQUIRED_FIELDS)
+
         self._cache_updated = True
 
     def read_all(self) -> ndarray:
@@ -114,10 +117,10 @@ class SequenceCSVRepository(SequenceRepository):
         if len(existing_ids) > 0:
             new_id = existing_ids.max() + 1
 
-        new_entry = [new_id, clause_a_id, clause_b_id, 0, 0]
+        new_entry = [new_id, clause_a_id, clause_b_id, "0", "0"]
 
         if len(self._database_cache.index) > 0:
-            self._database_cache.loc[max(self._database_cache.index)+1] = new_entry
+            self._database_cache.loc[max(self._database_cache.index) + 1] = new_entry
         else:
             self._database_cache.loc[len(self._database_cache)] = new_entry
 
@@ -125,9 +128,9 @@ class SequenceCSVRepository(SequenceRepository):
 
         return new_id
 
-    def update(self, sequence_id: int, class_correct: int) -> bool:
+    def update(self, sequence_id: int, correct_classes: str) -> bool:
         id_field = SequenceCSVRepository.SEQUENCE_ID_FIELD
-        corrected_field = SequenceCSVRepository.CORRECTED_CLASS
+        corrected_field = SequenceCSVRepository.CORRECTED_CLASSES
 
         self._read_database_into_cache()
 
@@ -136,7 +139,7 @@ class SequenceCSVRepository(SequenceRepository):
         if len(matches) == 0:
             return False
         elif len(matches) == 1:
-            self._database_cache.loc[(self._database_cache[id_field] == sequence_id), [corrected_field]] = class_correct
+            self._database_cache.loc[(self._database_cache[id_field] == sequence_id), [corrected_field]] = correct_classes
 
             self._write_cache_to_database()
             return True
@@ -154,7 +157,8 @@ class SequenceCSVRepository(SequenceRepository):
             return False
         elif len(matches) == 1:
             self._database_cache = self._database_cache.loc[~(self._database_cache[id_field] == sequence_id)]
-            self._database_cache[id_field] = self._database_cache[id_field].apply(lambda x: x - 1 if x > sequence_id else x)
+            self._database_cache[id_field] = self._database_cache[id_field].apply(
+                lambda x: x - 1 if x > sequence_id else x)
 
             self._write_cache_to_database()
             return True

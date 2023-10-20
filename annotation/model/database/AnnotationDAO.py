@@ -15,6 +15,19 @@ class AnnotationDAO:
         self.clause_repository: ClauseRepository = ClauseCSVRepository(clause_database_fn)
         self.sequence_repository: SequenceRepository = SequenceCSVRepository(sequence_db_path)
 
+    @staticmethod
+    def _split_to_int_list(delimited_str: str) -> list[int]:
+        if len(delimited_str) == 0:
+            return []
+
+        delimiter: str = SequenceCSVRepository.CLASS_LS_DELIMITER
+        return [int(x) for x in delimited_str.split(delimiter)]
+
+    @staticmethod
+    def _join_str_from_int_list(int_list: list[int]) -> str:
+        delimiter: str = SequenceCSVRepository.CLASS_LS_DELIMITER
+        return delimiter.join([str(x) for x in int_list])
+
     def get_text(self) -> str:
         return self.text_repository.read_all()
 
@@ -28,14 +41,12 @@ class AnnotationDAO:
         sequence_data: ndarray = self.sequence_repository.read_all()
         return sequence_data.shape[0]
 
-    def get_sequence_by_id(self, sequence_id: int) -> ClauseSequence:
-        sequence_data: tuple = self.sequence_repository.read_by_id(sequence_id)
-        if len(sequence_data) == 0:
-            raise ValueError(f"Sequence database does not contain a sequence with id {sequence_id}")
+    def _read_sequence_from_sequence_data(self, sequence_data: tuple[int]) -> ClauseSequence:
+        sequence_id: int = sequence_data[0]
         clause_a_id: int = sequence_data[1]
         clause_b_id: int = sequence_data[2]
-        class_predict_id: int = sequence_data[3]
-        class_correct_id: int = sequence_data[4]
+        class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[3])
+        class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[4])
 
         clause_a_data: tuple = self.clause_repository.read_by_id(clause_a_id)
         if len(clause_a_data) == 0:
@@ -47,58 +58,46 @@ class AnnotationDAO:
         clause_a: Clause = Clause(clause_a_data[1], clause_a_data[2], clause_id=clause_a_id)
         clause_b: Clause = Clause(clause_b_data[1], clause_b_data[2], clause_id=clause_b_id)
 
-        try:
-            predicted_class = Classification(class_predict_id)
-        except ValueError:
-            predicted_class = None
-        try:
-            correct_class = Classification(class_correct_id)
-        except ValueError:
-            correct_class = None
+        predicted_classes: Optional[list[Classification]] = []
+        for class_int in class_predict_ids:
+            try:
+                predicted_classes.append(Classification(class_int))
+            except ValueError:
+                continue
+        if len(predicted_classes) == 0:
+            predicted_classes = None
 
-        return ClauseSequence(sequence_id, clause_a, clause_b, predicted_class, correct_class)
+        corrected_classes: Optional[list[Classification]] = []
+        for class_int in class_correct_ids:
+            try:
+                corrected_classes.append(Classification(class_int))
+            except ValueError:
+                continue
+        if len(corrected_classes) == 0:
+            corrected_classes = None
+
+        return ClauseSequence(sequence_id, clause_a, clause_b, predicted_classes, corrected_classes)
+
+    def get_sequence_by_id(self, sequence_id: int) -> ClauseSequence:
+        sequence_data: tuple = self.sequence_repository.read_by_id(sequence_id)
+        if len(sequence_data) == 0:
+            raise ValueError(f"Sequence database does not contain a sequence with id {sequence_id}")
+
+        return self._read_sequence_from_sequence_data(sequence_data)
 
     def get_all_sequences(self) -> list[ClauseSequence]:
-        all_clauses: ndarray = self.clause_repository.read_all()
-        clause_map: dict[int, Clause] = {}
-        for clause_data in all_clauses:
-            clause_id = clause_data[0]
-            clause = Clause(clause_data[1], clause_data[2])
-            clause_map[clause_id] = clause
-
         sequence_data: ndarray = self.sequence_repository.read_all()
         sequence_map: dict[int, ClauseSequence] = {}
 
         for data in sequence_data:
-            sequence_id: int = data[0]
-            clause_a_id: int = data[1]
-            clause_b_id: int = data[2]
-            class_predict_id: int = data[3]
-            class_correct_id: int = data[4]
-
-            clause_a: Optional[Clause] = clause_map.get(clause_a_id)
-            clause_b: Optional[Clause] = clause_map.get(clause_b_id)
-            if clause_a is None:
-                raise ValueError(f"Clause ID {clause_a_id} is found in sequence database but is not present in clause database")
-            if clause_b is None:
-                raise ValueError(f"Clause ID {clause_b_id} is found in sequence database but is not present in clause database")
-
-            try:
-                predicted_class = Classification(class_predict_id)
-            except ValueError:
-                predicted_class = None
-            try:
-                correct_class = Classification(class_correct_id)
-            except ValueError:
-                correct_class = None
-
-            sequence = ClauseSequence(sequence_id, clause_a, clause_b, predicted_class, correct_class)
-            sequence_map[sequence_id] = sequence
+            sequence = self._read_sequence_from_sequence_data(data)
+            sequence_map[sequence.get_id()] = sequence
 
         return list(sequence_map.values())
 
-    def update_sequence_classification(self, sequence_id: int, correct_class: int):
-        self.sequence_repository.update(sequence_id, correct_class)
+    def update_sequence_classifications(self, sequence_id: int, correct_classes: list[int]):
+        correct_classes_str: str = AnnotationDAO._join_str_from_int_list(correct_classes)
+        self.sequence_repository.update(sequence_id, correct_classes_str)
 
     def create_sequence(self, clause_a_id: int, clause_b_id: int) -> int:
         return self.sequence_repository.create(clause_a_id, clause_b_id)

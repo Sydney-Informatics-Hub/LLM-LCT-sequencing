@@ -10,10 +10,8 @@ class Annotation:
                                                                        clause_db_path,
                                                                        sequence_db_path)
         self.notifier_service: NotifierService = NotifierService()
-        self.controller: AnnotationController = AnnotationController(self.annotation_service,
-                                                                     self.notifier_service,
-                                                                     log_file_path,
-                                                                     debug=True)
+        self.controller: AnnotationController = AnnotationController(self.annotation_service, self.notifier_service,
+                                                                     log_file_path, debug=False)
         self.view: AnnotationViewWrapper = AnnotationViewWrapper(self.controller)
 
     def run(self):

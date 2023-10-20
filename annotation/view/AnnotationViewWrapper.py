@@ -2,8 +2,8 @@ import panel as pn
 from panel import Row
 
 from annotation.controller.AnnotationController import AnnotationController
-from annotation.view.gui.widgets.Controls import Controls
-from annotation.view.gui.widgets.TextDisplay import TextDisplay
+from annotation.view.gui import Controls
+from annotation.view.gui import TextDisplay
 
 pn.extension(notifications=True)
 

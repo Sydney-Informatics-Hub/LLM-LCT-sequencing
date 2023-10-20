@@ -12,8 +12,8 @@ class SequenceRepository(ABC):
          - integer id of the sequence
          - integer id of the first clause
          - integer id of the second clause
-         - the predicted class as an integer
-         - the corrected class as an integer
+         - the predicted classes as a str structured as delimited digits, e.g. '1,2,3'
+         - the corrected classes as a str structured as delimited digits, e.g. '1,2,3'
         Returns
         -------
         all_sequences: ndarray[tuple[int]] - all sequences found in the database
@@ -28,8 +28,8 @@ class SequenceRepository(ABC):
          - integer id of the sequence
          - integer id of the first clause
          - integer id of the second clause
-         - the predicted class as an integer
-         - the corrected class as an integer
+         - the predicted classes as a str structured as delimited digits, e.g. '1,2,3'
+         - the corrected classes as a str structured as delimited digits, e.g. '1,2,3'
         Parameters
         ----------
         sequence_id: int - integer id of the sequence
@@ -48,8 +48,8 @@ class SequenceRepository(ABC):
          - integer id of the sequence
          - integer id of the first clause
          - integer id of the second clause
-         - the predicted class as an integer
-         - the corrected class as an integer
+         - the predicted classes as a str structured as delimited digits, e.g. '1,2,3'
+         - the corrected classes as a str structured as delimited digits, e.g. '1,2,3'
         Parameters
         ----------
         clause_id: int - the id of the specified clause
@@ -77,14 +77,14 @@ class SequenceRepository(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def update(self, sequence_id: int, class_correct: int) -> bool:
+    def update(self, sequence_id: int, correct_classes: str) -> bool:
         """
         Updates the corrected class for the sequence in the database with the given sequence id.
         Returns True if the operation succeeds, False if the operation fails or the sequence is not found.
         Parameters
         ----------
         sequence_id: int - integer id of the sequence
-        class_correct: int - the corrected class as an integer
+        correct_classes: str - the corrected classes as a str structured as delimited digits, e.g. '1,2,3'
 
         Returns
         -------

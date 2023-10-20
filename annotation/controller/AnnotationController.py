@@ -67,26 +67,29 @@ class AnnotationController:
     def get_clauses(self) -> list[tuple[int, str]]:
         return self.annotation_service.get_clauses()
 
-    def get_curr_sequence(self) -> ClauseSequenceTuple:
+    def get_curr_sequence(self) -> Optional[ClauseSequenceTuple]:
         try:
             return self.annotation_service.get_sequence_clause_ranges(self.curr_sequence_id)
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
+            return None
 
     def get_all_classifications(self) -> list[str]:
         return self.annotation_service.get_all_sequence_classifications()
 
-    def get_predicted_classification(self) -> str:
+    def get_predicted_classifications(self) -> list[str]:
         try:
-            return self.annotation_service.get_sequence_predict_class(self.curr_sequence_id)
+            return self.annotation_service.get_sequence_predict_classes(self.curr_sequence_id)
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
+            return []
 
-    def get_correct_classification(self) -> str:
+    def get_correct_classifications(self) -> list[str]:
         try:
-            return self.annotation_service.get_sequence_correct_class(self.curr_sequence_id)
+            return self.annotation_service.get_sequence_correct_classes(self.curr_sequence_id)
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
+            return []
 
     # Data control methods
 
@@ -105,11 +108,11 @@ class AnnotationController:
             self.curr_sequence_id -= 1
         self.update_displays()
 
-    def set_correct_classification(self, classification: str):
-        logging.debug(f"set_correct_classification called. Args: classification: {classification}")
+    def set_correct_classifications(self, classifications: list[str]):
+        logging.debug(f"set_correct_classifications called. Args: classifications: {classifications}")
 
         try:
-            self.annotation_service.set_sequence_correct_class(self.curr_sequence_id, classification)
+            self.annotation_service.set_sequence_correct_classes(self.curr_sequence_id, classifications)
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
 

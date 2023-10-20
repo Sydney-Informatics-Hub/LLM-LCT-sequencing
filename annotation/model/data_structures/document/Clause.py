@@ -44,24 +44,23 @@ class Clause:
 
 class ClauseSequence:
     def __init__(self, sequence_id: int, first_clause: Clause, second_clause: Clause,
-                 predicted_class: Optional[Classification] = None, correct_class: Optional[Classification] = None):
+                 predicted_class: Optional[list[Classification]] = None,
+                 correct_class: Optional[list[Classification]] = None):
         self.sequence_id: int = sequence_id
         self.first_clause: Clause = first_clause
         self.second_clause: Clause = second_clause
-        self.predicted_class: Classification = predicted_class
-        self.correct_class: Classification = correct_class
+        self.predicted_classes: Optional[list[Classification]] = predicted_class
+        self.correct_classes: Optional[list[Classification]] = correct_class
 
     def __eq__(self, other) -> bool:
         if type(other) is not ClauseSequence:
             return False
         return ((self.sequence_id == other.sequence_id) and
                 (self.first_clause == other.first_clause) and
-                (self.second_clause == other.second_clause) and
-                (self.predicted_class == other.predicted_class) and
-                (self.correct_class == other.correct_class))
+                (self.second_clause == other.second_clause))
 
     def __hash__(self):
-        return hash((self.sequence_id, self.first_clause, self.second_clause, self.predicted_class, self.correct_class))
+        return hash((self.sequence_id, self.first_clause, self.second_clause))
 
     def get_id(self) -> int:
         return self.sequence_id
@@ -69,14 +68,14 @@ class ClauseSequence:
     def get_clause_ranges(self) -> tuple[tuple[int, int], tuple[int, int]]:
         return tuple(self.first_clause.get_range()), tuple(self.second_clause.get_range())
 
-    def get_predicted_class(self) -> Optional[Classification]:
-        return self.predicted_class
+    def get_predicted_classes(self) -> Optional[list[Classification]]:
+        return self.predicted_classes
 
-    def set_predicted_class(self, predicted_class: Optional[Classification]):
-        self.predicted_class = predicted_class
+    def set_predicted_classes(self, predicted_classes: Optional[list[Classification]]):
+        self.predicted_classes = predicted_classes
 
-    def get_correct_class(self) -> Optional[Classification]:
-        return self.correct_class
+    def get_correct_classes(self) -> Optional[list[Classification]]:
+        return self.correct_classes
 
-    def set_correct_class(self, correct_class: Optional[Classification]):
-        self.correct_class = correct_class
+    def set_correct_classes(self, correct_classes: Optional[list[Classification]]):
+        self.correct_classes = correct_classes
