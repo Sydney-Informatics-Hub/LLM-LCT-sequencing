@@ -212,11 +212,13 @@ def test_select_examples_by_type():
     assert len(linkages_sel) == nsel
 
 
-def gen_prompt(zero_shot_prompt, sequencing_classes, description_classes, examples_classes, text_to_classify):
+def gen_prompt(zero_shot_prompt, sequencing_classes, description_classes, examples_classes, text_content, text_chunk_1, text_chunk_2):
     zero_shot_prompt = zero_shot_prompt.replace('SEQUENCING_CLASSES', sequencing_classes)
     zero_shot_prompt = zero_shot_prompt.replace('DESCRIPTION_CLASSES', description_classes)
     zero_shot_prompt = zero_shot_prompt.replace('EXAMPLES_CLASSES', examples_classes)
-    zero_shot_prompt = zero_shot_prompt.replace('TEXT_TO_CLASSIFY', text_to_classify)
+    zero_shot_prompt = zero_shot_prompt.replace('TEXT_CONTENT', text_content)
+    zero_shot_prompt = zero_shot_prompt.replace('CHUNK_1', text_chunk_1)
+    zero_shot_prompt = zero_shot_prompt.replace('CHUNK_2', text_chunk_2)
     return zero_shot_prompt
 
 def get_sequencing_classes(path_schema, filename_definitions):
@@ -387,6 +389,8 @@ def run_pipe(
     --------
     - df_results (pd.DataFrame): The dataframe with results from the experiment, including:
         - test_str (str): The test sample.
+        - test_chunk1 (str): The first clause of the test sample.
+        - test_chunk2 (str): The second clause of the test sample.
         - test_class (str): The true class.
         - test_linkage (str): The true linkage word.
         - pred_class (str): The predicted class.
@@ -407,7 +411,7 @@ def run_pipe(
 
     examples = load_json(os.path.join(path_schema, filename_examples))
     schema = load_json(os.path.join(path_schema, filename_schema))
-    assert validate_json(examples, schema), "JSON data is invalid!"
+    assert validate_json(examples, schema)
     df = json_to_dataframe(examples)
 
     # Select examples for each type
@@ -421,9 +425,12 @@ def run_pipe(
     # loop over train_df and add to example string
     example_string = """ """
     for index, row in train_df.iterrows():
-        example_string += f"""example: {row['Example']}\n"""
-        example_string += f"""classification: {row['Sub_Subtype']}\n"""
-        example_string += f"""linkage word: {row['Linkage_Word']}\n"""
+        example_string += f"""Input\nText content: {row['Example']}\n"""
+        example_string += f"""Clause 1: {row['Linked_Chunk_1']}\n"""
+        example_string += f"""Clause 2: {row['Linked_Chunk_2']}\n"""
+        example_string += f"""\nAnswer\nClassification: {row['Sub_Subtype']}\n"""
+        example_string += f"""Linkage word: {row['Linkage_Word']}\n"""
+        example_string += f"""Reason: {row['Reasoning']}\n"""
         example_string += f"""\n"""
 
     # replace example_types with example_types_short in example_string
@@ -431,10 +438,14 @@ def run_pipe(
         example_string = example_string.replace(example_type, example_type_short)
 
     list_test_str = []
+    list_test_chunk1 = []
+    list_test_chunk2 = []
     list_test_class = []
     list_test_linkage = []
     for index, row in test_df.iterrows():
         list_test_str.append(row['Example'])
+        list_test_chunk1.append(row['Linked_Chunk_1'])
+        list_test_chunk2.append(row['Linked_Chunk_2'])
         list_test_class.append(row['Sub_Subtype'])
         list_test_linkage.append(row['Linkage_Word'])
 
@@ -474,6 +485,8 @@ def run_pipe(
     # initiate results dataframe
     df_results = pd.DataFrame(columns=[
         'test_str', 
+        'test_chunk1',
+        'test_chunk2',
         'test_class', 
         'test_linkage', 
         'pred_class', 
@@ -486,15 +499,15 @@ def run_pipe(
         'modelname_llm', 
         'reasoning'])
 
-    # Intiate LLM with API key
+    # Initiate LLM with API key
     llm = LLM(filename_openai_key='../../openai_key.txt', model_name = modelname_llm)
 
     # Loop over test sample in list_test_str
     n_test = 0
-    for test_str, test_class, test_linkage in zip(list_test_str, list_test_class, list_test_linkage):
+    for test_str, test_chunk1, test_chunk2, test_class, test_linkage in zip(list_test_str, list_test_chunk1, list_test_chunk2,list_test_class, list_test_linkage):
         print(f"Test sample {n_test} of {len(list_test_str)}")
-        # generate prompt
-        prompt = gen_prompt(zero_shot_prompt, sequencing_classes, sequencing_definition, example_string, test_str)
+        # generate prompt 
+        prompt = gen_prompt(zero_shot_prompt, sequencing_classes, sequencing_definition, example_string, test_str, test_chunk1, test_chunk2)
 
         # replace in prompt all occurences of example_types with f'{example_type} (example_type_short)'
         for example_type, example_type_short in zip(example_types, example_types_short):
@@ -529,7 +542,7 @@ def run_pipe(
                 print('WARNING: completion_text not correct format! Skipping test sample')
                 print(completion_text)
                 completion_text = completion_text.split('\n')[0]
-            # lingage word of test sample
+            # linkage word of test sample
             try:
                 linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
             except:
@@ -582,6 +595,8 @@ def run_pipe(
         #add a new row to df_results
         row = [
             test_str, 
+            test_chunk1,
+            test_chunk2,
             test_class, 
             test_linkage, 
             class_predicted, 
