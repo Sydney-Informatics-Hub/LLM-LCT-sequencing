@@ -106,10 +106,13 @@ def select_examples_by_type(examples, example_type, n_examples, type_order = 'Su
     example_list = []
     reason_list = []
     linkage_list = []
+    #clause1_list = []
+    #clause2_list = []
     for example in selected_examples:
         example_list.append(example['Example'])
         reason_list.append(example['Reasoning'])
         linkage_list.append(example['Linkage_Word'])
+        # check if example contains two clauses
     
     return example_list, reason_list, linkage_list
 
