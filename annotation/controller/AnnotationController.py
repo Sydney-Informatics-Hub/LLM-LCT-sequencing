@@ -1,8 +1,10 @@
 import logging
 import traceback
+from io import BytesIO
 from typing import Callable, Optional
 
 from annotation.model import AnnotationService
+from annotation.model.export import ExportService
 from annotation.view.notifications import NotifierService
 
 # Type alias for complex tuples
@@ -14,14 +16,15 @@ class AnnotationController:
     MIN_SEQUENCE_ID: int = 1
 
     def __init__(self, annotation_service: AnnotationService, notifier_service: NotifierService,
-                 log_file_path: str, debug: bool = False):
+                 export_service: ExportService, log_file_path: str, debug: bool = False):
         AnnotationController.configure_logging(log_file_path, debug)
 
         self.annotation_service: AnnotationService = annotation_service
         self.notifier_service: NotifierService = notifier_service
-        self.curr_sequence_id: int = 1
+        self.export_service: ExportService = export_service
 
         self._update_display_callables: list[Callable] = []
+        self.curr_sequence_id: int = 1
 
     @staticmethod
     def configure_logging(log_file_path: str, debug: bool = False):
@@ -64,7 +67,7 @@ class AnnotationController:
     def get_text(self) -> str:
         return self.annotation_service.get_text()
 
-    def get_clauses(self) -> list[tuple[int, str]]:
+    def get_clauses(self) -> dict[int, str]:
         return self.annotation_service.get_clauses()
 
     def get_curr_sequence(self) -> Optional[ClauseSequenceTuple]:
@@ -143,3 +146,14 @@ class AnnotationController:
 
         # The display must be updated to reflect the deletion
         self.update_displays()
+
+    def export(self, filetype: str) -> Optional[BytesIO]:
+        try:
+            return self.export_service.export(filetype, self.annotation_service.get_dataframe_for_export())
+        except ValueError as e:
+            logging.error(str(e) + '\n' + traceback.format_exc())
+            self.display_error(str(e))
+            return
+
+    def get_export_file_formats(self) -> list[str]:
+        return self.export_service.get_filetypes()

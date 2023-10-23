@@ -65,6 +65,12 @@ class ClauseSequence:
     def get_id(self) -> int:
         return self.sequence_id
 
+    def get_first_clause(self) -> Clause:
+        return self.first_clause
+
+    def get_second_clause(self) -> Clause:
+        return self.second_clause
+
     def get_clause_ranges(self) -> tuple[tuple[int, int], tuple[int, int]]:
         return tuple(self.first_clause.get_range()), tuple(self.second_clause.get_range())
 

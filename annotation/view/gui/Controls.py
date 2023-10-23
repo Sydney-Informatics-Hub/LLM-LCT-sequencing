@@ -1,7 +1,8 @@
 from typing import Optional, Callable
 
 from panel import Row, Column, bind
-from panel.widgets import Button, CrossSelector, CheckButtonGroup
+from panel.layout import Divider
+from panel.widgets import Button, CrossSelector, CheckButtonGroup, Select, FileDownload
 from panel.pane import Str, HTML
 
 from annotation.controller.AnnotationController import AnnotationController
@@ -177,10 +178,9 @@ class AddSequenceControls:
             return
 
         clause_selector_options = {}
-        for clause_data in self.controller.get_clauses():
-            clause_id = clause_data[0]
-            clause_text = clause_data[1]
-            clause_selector_options[clause_text] = clause_id
+        for clause_id, clause_text in self.controller.get_clauses().items():
+            unique_clause_text = f"{clause_id}-{clause_text}"
+            clause_selector_options[unique_clause_text] = clause_id
 
         self.clause_selector.options = clause_selector_options
 
@@ -286,17 +286,67 @@ class SequenceClassificationControls:
         self.controller.set_correct_classifications(self.classification_selector.value)
 
 
+class ExportControls:
+    FILENAME: str = "sequence_annotation"
+
+    def __init__(self, controller: AnnotationController, reset_visibility_fn: Callable):
+        self.controller: AnnotationController = controller
+        self.reset_visibility_fn = reset_visibility_fn
+
+        self.show_options_button = Button(name="Show export options", button_type="success", button_style="outline")
+        file_download_buttons = [FileDownload(
+            label=f"Export to {ftype}",
+            filename=f"{ExportControls.FILENAME}.{ftype}",
+            callback=bind(self.export, filetype=ftype),
+            button_type="primary",
+            button_style="outline") for ftype in self.controller.get_export_file_formats()]
+        self.export_buttons = Row(
+            *file_download_buttons,
+            visible=False
+        )
+
+        self.show_options_button.on_click(self.toggle_options_visibility)
+
+        self.component = Column(
+            self.show_options_button,
+            self.export_buttons,
+            align="start"
+        )
+
+    def get_component(self):
+        return self.component
+
+    def set_visibility(self, is_visible: bool):
+        self.component.visible = is_visible
+
+    def toggle_visibility(self):
+        self.component.visible = not self.component.visible
+
+    def export(self, filetype: str, *args):
+        return self.controller.export(filetype)
+
+    def toggle_options_visibility(self, *args):
+        self.export_buttons.visible = not self.export_buttons.visible
+        if self.export_buttons.visible:
+            self.show_options_button.button_style = "solid"
+        else:
+            self.show_options_button.button_style = "outline"
+
+
 class Controls:
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
         self.clause_sequence_controls = ClauseSequenceControls(self.controller, self.add_sequence_controls)
         self.sequence_classification_controls = SequenceClassificationControls(self.controller)
         self.add_sequence_controls = AddSequenceControls(self.controller, self.reset_visibility)
+        self.export_controls = ExportControls(self.controller, self.reset_visibility)
 
         self.component = Column(
             self.clause_sequence_controls.get_component(),
             self.sequence_classification_controls.get_component(),
             self.add_sequence_controls.get_component(),
+            Divider(),
+            self.export_controls.get_component(),
             styles=controls_style,
             sizing_mode="stretch_width"
         )
@@ -324,5 +374,6 @@ class Controls:
         self.add_sequence_controls.set_visibility(False)
         self.clause_sequence_controls.set_visibility(True)
         self.sequence_classification_controls.set_visibility(True)
+        self.export_controls.set_visibility(True)
 
         self.update_display()

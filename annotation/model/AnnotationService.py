@@ -1,5 +1,7 @@
 from typing import Optional
 
+from pandas import DataFrame
+
 from annotation.model.data_structures.classification.Classification import Classification
 from annotation.model.data_structures.document.Clause import ClauseSequence, Clause
 from annotation.model.database.AnnotationDAO import AnnotationDAO
@@ -16,17 +18,16 @@ class AnnotationService:
     def get_text(self) -> str:
         return self.annotation_dao.get_text()
 
-    def get_clauses(self) -> list[tuple[int, str]]:
+    def get_clauses(self) -> dict[int, str]:
         text: str = self.get_text()
         clauses: list[Clause] = self.annotation_dao.get_all_clauses()
 
-        clause_str_ls: list[tuple[int, str]] = []
+        clause_str_dict: dict[int, str] = {}
         for clause in clauses:
             clause_text = text[clause.start: clause.end+1]
-            data = (clause.clause_id, clause_text)
-            clause_str_ls.append(data)
+            clause_str_dict[clause.clause_id] = clause_text
 
-        return clause_str_ls
+        return clause_str_dict
 
     def get_sequence_count(self) -> int:
         return self.annotation_dao.get_sequence_count()
@@ -81,3 +82,32 @@ class AnnotationService:
 
     def delete_sequence(self, sequence_id: int):
         self.annotation_dao.delete_sequence(sequence_id)
+
+    def get_dataframe_for_export(self) -> DataFrame:
+        export_columns = ["Clause A", "Clause B", "Predicted Classes", "Corrected Classes"]
+        export_data: list[dict[str, str]] = []
+
+        clause_texts: dict[int, str] = self.get_clauses()
+        sequences: list[ClauseSequence] = self.annotation_dao.get_all_sequences()
+        for sequence in sequences:
+            clause_a_text: Optional[str] = clause_texts.get(sequence.get_first_clause().get_id())
+            clause_a_text = "" if clause_a_text is None else clause_a_text
+            clause_b_text: Optional[str] = clause_texts.get(sequence.get_second_clause().get_id())
+            clause_b_text = "" if clause_b_text is None else clause_b_text
+
+            predicted_classes: Optional[list[Classification]] = sequence.get_predicted_classes()
+            predicted_classes_str: str = ""
+            if predicted_classes is not None:
+                predicted_classes_str = ','.join([c.name for c in predicted_classes])
+            correct_classes: Optional[list[Classification]] = sequence.get_correct_classes()
+            corrected_classes_str: str = ""
+            if correct_classes is not None:
+                corrected_classes_str = ','.join([c.name for c in correct_classes])
+
+            sequence_dict: dict[str, str] = {export_columns[0]: clause_a_text,
+                                             export_columns[1]: clause_b_text,
+                                             export_columns[2]: predicted_classes_str,
+                                             export_columns[3]: corrected_classes_str}
+            export_data.append(sequence_dict)
+
+        return DataFrame(export_data, columns=export_columns)
