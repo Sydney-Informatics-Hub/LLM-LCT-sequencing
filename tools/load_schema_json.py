@@ -55,6 +55,8 @@ def json_to_dataframe(data):
                 'Subtype': item.get('Subtype', None),
                 'Sub_Subtype': item.get('Sub_Subtype', None),
                 'Example': example.get('Example', None),
+                'Linked_Chunk_1': example.get('Linked_Chunk_1', None),
+                'Linked_Chunk_2': example.get('Linked_Chunk_2', None),
                 'Reasoning': example.get('Reasoning', None),
                 'Linkage_Word': example.get('Linkage_Word', None)
             }
