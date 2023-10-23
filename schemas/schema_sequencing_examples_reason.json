@@ -24,6 +24,12 @@
                                 "Example": {
                                     "type": "string"
                                 },
+                                "Linked_Chunk_1": {
+                                    "type": "string"
+                                },
+                                "Linked_Chunk_2": {
+                                    "type": "string"
+                                },
                                 "Reasoning": {
                                     "type": "string"
                                 },
