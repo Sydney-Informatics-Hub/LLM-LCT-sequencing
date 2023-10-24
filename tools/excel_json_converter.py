@@ -37,12 +37,12 @@ def excel_to_json(excel_filename, json_filename_out):
     with open(json_filename_out, 'w') as f:
         f.write(data_json)
 
-    #if df.shape[1] >= 6:
-    #    # validate the data
-    #    json_schema = "../schemas/schema_sequencing_examples_reason.json"
-    #    schema = load_json(json_schema)
-    #    data_loaded = load_json(json_filename_out)
-    #    assert validate_json(data_loaded, schema), "JSON data is invalid!"
+    if df.shape[1] >= 6:
+       # validate the data
+       json_schema = "../schemas/schema_sequencing_examples_reason.json"
+       schema = load_json(json_schema)
+       data_loaded = load_json(json_filename_out)
+       assert validate_json(data_loaded, schema), "JSON data is invalid!"
 
 
 
@@ -78,6 +78,7 @@ def dataframe_to_json(df):
             example['Reasoning'] = row['Reasoning']
             example['Linked_Chunk_1'] = row['Linked_Chunk_1']
             example['Linked_Chunk_2'] = row['Linked_Chunk_2']
+            example['Linkage_Word'] = row['Linkage_Word']
             item['Examples'].append(example)
         data['Data'].append(item)
     return data
