@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 
 
 from load_schema_json import load_json, validate_json, json_to_dataframe
+from excel_json_converter import excel_to_json
 #import importlib
 #importlib.reload(utils_llm)
 from utils_llm import LLM
@@ -355,6 +356,8 @@ def eval_exp(df, outpath_exp, seq_classes):
     metrics = metrics_from_confusion_matrix(confusion_matrix, outfname = os.path.join(outpath_exp, 'metrics.json'))
 
 
+
+
 def run_pipe(
         outpath = "../results/", 
         path_schema = '../schemas', 
@@ -363,7 +366,7 @@ def run_pipe(
         filename_definitions = "sequencing_types.json", 
         filename_zero_prompt = "instruction_prompt.txt", 
         modelname_llm = 'gpt-3.5-turbo-instruct',
-        list_prompt_indices = None
+        list_prompt_indices = None,
         ):
     """
     This experiment pipeline includes the following main steps:
@@ -406,6 +409,23 @@ def run_pipe(
     - seq_classes (list): The list of sequencing classes.
 
     """
+    # Check if filename_examples is excel file
+    if filename_examples.endswith(".xlsx"):
+        # convert filename_examples to json
+        json_filename_out = filename_examples.replace(".xlsx", "_converted.json")
+        excel_to_json(os.path.join(path_schema, filename_examples), 
+                    os.path.join(path_schema, json_filename_out))
+        filename_examples = json_filename_out
+
+    # Check if filename_definitions is excel file
+    if filename_definitions.endswith(".xlsx"):
+        # convert filename_definitions to json
+        json_filename_out = filename_definitions.replace(".xlsx", "_converted.json")
+        excel_to_json(os.path.join(path_schema, filename_definitions), 
+                    os.path.join(path_schema, json_filename_out))
+        filename_definitions = json_filename_out
+
+
     # initialize token_counter
     token_count = 0
 
@@ -423,8 +443,13 @@ def run_pipe(
     # split in train and test samples
     train_df, test_df = example_train_test_split(df, list_prompt_indices=list_prompt_indices, Nsel=1)
     # loop over train_df and add to example string
+
     example_string = """ """
     for index, row in train_df.iterrows():
+        clause1 = row['Linked_Chunk_1']
+        clause2 = row['Linked_Chunk_2']
+        text = row['Example']
+        # f
         example_string += f"""Input\nText content: {row['Example']}\n"""
         example_string += f"""Clause 1: {row['Linked_Chunk_1']}\n"""
         example_string += f"""Clause 2: {row['Linked_Chunk_2']}\n"""
