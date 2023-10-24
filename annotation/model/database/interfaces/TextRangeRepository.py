@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from numpy import ndarray
 
 
-class ClauseRepository(ABC):
+class TextRangeRepository(ABC):
     @abstractmethod
     def read_all(self) -> ndarray:
         raise NotImplementedError()
@@ -17,7 +17,7 @@ class ClauseRepository(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def update(self, paragraph_id: int, sequence_idx: int, sequence: tuple[tuple[int, int], tuple[int, int]], classification: int) -> bool:
+    def update(self, clause_id: int, start: int, end: int) -> bool:
         raise NotImplementedError()
 
     @abstractmethod

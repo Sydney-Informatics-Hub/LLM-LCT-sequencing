@@ -13,10 +13,11 @@ class SequenceCSVRepository(SequenceRepository):
     SEQUENCE_ID_FIELD: str = "sequence_id"
     CLAUSE_A_ID_FIELD: str = "c1_id"
     CLAUSE_B_ID_FIELD: str = "c2_id"
+    LINKAGE_FIELD: str = "linkage_words"
     PREDICTED_CLASSES: str = "classes_predict"
     CORRECTED_CLASSES: str = "classes_correct"
     FIELD_DTYPES: dict = {SEQUENCE_ID_FIELD: int, CLAUSE_A_ID_FIELD: int, CLAUSE_B_ID_FIELD: int,
-                          PREDICTED_CLASSES: str, CORRECTED_CLASSES: str}
+                          LINKAGE_FIELD: str, PREDICTED_CLASSES: str, CORRECTED_CLASSES: str}
     REQUIRED_FIELDS: list[str, ...] = [field for field in FIELD_DTYPES.keys()]
 
     CLASS_LS_DELIMITER: str = ','
@@ -44,7 +45,7 @@ class SequenceCSVRepository(SequenceRepository):
             reader = DictReader(csv_f)
             for field in SequenceCSVRepository.REQUIRED_FIELDS:
                 if field not in reader.fieldnames:
-                    raise DatabaseFieldError(f"Missing {field} column from paragraph database")
+                    raise DatabaseFieldError(f"Missing {field} column from sequence database")
 
     def _read_database_into_cache(self):
         if self._cache_updated:
@@ -117,7 +118,7 @@ class SequenceCSVRepository(SequenceRepository):
         if len(existing_ids) > 0:
             new_id = existing_ids.max() + 1
 
-        new_entry = [new_id, clause_a_id, clause_b_id, "0", "0"]
+        new_entry = [new_id, clause_a_id, clause_b_id, 0, "0", "0"]
 
         if len(self._database_cache.index) > 0:
             self._database_cache.loc[max(self._database_cache.index) + 1] = new_entry

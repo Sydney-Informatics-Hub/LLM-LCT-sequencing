@@ -1,2 +1,2 @@
 from .SequenceCSVRepository import SequenceCSVRepository
-from .ClauseCSVRepository import ClauseCSVRepository
+from .TextRangeCSVRepository import TextRangeCSVRepository

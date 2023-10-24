@@ -16,6 +16,10 @@ clause_stylesheet = """
 .clause_overlap {
     background-color: rgba(160, 90, 191, 1);
 }
+
+.linkage_word {
+    background-color: rgba(234, 82, 209, 1);
+}
 """
 
 controls_style = {

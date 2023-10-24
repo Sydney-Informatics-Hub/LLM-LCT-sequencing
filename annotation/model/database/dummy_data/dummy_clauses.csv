@@ -1,4 +1,4 @@
-clause_id,start,end
+range_id,start,end
 1,0,75
 2,80,150
 3,160,200

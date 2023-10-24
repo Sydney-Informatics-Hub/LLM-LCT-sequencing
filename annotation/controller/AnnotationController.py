@@ -8,8 +8,8 @@ from annotation.model.export import ExportService
 from annotation.view.notifications import NotifierService
 
 # Type alias for complex tuples
-ClauseTuple = tuple[int, int]
-ClauseSequenceTuple = tuple[ClauseTuple, ClauseTuple]
+TextRangeTuple = tuple[int, int]
+SequenceTuple = tuple[TextRangeTuple, TextRangeTuple]
 
 
 class AnnotationController:
@@ -70,9 +70,16 @@ class AnnotationController:
     def get_clauses(self) -> dict[int, str]:
         return self.annotation_service.get_clauses()
 
-    def get_curr_sequence(self) -> Optional[ClauseSequenceTuple]:
+    def get_curr_sequence_ranges(self) -> Optional[SequenceTuple]:
         try:
             return self.annotation_service.get_sequence_clause_ranges(self.curr_sequence_id)
+        except Exception as e:
+            logging.error(str(e) + '\n' + traceback.format_exc())
+            return None
+
+    def get_curr_sequence_linkage_words(self) -> Optional[list[str]]:
+        try:
+            return self.annotation_service.get_sequence_linkage_words(self.curr_sequence_id)
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
             return None

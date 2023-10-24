@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from panel import Column
@@ -15,8 +16,9 @@ class TextRender:
     def __init__(self, text: str = ""):
         self.raw_text: str = text
 
-        self.clause_a_range: tuple[int, int] | None = None
-        self.clause_b_range: tuple[int, int] | None = None
+        self.clause_a_range: Optional[tuple[int, int]] = None
+        self.clause_b_range: Optional[tuple[int, int]] = None
+        self.linkage_word_ranges: list[tuple[int, int]] = []
 
     def set_text(self, text: str):
         if type(text) is not str:
@@ -36,53 +38,31 @@ class TextRender:
         return ((a_start <= b_start) and (b_start <= a_end)) or ((b_start <= a_start) and (a_start <= b_end))
 
     def _repr_html_(self) -> str:
-        """
-        Inserts HTML span tags around the clauses in the paragraph and returns the HTML string.
-        If the two clauses overlap, a third set of span tags will surround the overlapped section.
-        """
-        html_text: str
-        if (self.clause_a_range is None) or (self.clause_b_range is None):
-            # If one or both of the clauses are not present, then no html tags need to be inserted
-            return self.raw_text
+        text_ls: list[str] = list(self.raw_text)
 
-        # Both clauses exist but order is not yet determined
-        if self.clause_a_range[0] <= self.clause_b_range[0]:
-            first_clause_range = list(self.clause_a_range)
-            second_clause_range = list(self.clause_b_range)
-        else:
-            first_clause_range = list(self.clause_b_range)
-            second_clause_range = list(self.clause_a_range)
+        for i, char in enumerate(text_ls):
+            # Replace file newline characters with HTML newlines
+            if (char == "\n") or (char == "\r\n"):
+                text_ls[i] = "<br>"
+
+        if self.clause_a_range is not None:
+            text_ls[self.clause_a_range[0]] = "<span class=\"first_clause\">" + text_ls[self.clause_a_range[0]]
+            text_ls[self.clause_a_range[1]] = "</span>" + text_ls[self.clause_a_range[1]]
+
+        if self.clause_b_range is not None:
+            text_ls[self.clause_b_range[0]] = "<span class=\"second_clause\">" + text_ls[self.clause_b_range[0]]
+            text_ls[self.clause_b_range[1]] = "</span>" + text_ls[self.clause_b_range[1]]
 
         if self.do_clauses_overlap():
-            # If clauses overlap, a set of span tags will be inserted around the overlap and the clause ranges will be adjusted accordingly
-            overlap_range = [second_clause_range[0], first_clause_range[1]]
-            first_clause_range[1] = overlap_range[0] - 1
-            second_clause_range[0] = overlap_range[1] + 1
+            overlap_range = [self.clause_b_range[0], self.clause_a_range[1]]
+            text_ls[overlap_range[0]] = "<span class=\"clause_overlap\">" + text_ls[overlap_range[0]]
+            text_ls[overlap_range[1]] = "</span>" + text_ls[overlap_range[1]]
 
-            first_clause_text = self.raw_text[first_clause_range[0]:first_clause_range[1] + 1]
-            first_clause_render = f"<span class=\"first_clause\">{first_clause_text}</span>"
-            second_clause_text = self.raw_text[second_clause_range[0]:second_clause_range[1] + 1]
-            second_clause_render = f"<span class=\"second_clause\">{second_clause_text}</span>"
-            overlap_text = self.raw_text[overlap_range[0]:overlap_range[1] + 1]
-            overlap_render = f"<span class=\"clause_overlap\">{overlap_text}</span>"
+        for linkage_word_range in self.linkage_word_ranges:
+            text_ls[linkage_word_range[0]] = "<span class=\"linkage_word\">" + text_ls[linkage_word_range[0]]
+            text_ls[linkage_word_range[1]] = "</span>" + text_ls[linkage_word_range[1]]
 
-            html_text = ""
-            if overlap_range[0] > 0:
-                # If both clauses begin at the start of the text, the first clause can be omitted from the render
-                html_text += self.raw_text[:first_clause_range[0]] + first_clause_render
-            html_text += overlap_render
-            if overlap_range[1] < (len(self.raw_text) - 1):
-                # If both clauses end at the end of the text, the second clause can be omitted from the render
-                html_text += second_clause_render + self.raw_text[second_clause_range[1] + 1:]
-        else:
-            first_clause_text = self.raw_text[first_clause_range[0]:first_clause_range[1] + 1]
-            first_clause_render = f"<span class=\"first_clause\">{first_clause_text}</span>"
-            second_clause_text = self.raw_text[second_clause_range[0]:second_clause_range[1] + 1]
-            second_clause_render = f"<span class=\"second_clause\">{second_clause_text}</span>"
-
-            html_text = (self.raw_text[:first_clause_range[0]] + first_clause_render +
-                         self.raw_text[first_clause_range[1] + 1:second_clause_range[0]] +
-                         second_clause_render + self.raw_text[second_clause_range[1] + 1:])
+        html_text: str = "".join(text_ls)
 
         return html_text
 
@@ -118,7 +98,7 @@ class TextRender:
         clause_b_range: tuple[int, int] - The start and end index of range defined for Clause B
         """
         if clause_b_range is None:
-            self.clause_a_range = clause_b_range
+            self.clause_b_range = clause_b_range
             return
         if type(clause_b_range) is not tuple:
             raise TypeError("clause_b_range must be a tuple")
@@ -132,6 +112,46 @@ class TextRender:
 
         self.clause_b_range = clause_b_range
 
+    def update_linkage_word_ranges(self, linkage_words: list[str]):
+        """
+        Iterates over the provided list of strings, identifies their occurrences within the current clauses,
+        and sets the linkage_word ranges to the corresponding indexes of the occurrences.
+        Parameters
+        ----------
+        linkage_words: list[str] - A list of linkage words that occur within the currently set clauses
+        """
+        if len(linkage_words) == 0:
+            self.linkage_word_ranges = []
+            return
+
+        linkage_word_ranges: list[tuple[int, int]] = []
+
+        clause_a_text: str = ""
+        if self.clause_a_range is not None:
+            clause_a_text = self.raw_text[self.clause_a_range[0]:self.clause_a_range[1]]
+        clause_b_text: str = ""
+        if self.clause_b_range is not None:
+            clause_b_text = self.raw_text[self.clause_b_range[0]:self.clause_b_range[1]]
+
+        for linkage_word in linkage_words:
+            pattern = r'\b' + re.escape(linkage_word) + r'\b'
+
+            if self.clause_a_range is not None:
+                clause_a_matches = re.finditer(pattern, clause_a_text)
+                for match in clause_a_matches:
+                    base_idx = self.clause_a_range[0]
+                    new_range: tuple = (base_idx + match.start()), (base_idx + match.end())
+                    linkage_word_ranges.append(new_range)
+
+            if self.clause_b_range is not None:
+                clause_b_matches = re.finditer(pattern, clause_b_text)
+                for match in clause_b_matches:
+                    base_idx = self.clause_b_range[0]
+                    new_range: tuple = (base_idx + match.start()), (base_idx + match.end())
+                    linkage_word_ranges.append(new_range)
+
+        self.linkage_word_ranges = linkage_word_ranges
+
 
 class TextDisplay:
     """
@@ -139,20 +159,23 @@ class TextDisplay:
     """
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
-        self.text_render: TextRender = TextRender()
-        self.text_html = HTML(TextRender, stylesheets=[clause_stylesheet])
+        self.text_render: TextRender = TextRender(self.controller.get_text())
+        self.text_html = HTML(self.text_render, stylesheets=[clause_stylesheet])
         self.component = Column(self.text_html, styles=text_display_style, sizing_mode="stretch_height")
 
         self.controller.add_update_text_display_callable(self.update_display)
 
     def update_display(self):
-        clause_ranges = self.controller.get_curr_sequence()
+        clause_ranges = self.controller.get_curr_sequence_ranges()
         if clause_ranges is None:
             clause_a_range, clause_b_range = None, None
         else:
             clause_a_range, clause_b_range = clause_ranges
-        self.set_clause_a_range(clause_a_range)
-        self.set_clause_b_range(clause_b_range)
+        self.text_render.set_clause_a_range(clause_a_range)
+        self.text_render.set_clause_b_range(clause_b_range)
+        linkage_words: list[str] = self.controller.get_curr_sequence_linkage_words()
+        self.text_render.update_linkage_word_ranges(linkage_words)
+
         self.set_text(self.controller.get_text())
 
     def get_component(self):
@@ -161,17 +184,3 @@ class TextDisplay:
     def set_text(self, text: str):
         self.text_render.set_text(text)
         self.text_html.object = self.text_render
-
-    def set_clause_a_range(self, clause_a_range: Optional[tuple[int, int]]):
-        """
-        Calls the method of the same name on the current paragraph object (unless curr_paragraph is None)
-        """
-        if self.text_render is not None:
-            self.text_render.set_clause_a_range(clause_a_range)
-
-    def set_clause_b_range(self, clause_b_range: Optional[tuple[int, int]]):
-        """
-        Calls the method of the same name on the current paragraph object (unless curr_paragraph is None)
-        """
-        if self.text_render is not None:
-            self.text_render.set_clause_b_range(clause_b_range)

@@ -3,41 +3,49 @@ from typing import Optional
 from pandas import DataFrame
 
 from annotation.model.data_structures.classification.Classification import Classification
-from annotation.model.data_structures.document.Clause import ClauseSequence, Clause
+from annotation.model.data_structures.document.TextRange import ClauseSequence, TextRange
 from annotation.model.database.AnnotationDAO import AnnotationDAO
 
 # Type alias for complex tuples
-ClauseTuple = tuple[int, int]
-ClauseSequenceTuple = tuple[ClauseTuple, ClauseTuple]
+TextRangeTuple = tuple[int, int]
+SequenceTuple = tuple[TextRangeTuple, TextRangeTuple]
 
 
 class AnnotationService:
-    def __init__(self, text_database_fn: str, clause_database_fn: str, sequence_db_path: str):
-        self.annotation_dao: AnnotationDAO = AnnotationDAO(text_database_fn, clause_database_fn, sequence_db_path)
+    def __init__(self, text_database_fn: str, clause_database_fn: str, sequence_database_fn: str):
+        self.annotation_dao: AnnotationDAO = AnnotationDAO(text_database_fn, clause_database_fn,
+                                                           sequence_database_fn)
 
     def get_text(self) -> str:
         return self.annotation_dao.get_text()
 
     def get_clauses(self) -> dict[int, str]:
         text: str = self.get_text()
-        clauses: list[Clause] = self.annotation_dao.get_all_clauses()
+        clauses: list[TextRange] = self.annotation_dao.get_all_clauses()
 
         clause_str_dict: dict[int, str] = {}
         for clause in clauses:
             clause_text = text[clause.start: clause.end+1]
-            clause_str_dict[clause.clause_id] = clause_text
+            clause_str_dict[clause.range_id] = clause_text
 
         return clause_str_dict
 
     def get_sequence_count(self) -> int:
         return self.annotation_dao.get_sequence_count()
 
-    def get_sequence_clause_ranges(self, sequence_id: int) -> Optional[ClauseSequenceTuple]:
+    def get_sequence_clause_ranges(self, sequence_id: int) -> Optional[SequenceTuple]:
         sequence: Optional[ClauseSequence] = self.annotation_dao.get_sequence_by_id(sequence_id)
         if sequence is None:
             return None
 
         return sequence.get_clause_ranges()
+
+    def get_sequence_linkage_words(self, sequence_id: int) -> Optional[list[str]]:
+        sequence: Optional[ClauseSequence] = self.annotation_dao.get_sequence_by_id(sequence_id)
+        if sequence is None:
+            return None
+
+        return sequence.get_linkage_words()
 
     def get_all_sequence_classifications(self) -> list[str]:
         return [c.name for c in Classification]

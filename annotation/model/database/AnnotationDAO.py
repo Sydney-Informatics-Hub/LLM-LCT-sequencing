@@ -3,17 +3,17 @@ from typing import Optional
 from numpy import ndarray
 
 from annotation.model.data_structures.classification.Classification import Classification
-from annotation.model.data_structures.document.Clause import ClauseSequence, Clause
-from annotation.model.database.interfaces import ClauseRepository, SequenceRepository, TextRepository
-from annotation.model.database.CSV import ClauseCSVRepository, SequenceCSVRepository
+from annotation.model.data_structures.document.TextRange import ClauseSequence, TextRange
+from annotation.model.database.interfaces import TextRangeRepository, SequenceRepository, TextRepository
+from annotation.model.database.CSV import TextRangeCSVRepository, SequenceCSVRepository
 from annotation.model.database.TXT import TextTXTRepository
 
 
 class AnnotationDAO:
-    def __init__(self, text_database_fn: str, clause_database_fn: str, sequence_db_path: str):
+    def __init__(self, text_database_fn: str, clause_database_fn: str, sequence_database_fn: str):
         self.text_repository: TextRepository = TextTXTRepository(text_database_fn)
-        self.clause_repository: ClauseRepository = ClauseCSVRepository(clause_database_fn)
-        self.sequence_repository: SequenceRepository = SequenceCSVRepository(sequence_db_path)
+        self.clause_repository: TextRangeRepository = TextRangeCSVRepository(clause_database_fn)
+        self.sequence_repository: SequenceRepository = SequenceCSVRepository(sequence_database_fn)
 
     @staticmethod
     def _split_to_int_list(delimited_str: str) -> list[int]:
@@ -31,9 +31,9 @@ class AnnotationDAO:
     def get_text(self) -> str:
         return self.text_repository.read_all()
 
-    def get_all_clauses(self) -> list[Clause]:
+    def get_all_clauses(self) -> list[TextRange]:
         clause_data: ndarray = self.clause_repository.read_all()
-        clauses: list[Clause] = [Clause(data[1], data[2], clause_id=data[0]) for data in clause_data]
+        clauses: list[TextRange] = [TextRange(data[1], data[2], range_id=data[0]) for data in clause_data]
 
         return clauses
 
@@ -45,8 +45,9 @@ class AnnotationDAO:
         sequence_id: int = sequence_data[0]
         clause_a_id: int = sequence_data[1]
         clause_b_id: int = sequence_data[2]
-        class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[3])
-        class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[4])
+        linkage_words: str | float = sequence_data[3]
+        class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[4])
+        class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[5])
 
         clause_a_data: tuple = self.clause_repository.read_by_id(clause_a_id)
         if len(clause_a_data) == 0:
@@ -55,8 +56,12 @@ class AnnotationDAO:
         if len(clause_b_data) == 0:
             raise ValueError(f"Clause database does not contain a clause with id {clause_b_id}")
 
-        clause_a: Clause = Clause(clause_a_data[1], clause_a_data[2], clause_id=clause_a_id)
-        clause_b: Clause = Clause(clause_b_data[1], clause_b_data[2], clause_id=clause_b_id)
+        clause_a: TextRange = TextRange(clause_a_data[1], clause_a_data[2], range_id=clause_a_id)
+        clause_b: TextRange = TextRange(clause_b_data[1], clause_b_data[2], range_id=clause_b_id)
+
+        linkage_words_list: list[str] = []
+        if isinstance(linkage_words, str):
+            linkage_words_list = linkage_words.split(",")
 
         predicted_classes: Optional[list[Classification]] = []
         for class_int in class_predict_ids:
@@ -76,7 +81,7 @@ class AnnotationDAO:
         if len(corrected_classes) == 0:
             corrected_classes = None
 
-        return ClauseSequence(sequence_id, clause_a, clause_b, predicted_classes, corrected_classes)
+        return ClauseSequence(sequence_id, clause_a, clause_b, linkage_words_list, predicted_classes, corrected_classes)
 
     def get_sequence_by_id(self, sequence_id: int) -> ClauseSequence:
         sequence_data: tuple = self.sequence_repository.read_by_id(sequence_id)

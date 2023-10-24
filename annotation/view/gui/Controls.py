@@ -2,7 +2,7 @@ from typing import Optional, Callable
 
 from panel import Row, Column, bind
 from panel.layout import Divider
-from panel.widgets import Button, CrossSelector, CheckButtonGroup, Select, FileDownload
+from panel.widgets import Button, CrossSelector, CheckButtonGroup, FileDownload
 from panel.pane import Str, HTML
 
 from annotation.controller.AnnotationController import AnnotationController
@@ -19,8 +19,9 @@ class ClauseSequenceControls:
 
         self.title = Str("Clause Pair Sequence", styles=sequence_heading_style)
         self.clause_a_info = HTML(ClauseSequenceControls.format_first_clause_str(), stylesheets=[clause_stylesheet])
-        self.clause_overlap_info = HTML(ClauseSequenceControls.format_overlap_str(), stylesheets=[clause_stylesheet])
         self.clause_b_info = HTML(ClauseSequenceControls.format_second_clause_str(), stylesheets=[clause_stylesheet])
+        self.clause_overlap_info = HTML(ClauseSequenceControls.format_overlap_str(), stylesheets=[clause_stylesheet])
+        self.linkage_word_info = HTML(ClauseSequenceControls.format_linkage_str(), stylesheets=[clause_stylesheet])
         self.prev_sequence_button = Button(name="\N{LEFTWARDS ARROW TO BAR} PREV", button_type="primary",
                                            button_style="outline")
         self.next_sequence_button = Button(name="NEXT \N{RIGHTWARDS ARROW TO BAR}", button_type="primary",
@@ -44,6 +45,7 @@ class ClauseSequenceControls:
                 Column(
                     self.clause_a_info,
                     self.clause_b_info,
+                    self.linkage_word_info,
                     self.clause_overlap_info,
                     styles=sequence_info_style
                 ),
@@ -94,6 +96,15 @@ class ClauseSequenceControls:
         return f"<span class=\"clause_overlap\"><strong>Overlap:</strong> {overlap_range[0]} - {overlap_range[1]}</span>"
 
     @staticmethod
+    def format_linkage_str(linkage_words: Optional[list[str]] = None) -> str:
+        linkage_str: str = f"<span class=\"linkage_word\"><strong>Linkage words:</strong> "
+        if linkage_words is not None:
+            linkage_str += ", ".join(linkage_words)
+        linkage_str += "</span>"
+
+        return linkage_str
+
+    @staticmethod
     def get_clause_overlap(clause_a_range: tuple[int, int], clause_b_range: tuple[int, int]) -> Optional[tuple[int, int]]:
         if (clause_a_range is None) or (clause_b_range is None):
             return
@@ -112,7 +123,7 @@ class ClauseSequenceControls:
         self.component.visible = not self.component.visible
 
     def update_display(self):
-        clause_ranges = self.controller.get_curr_sequence()
+        clause_ranges = self.controller.get_curr_sequence_ranges()
         if clause_ranges is None:
             clause_a_range, clause_b_range = None, None
         else:
@@ -121,6 +132,9 @@ class ClauseSequenceControls:
         self.clause_b_info.object = ClauseSequenceControls.format_second_clause_str(clause_b_range)
         overlap_range = ClauseSequenceControls.get_clause_overlap(clause_a_range, clause_b_range)
         self.clause_overlap_info.object = ClauseSequenceControls.format_overlap_str(overlap_range)
+        linkage_words: Optional[list[str]] = self.controller.get_curr_sequence_linkage_words()
+        self.linkage_word_info.object = ClauseSequenceControls.format_linkage_str(linkage_words)
+
         self.reset_manage_sequence_pane()
 
     def next_sequence(self, event):
