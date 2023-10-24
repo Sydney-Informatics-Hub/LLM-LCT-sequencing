@@ -186,6 +186,40 @@ def openai_models():
     # return openai available models
     return openai.Model.list()
 
+def find_clause_position(text, clause):
+    """
+    Find position of str in a text
+
+    Parameters:
+    -----------
+    - text (str): The text to search in.
+    - clause (str): The clause to search for.
+
+    Returns:
+    --------
+    - start_position (int): The start position of the clause in the text.
+    - end_position (int): The end position of the clause in the text.
+    - bracketed_text (str): The text with brackets around the clause.
+    """
+    # enforce utf8 encoding
+    text = text.encode('utf8', errors='ignore').decode('utf8')
+    clause = clause.encode('utf8', errors='ignore').decode('utf8')
+    
+    # Find the start position of the clause in the text
+    start_position = text.find(clause)
+    
+    # If the clause is not found, return None values
+    if start_position == -1:
+        return None, None, text
+
+    # Calculate the end position
+    end_position = start_position + len(clause) - 1
+
+    # Insert brackets around the clause
+    bracketed_text = text[:start_position] + "[" + clause + "]" + text[end_position + 1:]
+
+    return start_position, end_position, bracketed_text
+
 
 def test_llm_completion():
     """
