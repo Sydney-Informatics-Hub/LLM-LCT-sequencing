@@ -2,11 +2,10 @@ from typing import Optional
 
 from numpy import ndarray
 
-from annotation.model.data_structures.classification.Classification import Classification
-from annotation.model.data_structures.document.TextRange import ClauseSequence, TextRange
-from annotation.model.database.interfaces import TextRangeRepository, SequenceRepository, TextRepository
-from annotation.model.database.CSV import TextRangeCSVRepository, SequenceCSVRepository
-from annotation.model.database.TXT import TextTXTRepository
+from annotation.model.data_structures import TextRange, ClauseSequence
+from annotation.model.data_structures.Classification import Classification
+from annotation.model.database.repositories import TextRepository, TextTXTRepository, TextRangeRepository, \
+    TextRangeCSVRepository, SequenceRepository, SequenceCSVRepository
 
 
 class AnnotationDAO:
@@ -28,8 +27,14 @@ class AnnotationDAO:
         delimiter: str = SequenceCSVRepository.CLASS_LS_DELIMITER
         return delimiter.join([str(x) for x in int_list])
 
+    def write_text_file(self, text: str):
+        self.text_repository.write_file(text)
+
     def get_text(self) -> str:
         return self.text_repository.read_all()
+
+    def create_clause(self, start: int, end: int) -> int:
+        return self.clause_repository.create(start, end)
 
     def get_all_clauses(self) -> list[TextRange]:
         clause_data: ndarray = self.clause_repository.read_all()
@@ -60,8 +65,8 @@ class AnnotationDAO:
         clause_b: TextRange = TextRange(clause_b_data[1], clause_b_data[2], range_id=clause_b_id)
 
         linkage_words_list: list[str] = []
-        if isinstance(linkage_words, str):
-            linkage_words_list = linkage_words.split(",")
+        if isinstance(linkage_words, str) and (len(linkage_words) > 0):
+            linkage_words_list = linkage_words.split(SequenceCSVRepository.LINKAGE_LS_DELIMITER)
 
         predicted_classes: Optional[list[Classification]] = []
         for class_int in class_predict_ids:
@@ -104,8 +109,14 @@ class AnnotationDAO:
         correct_classes_str: str = AnnotationDAO._join_str_from_int_list(correct_classes)
         self.sequence_repository.update(sequence_id, correct_classes_str)
 
-    def create_sequence(self, clause_a_id: int, clause_b_id: int) -> int:
-        return self.sequence_repository.create(clause_a_id, clause_b_id)
+    def create_sequence(self, clause_a_id: int, clause_b_id: int,
+                        linkage_words: str = "", predicted_classes: str = "0") -> int:
+        return self.sequence_repository.create(clause_a_id, clause_b_id, linkage_words, predicted_classes)
 
     def delete_sequence(self, sequence_id: int):
         self.sequence_repository.delete(sequence_id)
+
+    def clear_all_data_stores(self):
+        self.text_repository.clear_database()
+        self.sequence_repository.clear_database()
+        self.clause_repository.clear_database()

@@ -108,10 +108,14 @@ class ClauseSequenceControls:
     def get_clause_overlap(clause_a_range: tuple[int, int], clause_b_range: tuple[int, int]) -> Optional[tuple[int, int]]:
         if (clause_a_range is None) or (clause_b_range is None):
             return
-        if (clause_a_range[0] <= clause_b_range[0]) and (clause_b_range[0] <= clause_a_range[1]):
-            return clause_b_range[0], clause_a_range[1]
-        elif (clause_b_range[0] <= clause_a_range[0]) and (clause_a_range[0] <= clause_b_range[1]):
-            return clause_a_range[0], clause_b_range[1]
+
+        a_start, a_end = clause_a_range
+        b_start, b_end = clause_b_range
+
+        if (a_start <= b_start) and (b_start < a_end):
+            return b_start, a_end
+        if (b_start <= a_start) and (a_start < b_end):
+            return a_start, b_end
 
     def get_component(self):
         return self.component
@@ -342,8 +346,10 @@ class ExportControls:
     def toggle_options_visibility(self, *args):
         self.export_buttons.visible = not self.export_buttons.visible
         if self.export_buttons.visible:
+            self.show_options_button.name = "Hide export options"
             self.show_options_button.button_style = "solid"
         else:
+            self.show_options_button.name = "Show export options"
             self.show_options_button.button_style = "outline"
 
 

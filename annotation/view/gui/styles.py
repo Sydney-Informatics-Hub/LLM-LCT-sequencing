@@ -45,7 +45,7 @@ sequence_heading_style = {
 
 sequence_info_style = {
     "min-height": "90px",
-    "min-width": "150px"
+    "min-width": "200px"
 }
 
 manage_sequence_button_style = {

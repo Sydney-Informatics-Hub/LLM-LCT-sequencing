@@ -1,7 +1,7 @@
 import os
 
 from annotation.model.database.DatabaseExceptions import DatabaseFileSizeError
-from annotation.model.database.interfaces import TextRepository
+from annotation.model.database.repositories import TextRepository
 
 
 class TextTXTRepository(TextRepository):
@@ -13,7 +13,7 @@ class TextTXTRepository(TextRepository):
         self._cache_updated: bool = False
 
         # Validate the file can be opened with read permissions
-        if not (os.access(self._database_filename, os.R_OK)):
+        if not os.access(self._database_filename, os.R_OK):
             raise PermissionError(f"No permissions to read the file: {self._database_filename}")
 
         # Validate the file is not too large to be read into memory
@@ -28,6 +28,12 @@ class TextTXTRepository(TextRepository):
 
         with open(self._database_filename) as f:
             self._database_cache = f.read()
+
+        self._cache_updated = True
+
+    def _write_cache_to_database(self):
+        with open(self._database_filename, 'w') as f:
+            f.write(self._database_cache)
 
         self._cache_updated = True
 
@@ -58,3 +64,11 @@ class TextTXTRepository(TextRepository):
         self._read_database_into_cache()
 
         return len(self._database_cache)
+
+    def write_file(self, text: str):
+        self._database_cache = text
+        self._write_cache_to_database()
+
+    def clear_database(self):
+        self._database_cache = ""
+        self._write_cache_to_database()

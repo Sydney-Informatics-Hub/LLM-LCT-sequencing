@@ -4,12 +4,9 @@ from io import BytesIO
 from typing import Callable, Optional
 
 from annotation.model import AnnotationService
+from annotation.model.data_structures import SequenceTuple
 from annotation.model.export import ExportService
 from annotation.view.notifications import NotifierService
-
-# Type alias for complex tuples
-TextRangeTuple = tuple[int, int]
-SequenceTuple = tuple[TextRangeTuple, TextRangeTuple]
 
 
 class AnnotationController:

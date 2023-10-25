@@ -9,17 +9,21 @@ class TextRangeRepository(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def read_by_id(self, clause_id: int) -> tuple:
+    def read_by_id(self, range_id: int) -> tuple:
         raise NotImplementedError()
 
     @abstractmethod
-    def create(self, clause) -> int:
+    def create(self, start: int, end: int) -> int:
         raise NotImplementedError()
 
     @abstractmethod
-    def update(self, clause_id: int, start: int, end: int) -> bool:
+    def update(self, range_id: int, start: int, end: int) -> bool:
         raise NotImplementedError()
 
     @abstractmethod
     def delete(self) -> bool:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def clear_database(self):
         raise NotImplementedError()

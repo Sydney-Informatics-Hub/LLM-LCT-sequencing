@@ -35,7 +35,7 @@ class TextRender:
         a_start, a_end = self.clause_a_range
         b_start, b_end = self.clause_b_range
 
-        return ((a_start <= b_start) and (b_start <= a_end)) or ((b_start <= a_start) and (a_start <= b_end))
+        return ((a_start <= b_start) and (b_start < a_end)) or ((b_start <= a_start) and (a_start < b_end))
 
     def _repr_html_(self) -> str:
         text_ls: list[str] = list(self.raw_text)
@@ -45,22 +45,25 @@ class TextRender:
             if (char == "\n") or (char == "\r\n"):
                 text_ls[i] = "<br>"
 
-        if self.clause_a_range is not None:
-            text_ls[self.clause_a_range[0]] = "<span class=\"first_clause\">" + text_ls[self.clause_a_range[0]]
-            text_ls[self.clause_a_range[1]] = "</span>" + text_ls[self.clause_a_range[1]]
-
-        if self.clause_b_range is not None:
-            text_ls[self.clause_b_range[0]] = "<span class=\"second_clause\">" + text_ls[self.clause_b_range[0]]
-            text_ls[self.clause_b_range[1]] = "</span>" + text_ls[self.clause_b_range[1]]
-
-        if self.do_clauses_overlap():
+        clauses_overlap: bool = self.do_clauses_overlap()
+        if clauses_overlap:
             overlap_range = [self.clause_b_range[0], self.clause_a_range[1]]
-            text_ls[overlap_range[0]] = "<span class=\"clause_overlap\">" + text_ls[overlap_range[0]]
-            text_ls[overlap_range[1]] = "</span>" + text_ls[overlap_range[1]]
+
+            text_ls[self.clause_a_range[0]] = "<span class=\"first_clause\">" + text_ls[self.clause_a_range[0]]
+            text_ls[overlap_range[0]] = "</span><span class=\"clause_overlap\">" + text_ls[overlap_range[0]]
+            text_ls[overlap_range[1]] = "</span><span class=\"second_clause\">" + text_ls[overlap_range[1]]
+            text_ls[self.clause_b_range[1]] = "</span>" + text_ls[self.clause_b_range[1]]
+        else:
+            if self.clause_a_range is not None:
+                text_ls[self.clause_a_range[0]] = "<span class=\"first_clause\">" + text_ls[self.clause_a_range[0]]
+                text_ls[self.clause_a_range[1]] = "</span>" + text_ls[self.clause_a_range[1]]
+            if self.clause_b_range is not None:
+                text_ls[self.clause_b_range[0]] = "<span class=\"second_clause\">" + text_ls[self.clause_b_range[0]]
+                text_ls[self.clause_b_range[1]] = "</span>" + text_ls[self.clause_b_range[1]]
 
         for linkage_word_range in self.linkage_word_ranges:
             text_ls[linkage_word_range[0]] = "<span class=\"linkage_word\">" + text_ls[linkage_word_range[0]]
-            text_ls[linkage_word_range[1]] = "</span>" + text_ls[linkage_word_range[1]]
+            text_ls[linkage_word_range[1]-1] = text_ls[linkage_word_range[1]-1] + "</span>"
 
         html_text: str = "".join(text_ls)
 

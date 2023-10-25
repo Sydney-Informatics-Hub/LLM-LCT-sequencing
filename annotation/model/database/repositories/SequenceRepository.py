@@ -61,7 +61,8 @@ class SequenceRepository(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def create(self, clause_a_id: int, clause_b_id: int) -> int:
+    def create(self, clause_a_id: int, clause_b_id: int,
+               linkage_words: str = "", predicted_classes: str = "") -> int:
         """
         Creates a new sequence in the database with the provided clause ids.
         Returns the integer id of the new sequence. IDs automatically increment by 1 from the max ID
@@ -69,6 +70,8 @@ class SequenceRepository(ABC):
         ----------
         clause_a_id: int - the id of the first specified clause
         clause_b_id: int - the id of the second specified clause
+        linkage_words: str - the linkage words for the sequence, as a list of words separated by a delimiter
+        predicted_classes: str - the predicted classes for the sequence, as a list of digits separated by a delimiter
 
         Returns
         -------
@@ -104,5 +107,12 @@ class SequenceRepository(ABC):
         Returns
         -------
         success: bool - True if the operation succeeds, False if the operation fails or the sequence is not found.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def clear_database(self):
+        """
+        Deletes all contents from the database, except for column headers
         """
         raise NotImplementedError()

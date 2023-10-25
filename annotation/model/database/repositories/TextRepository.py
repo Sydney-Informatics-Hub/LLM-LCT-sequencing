@@ -38,3 +38,21 @@ class TextRepository(ABC):
         -------
         end_index: int - The range end index.
         """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def write_file(self, text: str):
+        """
+        Accepts a string and writes the string to the database file.
+        Parameters
+        ----------
+        text: str - Any string, can be empty.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def clear_database(self):
+        """
+        Deletes all contents from the text database
+        """
+        raise NotImplementedError()

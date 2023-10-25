@@ -1,12 +1,11 @@
 import os
 from csv import DictReader
 
-import numpy as np
 from numpy import ndarray
 from pandas import DataFrame, read_csv
 
 from annotation.model.database.DatabaseExceptions import DatabaseFieldError, DatabaseEntryError
-from annotation.model.database.interfaces.SequenceRepository import SequenceRepository
+from annotation.model.database.repositories.SequenceRepository import SequenceRepository
 
 
 class SequenceCSVRepository(SequenceRepository):
@@ -21,6 +20,7 @@ class SequenceCSVRepository(SequenceRepository):
     REQUIRED_FIELDS: list[str, ...] = [field for field in FIELD_DTYPES.keys()]
 
     CLASS_LS_DELIMITER: str = ','
+    LINKAGE_LS_DELIMITER: str = ','
 
     def __init__(self, database_csv_filename: str):
         self._database_filename: str = database_csv_filename
@@ -28,9 +28,9 @@ class SequenceCSVRepository(SequenceRepository):
         self._cache_updated: bool = False
 
         # Validate the file can be opened with read and write permissions
-        if not (os.access(self._database_filename, os.R_OK)):
+        if not os.access(self._database_filename, os.R_OK):
             raise PermissionError(f"No permissions to read the file: {self._database_filename}")
-        if not (os.access(self._database_filename, os.W_OK)):
+        if not os.access(self._database_filename, os.W_OK):
             raise PermissionError(f"No permissions to write to the file: {self._database_filename}")
 
         self._read_database_into_cache()
@@ -96,14 +96,15 @@ class SequenceCSVRepository(SequenceRepository):
 
         return matches
 
-    def create(self, clause_a_id: int, clause_b_id: int) -> int:
-        if type(clause_a_id) is not int:
-            return -1
-        if type(clause_b_id) is not int:
+    def create(self, clause_a_id: int, clause_b_id: int,
+               linkage_words: str = "", predicted_classes: str = "0") -> int:
+        if ((type(clause_a_id) is not int) or (type(clause_b_id) is not int) or
+                (type(linkage_words) is not str) or (type(predicted_classes) is not str)):
             return -1
 
         self._read_database_into_cache()
 
+        sequence_id_field = SequenceCSVRepository.SEQUENCE_ID_FIELD
         clause_a_id_field = SequenceCSVRepository.CLAUSE_A_ID_FIELD
         clause_b_id_field = SequenceCSVRepository.CLAUSE_B_ID_FIELD
         matches: ndarray = self._database_cache.loc[
@@ -113,12 +114,12 @@ class SequenceCSVRepository(SequenceRepository):
         if len(matches) > 0:
             return -1
 
-        existing_ids: ndarray = self._database_cache['sequence_id']
+        existing_ids: ndarray = self._database_cache[sequence_id_field]
         new_id: int = 1
         if len(existing_ids) > 0:
             new_id = existing_ids.max() + 1
 
-        new_entry = [new_id, clause_a_id, clause_b_id, 0, "0", "0"]
+        new_entry = [new_id, clause_a_id, clause_b_id, linkage_words, predicted_classes, "0"]
 
         if len(self._database_cache.index) > 0:
             self._database_cache.loc[max(self._database_cache.index) + 1] = new_entry
@@ -165,3 +166,7 @@ class SequenceCSVRepository(SequenceRepository):
             return True
         else:
             raise DatabaseEntryError(f"More than one entry found for sequence_id: {sequence_id}")
+
+    def clear_database(self):
+        self._database_cache = self._database_cache.iloc[0:0]
+        self._write_cache_to_database()

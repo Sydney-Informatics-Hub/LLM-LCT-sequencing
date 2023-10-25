@@ -2,19 +2,18 @@ from typing import Optional
 
 from pandas import DataFrame
 
-from annotation.model.data_structures.classification.Classification import Classification
-from annotation.model.data_structures.document.TextRange import ClauseSequence, TextRange
-from annotation.model.database.AnnotationDAO import AnnotationDAO
-
-# Type alias for complex tuples
-TextRangeTuple = tuple[int, int]
-SequenceTuple = tuple[TextRangeTuple, TextRangeTuple]
+from annotation.model.data_structures import ClauseSequence, TextRange, Classification, SequenceTuple
+from annotation.model.database import AnnotationDAO, ref_text_ds_path, clauses_ds_path, sequences_ds_path, \
+    DatastoreBuilder
 
 
 class AnnotationService:
-    def __init__(self, text_database_fn: str, clause_database_fn: str, sequence_database_fn: str):
-        self.annotation_dao: AnnotationDAO = AnnotationDAO(text_database_fn, clause_database_fn,
-                                                           sequence_database_fn)
+    def __init__(self, text_file_path: str, master_sequence_db_path: str):
+        self.annotation_dao: AnnotationDAO = AnnotationDAO(ref_text_ds_path, clauses_ds_path,
+                                                           sequences_ds_path)
+        ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao,
+                                                        text_file_path, master_sequence_db_path)
+        ds_builder.build_data_stores()
 
     def get_text(self) -> str:
         return self.annotation_dao.get_text()
@@ -92,7 +91,7 @@ class AnnotationService:
         self.annotation_dao.delete_sequence(sequence_id)
 
     def get_dataframe_for_export(self) -> DataFrame:
-        export_columns = ["Clause A", "Clause B", "Predicted Classes", "Corrected Classes"]
+        export_columns = ["Clause A", "Clause B", "Linkage words", "Predicted Classes", "Corrected Classes"]
         export_data: list[dict[str, str]] = []
 
         clause_texts: dict[int, str] = self.get_clauses()
@@ -102,6 +101,8 @@ class AnnotationService:
             clause_a_text = "" if clause_a_text is None else clause_a_text
             clause_b_text: Optional[str] = clause_texts.get(sequence.get_second_clause().get_id())
             clause_b_text = "" if clause_b_text is None else clause_b_text
+
+            linkage_words: str = ",".join(sequence.get_linkage_words())
 
             predicted_classes: Optional[list[Classification]] = sequence.get_predicted_classes()
             predicted_classes_str: str = ""
@@ -114,8 +115,9 @@ class AnnotationService:
 
             sequence_dict: dict[str, str] = {export_columns[0]: clause_a_text,
                                              export_columns[1]: clause_b_text,
-                                             export_columns[2]: predicted_classes_str,
-                                             export_columns[3]: corrected_classes_str}
+                                             export_columns[2]: linkage_words,
+                                             export_columns[3]: predicted_classes_str,
+                                             export_columns[4]: corrected_classes_str}
             export_data.append(sequence_dict)
 
         return DataFrame(export_data, columns=export_columns)
