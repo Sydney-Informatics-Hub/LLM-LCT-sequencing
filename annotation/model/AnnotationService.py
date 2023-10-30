@@ -22,7 +22,7 @@ class AnnotationService:
 
         # large_language_processor = LLMProcess(clause_df) # TODO: insert LLM processor
         # master_sequence_df: DataFrame = large_language_processor.generate_dataframe()
-        master_sequence_df: DataFrame = read_csv(filepath_or_buffer="/Users/hcro4489/My Drive/USYD SIH/Repos/LLM-LCT-sequencing/annotation/model/database/dummy_data/sequences.csv",
+        master_sequence_df: DataFrame = read_csv(filepath_or_buffer="",
                                                  header=0,
                                                  names=DatastoreBuilder.REQUIRED_FIELDS,
                                                  dtype=DatastoreBuilder.FIELD_DTYPES)

@@ -65,7 +65,14 @@ class TextRender:
             text_ls[linkage_word_range[0]] = "<span class=\"linkage_word\">" + text_ls[linkage_word_range[0]]
             text_ls[linkage_word_range[1]-1] = text_ls[linkage_word_range[1]-1] + "</span>"
 
-        html_text: str = "".join(text_ls)
+        window_start: int = 0
+        window_end: int = -1
+        if self.clause_a_range is not None:
+            window_start = self.clause_a_range[0]
+        if self.clause_b_range is not None:
+            window_end = self.clause_b_range[1]
+
+        html_text: str = "".join(text_ls[window_start:window_end])
 
         return html_text
 
