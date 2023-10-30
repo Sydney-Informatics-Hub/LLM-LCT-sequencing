@@ -123,6 +123,7 @@ class AnnotationController:
             self.display_error(str(e))
 
         self.stop_loading_indicator()
+        self.update_displays()
 
     def next_sequence(self):
         logging.debug("next_sequence called")
