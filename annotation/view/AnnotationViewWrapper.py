@@ -14,10 +14,9 @@ class AnnotationViewWrapper:
         self.loading_indicator = LoadingIndicator(controller)
         self.text_display = TextDisplay(controller)
         self.controls = Controls(controller)
-        primary_row = Row(self.loading_indicator.get_component(),
+        self.layout = Row(self.loading_indicator.get_component(),
                           self.text_display.get_component(),
                           self.controls.get_component())
-        self.layout = primary_row
 
         self.controller.update_displays()
 
