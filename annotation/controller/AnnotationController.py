@@ -23,6 +23,8 @@ class AnnotationController:
         self._update_display_callables: list[Callable] = []
         self.curr_sequence_id: int = 1
 
+        self.loading_msg: Optional[str] = None
+
     @staticmethod
     def configure_logging(log_file_path: str, debug: bool = False):
         with open(log_file_path, 'w') as log_f:
@@ -48,6 +50,17 @@ class AnnotationController:
     def display_success(self, success_msg: str):
         logging.info(f"Success displayed: {success_msg}")
         self.notifier_service.notify_success(success_msg)
+
+    def set_loading_msg(self, loading_msg: str):
+        self.loading_msg = loading_msg
+        self.update_displays()
+
+    def stop_loading_indicator(self):
+        self.loading_msg = None
+        self.update_displays()
+
+    def get_loading_msg(self) -> Optional[str]:
+        return self.loading_msg
 
     def add_update_text_display_callable(self, update_text_display_callable: Optional[Callable]):
         logging.debug(f"add_update_text_display_callable called. Args: update_text_display_callable: {str(update_text_display_callable)}")
