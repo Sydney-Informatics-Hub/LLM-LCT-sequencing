@@ -88,10 +88,10 @@ class AnnotationDAO:
 
         return ClauseSequence(sequence_id, clause_a, clause_b, linkage_words_list, predicted_classes, corrected_classes)
 
-    def get_sequence_by_id(self, sequence_id: int) -> ClauseSequence:
+    def get_sequence_by_id(self, sequence_id: int) -> Optional[ClauseSequence]:
         sequence_data: tuple = self.sequence_repository.read_by_id(sequence_id)
         if len(sequence_data) == 0:
-            raise ValueError(f"Sequence database does not contain a sequence with id {sequence_id}")
+            return None
 
         return self._read_sequence_from_sequence_data(sequence_data)
 
