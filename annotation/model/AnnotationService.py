@@ -5,15 +5,25 @@ from pandas import DataFrame
 from annotation.model.data_structures import ClauseSequence, TextRange, Classification, SequenceTuple
 from annotation.model.database import AnnotationDAO, ref_text_ds_path, clauses_ds_path, sequences_ds_path, \
     DatastoreBuilder
+from annotation.model.database import SourceFileLoader
 
 
 class AnnotationService:
-    def __init__(self, text_file_path: str, master_sequence_db_path: str):
-        self.annotation_dao: AnnotationDAO = AnnotationDAO(ref_text_ds_path, clauses_ds_path,
-                                                           sequences_ds_path)
-        ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao,
-                                                        text_file_path, master_sequence_db_path)
-        ds_builder.build_data_stores()
+    def __init__(self):
+        self.annotation_dao: AnnotationDAO = AnnotationDAO(ref_text_ds_path, clauses_ds_path, sequences_ds_path)
+        self.annotation_dao.clear_all_data_stores()
+
+    def load_source_file(self, source_file_content):
+        ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao)
+
+        source_loader: SourceFileLoader = SourceFileLoader(source_file_content)
+        text_content: str = source_loader.get_text()
+        clause_df: DataFrame = source_loader.generate_clause_dataframe()
+
+        large_language_processor = LLMProcess(clause_df) # TODO: insert LLM processor
+        master_sequence_df: DataFrame = large_language_processor.generate_dataframe()
+
+        ds_builder.build_data_stores(text_content, master_sequence_df)
 
     def get_text(self) -> str:
         return self.annotation_dao.get_text()

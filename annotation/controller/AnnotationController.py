@@ -6,7 +6,7 @@ from typing import Callable, Optional
 from annotation.model import AnnotationService
 from annotation.model.data_structures import SequenceTuple
 from annotation.model.export import ExportService
-from annotation.view.notifications import NotifierService
+from annotation.view.global_notifiers import NotifierService
 
 
 class AnnotationController:
@@ -112,6 +112,16 @@ class AnnotationController:
             return []
 
     # Data control methods
+
+    def load_source_file(self, source_file_content: BytesIO):
+        try:
+            self.set_loading_msg("Loading source file")
+            self.annotation_service.load_source_file(source_file_content)
+        except Exception as e:
+            logging.error(str(e) + '\n' + traceback.format_exc())
+            self.display_error(str(e))
+
+        self.stop_loading_indicator()
 
     def next_sequence(self):
         logging.debug("next_sequence called")

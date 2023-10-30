@@ -2,7 +2,8 @@ import panel as pn
 from panel import Row
 
 from annotation.controller import AnnotationController
-from annotation.view.gui import Controls, LoadingIndicator, TextDisplay
+from annotation.view.global_notifiers import LoadingIndicator
+from annotation.view.gui import Controls, TextDisplay
 
 pn.extension(notifications=True)
 

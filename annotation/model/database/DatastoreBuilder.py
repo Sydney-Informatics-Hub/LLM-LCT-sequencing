@@ -21,12 +21,8 @@ class DatastoreBuilder:
                           WINDOW_START_FIELD: int, WINDOW_END_FIELD: int}
     REQUIRED_FIELDS: list[str, ...] = [field for field in FIELD_DTYPES.keys()]
 
-    def __init__(self, annotation_dao: AnnotationDAO, text_source_path: str, sequence_source_db_path: str):
+    def __init__(self, annotation_dao: AnnotationDAO):
         self.annotation_dao: AnnotationDAO = annotation_dao
-        self.text_source_path: str = text_source_path
-        self.sequence_source_db_path: str = sequence_source_db_path
-
-        self.annotation_dao.clear_all_data_stores()
 
     def _write_database_row(self, row: Series):
         c1_start: int = row[DatastoreBuilder.C1_START_FIELD]
@@ -44,15 +40,6 @@ class DatastoreBuilder:
 
         self.annotation_dao.create_sequence(c1_id, c2_id, linkage_words, predicted_classes)
 
-    def build_data_stores(self):
-        with open(self.text_source_path, 'r') as text_file_source:
-            text_content = text_file_source.read()
-
-        self.annotation_dao.write_text_file(text_content)
-
-        sequence_source_df: DataFrame = read_csv(filepath_or_buffer=self.sequence_source_db_path,
-                                                 header=0,
-                                                 names=DatastoreBuilder.REQUIRED_FIELDS,
-                                                 dtype=DatastoreBuilder.FIELD_DTYPES)
-
-        sequence_source_df.apply(self._write_database_row, axis=1)
+    def build_data_stores(self, text_file_content: str, master_sequence_df: DataFrame):
+        self.annotation_dao.write_text_file(text_file_content)
+        master_sequence_df.apply(self._write_database_row, axis=1)
