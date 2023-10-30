@@ -8,8 +8,7 @@ from panel.pane import Str, HTML
 from annotation.controller.AnnotationController import AnnotationController
 from .styles import (controls_style, sequence_heading_style, delete_sequence_button_style, add_sequence_button_style,
                      clause_stylesheet, sequence_info_style, classification_heading_style,
-                     sequence_classification_style,
-                     classification_subheading_style, llm_class_display_style, manage_sequence_button_style)
+                     sequence_classification_style, manage_sequence_button_style)
 
 
 class ClauseSequenceControls:

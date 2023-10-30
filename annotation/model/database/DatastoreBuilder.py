@@ -42,4 +42,10 @@ class DatastoreBuilder:
 
     def build_data_stores(self, text_file_content: str, master_sequence_df: DataFrame):
         self.annotation_dao.write_text_file(text_file_content)
+
+        # sequence_source_df: DataFrame = read_csv(filepath_or_buffer=sequence_source_db_path,
+        #                                          header=0,
+        #                                          names=DatastoreBuilder.REQUIRED_FIELDS,
+        #                                          dtype=DatastoreBuilder.FIELD_DTYPES)
+
         master_sequence_df.apply(self._write_database_row, axis=1)

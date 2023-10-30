@@ -1,7 +1,19 @@
+main_column_style = {
+    "min-height": "1000px"
+}
+
+top_bar_style = {
+    "height": "60px"
+}
+
 text_display_style = {
+    "height": "800px",
     "padding": "20px",
-    "width": "50%",
-    "min_width": "400px"
+}
+
+controls_style = {
+    "border-left": "1px solid black",
+    "padding": "20px"
 }
 
 clause_stylesheet = """
@@ -21,19 +33,6 @@ clause_stylesheet = """
     background-color: rgba(234, 82, 209, 1);
 }
 """
-
-controls_style = {
-    "border-left": "1px solid black",
-    "padding": "20px",
-    "min_width": "400px"
-}
-
-paragraph_controls_style = {
-}
-
-paragraph_heading_style = {
-    "font": "bold 1.3em \"Arial\", sans-serif"
-}
 
 controls_navigation_button_style = {
     "width": "75px"
@@ -68,11 +67,4 @@ classification_heading_style = {
 
 classification_subheading_style = {
     "font": "bold 1em \"Arial\", sans-serif"
-}
-
-llm_class_display_style = {
-    "width": "60px",
-    "padding": "5px 10px",
-    "border": "1px solid black",
-    "text-align": "center"
 }

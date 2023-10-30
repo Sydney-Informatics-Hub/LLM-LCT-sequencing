@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pandas import DataFrame
+from pandas import DataFrame, read_csv
 
 from annotation.model.data_structures import ClauseSequence, TextRange, Classification, SequenceTuple
 from annotation.model.database import AnnotationDAO, ref_text_ds_path, clauses_ds_path, sequences_ds_path, \
@@ -20,8 +20,12 @@ class AnnotationService:
         text_content: str = source_loader.get_text()
         clause_df: DataFrame = source_loader.generate_clause_dataframe()
 
-        large_language_processor = LLMProcess(clause_df) # TODO: insert LLM processor
-        master_sequence_df: DataFrame = large_language_processor.generate_dataframe()
+        # large_language_processor = LLMProcess(clause_df) # TODO: insert LLM processor
+        # master_sequence_df: DataFrame = large_language_processor.generate_dataframe()
+        master_sequence_df: DataFrame = read_csv(filepath_or_buffer="/Users/hcro4489/My Drive/USYD SIH/Repos/LLM-LCT-sequencing/annotation/model/database/dummy_data/sequences.csv",
+                                                 header=0,
+                                                 names=DatastoreBuilder.REQUIRED_FIELDS,
+                                                 dtype=DatastoreBuilder.FIELD_DTYPES)
 
         ds_builder.build_data_stores(text_content, master_sequence_df)
 

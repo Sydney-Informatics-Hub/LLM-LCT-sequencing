@@ -16,10 +16,11 @@ class FileUploadWidget:
 
         self.component = Row(self.file_input,
                              self.load_file_button,
+                             sizing_mode="stretch_width",
                              align="start")
 
     def get_component(self):
-        return self.get_component()
+        return self.component
 
     def load_file(self, *args):
         if self.file_input.value is None:

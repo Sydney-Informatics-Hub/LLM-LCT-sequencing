@@ -13,7 +13,8 @@ class LoadingIndicator:
 
         self.component = Row(self.loading_indicator,
                              visible=False,
-                             align="center")
+                             sizing_mode="stretch_width",
+                             align="end")
 
         self.controller.add_update_text_display_callable(self.update_display)
 

@@ -121,8 +121,12 @@ class TextRender:
         and sets the linkage_word ranges to the corresponding indexes of the occurrences.
         Parameters
         ----------
-        linkage_words: list[str] - A list of linkage words that occur within the currently set clauses
+        linkage_words: Optional[list[str]] - A list of linkage words that occur within the currently set clauses.
+        If None or empty, the linkage words will be set to an empty list
         """
+        if linkage_words is None:
+            self.linkage_word_ranges = []
+            return
         if len(linkage_words) == 0:
             self.linkage_word_ranges = []
             return
@@ -164,7 +168,10 @@ class TextDisplay:
         self.controller: AnnotationController = controller
         self.text_render: TextRender = TextRender(self.controller.get_text())
         self.text_html = HTML(self.text_render, stylesheets=[clause_stylesheet])
-        self.component = Column(self.text_html, styles=text_display_style, sizing_mode="stretch_height")
+        self.component = Column(self.text_html,
+                                scroll=True,
+                                styles=text_display_style,
+                                sizing_mode="stretch_width")
 
         self.controller.add_update_text_display_callable(self.update_display)
 
@@ -176,7 +183,7 @@ class TextDisplay:
             clause_a_range, clause_b_range = clause_ranges
         self.text_render.set_clause_a_range(clause_a_range)
         self.text_render.set_clause_b_range(clause_b_range)
-        linkage_words: list[str] = self.controller.get_curr_sequence_linkage_words()
+        linkage_words: Optional[list[str]] = self.controller.get_curr_sequence_linkage_words()
         self.text_render.update_linkage_word_ranges(linkage_words)
 
         self.set_text(self.controller.get_text())
