@@ -140,29 +140,18 @@ class TextRender:
 
         linkage_word_ranges: list[tuple[int, int]] = []
 
-        clause_a_text: str = ""
-        if self.clause_a_range is not None:
-            clause_a_text = self.raw_text[self.clause_a_range[0]:self.clause_a_range[1]]
-        clause_b_text: str = ""
-        if self.clause_b_range is not None:
-            clause_b_text = self.raw_text[self.clause_b_range[0]:self.clause_b_range[1]]
-
         for linkage_word in linkage_words:
-            pattern = r'\b' + re.escape(linkage_word) + r'\b'
+            # pattern = r'\b' + re.escape(linkage_word) + r'\b'
+            pattern = re.escape(linkage_word)
 
-            if self.clause_a_range is not None:
-                clause_a_matches = re.finditer(pattern, clause_a_text)
-                for match in clause_a_matches:
-                    base_idx = self.clause_a_range[0]
-                    new_range: tuple = (base_idx + match.start()), (base_idx + match.end())
-                    linkage_word_ranges.append(new_range)
-
-            if self.clause_b_range is not None:
-                clause_b_matches = re.finditer(pattern, clause_b_text)
-                for match in clause_b_matches:
-                    base_idx = self.clause_b_range[0]
-                    new_range: tuple = (base_idx + match.start()), (base_idx + match.end())
-                    linkage_word_ranges.append(new_range)
+            for clause_range in [self.clause_a_range, self.clause_b_range]:
+                if clause_range is not None:
+                    clause_text = self.raw_text[clause_range[0]:clause_range[1]]
+                    clause_match = re.finditer(pattern, clause_text)
+                    for match in clause_match:
+                        base_idx = clause_range[0]
+                        new_range: tuple = (base_idx + match.start()), (base_idx + match.end())
+                        linkage_word_ranges.append(new_range)
 
         self.linkage_word_ranges = linkage_word_ranges
 
