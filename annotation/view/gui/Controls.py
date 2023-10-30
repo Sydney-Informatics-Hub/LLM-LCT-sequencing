@@ -229,20 +229,18 @@ class AddSequenceControls:
 
 
 class SequenceClassificationControls:
-    UNSELECTED: str = "No change"
-
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
 
         self.title = Str("Sequence Classification", styles=classification_heading_style)
-        self.llm_class_title = Str("LLM", styles=classification_subheading_style)
-        self.llm_class_display = Row(Str("", styles=llm_class_display_style))
-        self.user_class_title = Str("User", styles=classification_subheading_style)
-        classification_options = [SequenceClassificationControls.UNSELECTED] + self.controller.get_all_classifications()
+        self.revert_to_llm_button = Button(name="Revert to prediction", disabled=True,
+                                           button_type="primary", button_style="outline")
+        self.revert_to_llm_button.on_click(self.revert_to_prediction)
+        classification_options = self.controller.get_all_classifications()
         self.classification_selector = CheckButtonGroup(
             name="Sequence Classifications",
             options=classification_options,
-            value=self.controller.get_correct_classifications(),
+            value=self.controller.get_predicted_classifications(),
             button_type="primary", button_style="outline"
         )
         selector_bound_fn = bind(self.set_correct_classification, classifications=self.classification_selector)
@@ -250,11 +248,7 @@ class SequenceClassificationControls:
         self.component = Column(
             Row(self.title,
                 align="center"),
-            Row(self.llm_class_title,
-                align="center"),
-            Row(self.llm_class_display,
-                align="center"),
-            Row(self.user_class_title,
+            Row(self.revert_to_llm_button,
                 align="center"),
             Row(self.classification_selector,
                 align="center"),
@@ -262,8 +256,6 @@ class SequenceClassificationControls:
             styles=sequence_classification_style,
             align="center"
         )
-
-        self.unselected_flag = SequenceClassificationControls.UNSELECTED in self.classification_selector.value
 
     def get_component(self):
         return self.component
@@ -275,32 +267,23 @@ class SequenceClassificationControls:
         self.component.visible = not self.component.visible
 
     def update_display(self):
-        self._update_user_class_display()
-        self._update_llm_display()
-
-    def _update_user_class_display(self):
         curr_correct_classes: list[str] = self.controller.get_correct_classifications()
         if len(curr_correct_classes) == 0:
-            curr_correct_classes = [SequenceClassificationControls.UNSELECTED]
+            curr_correct_classes = self.controller.get_predicted_classifications()
         self.classification_selector.value = curr_correct_classes
 
-    def _update_llm_display(self):
-        curr_predict_classes: list[str] = self.controller.get_predicted_classifications()
-        if len(curr_predict_classes) == 0:
-            curr_predict_classes = [""]
-        self.llm_class_display.objects = [Str(class_str, styles=llm_class_display_style) for class_str in curr_predict_classes]
+    def revert_to_prediction(self, *args):
+        self.classification_selector.value = self.controller.get_predicted_classifications()
+        self.revert_to_llm_button.disabled = True
+        self.revert_to_llm_button.button_style = "outline"
 
     def set_correct_classification(self, classifications: list[str]):
-        if len(classifications) == 0:
-            self.classification_selector.value = [SequenceClassificationControls.UNSELECTED]
-
-        if (len(classifications) > 1) and (SequenceClassificationControls.UNSELECTED in classifications):
-            if self.unselected_flag:
-                self.classification_selector.value = [x for x in self.classification_selector.value if x != SequenceClassificationControls.UNSELECTED]
-            else:
-                self.classification_selector.value = [SequenceClassificationControls.UNSELECTED]
-        self.unselected_flag = SequenceClassificationControls.UNSELECTED in self.classification_selector.value
-
+        predicted_classes: list[str] = self.controller.get_predicted_classifications()
+        if (predicted_classes == classifications) or (len(classifications) == 0):
+            self.revert_to_prediction()
+        else:
+            self.revert_to_llm_button.disabled = False
+            self.revert_to_llm_button.button_style = "solid"
         self.controller.set_correct_classifications(self.classification_selector.value)
 
 
