@@ -19,15 +19,24 @@ class SourceFileLoader:
 
     @staticmethod
     def read_docx(docx_file: str | BytesIO) -> str:
-        doc = Document(docx_file)
+        try:
+            doc = Document(docx_file)
+        except Exception:
+            raise ValueError("Loaded file type or file format is incorrect")
         doc_text: str = ""
+
+        if len(doc.tables) == 0:
+            raise ValueError("No table found within the loaded document")
 
         text_table: Table = doc.tables[0]
 
-        content_col: int = 0
+        content_col: int = -1
         for idx, cell in enumerate(text_table.rows[0].cells):
             if cell.text.lower() == "content":
                 content_col = idx
+
+        if content_col == -1:
+            raise ValueError("No column labelled 'content' found in table")
 
         for row in text_table.rows[1:]:
             cell = row.cells[content_col]
