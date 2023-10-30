@@ -18,19 +18,19 @@ controls_style = {
 
 clause_stylesheet = """
 .first_clause {
-    background-color: rgba(100, 143, 255, 1);
+    background-color: rgba(30, 136, 229, 0.8);
 }
 
 .second_clause {
-    background-color: rgba(220, 38, 127, 1);
+    background-color: rgba(216, 27, 96, 0.8);
 }
 
 .clause_overlap {
-    background-color: rgba(160, 90, 191, 1);
+    background-color: rgba(0, 77, 64, 0.8);
 }
 
 .linkage_word {
-    background-color: rgba(234, 82, 209, 1);
+    background-color: rgba(255, 193, 7, 0.8);
 }
 """
 
