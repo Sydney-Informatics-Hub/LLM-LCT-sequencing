@@ -117,6 +117,7 @@ class AnnotationController:
         try:
             self.set_loading_msg("Loading source file")
             self.annotation_service.load_source_file(source_file_content)
+            self.display_success("File successfully loaded")
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
             self.display_error(str(e))
