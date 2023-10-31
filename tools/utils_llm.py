@@ -31,9 +31,9 @@ class LLM:
             # check if API key is valid
             try:
                 ailist = openai.Model.list()
+                print('LLM initialized.')
             except openai.error.AuthenticationError:
                 print("No valid OpenAI API key found. Please enter your OpenAI API key.")
-            print('LLM initialized.')
         else:
             # Check if file exists
             if not os.path.isfile(filename_openai_key):
@@ -152,6 +152,9 @@ class LLM:
         return completion_text, tokens_used, completion_id, message_response
 
 def openai_apikey_input():
+    """
+    Create a password input widget to enter the OpenAI API key.
+    """
     pn.extension()
     password_input = pn.widgets.PasswordInput(name='Enter your OpenAI API Key (then press enter):',
                                               placeholder='<OpenAI API Key>')
@@ -204,7 +207,7 @@ def find_clause_position(text, clause):
     # enforce utf8 encoding
     text = text.encode('utf8', errors='ignore').decode('utf8')
     clause = clause.encode('utf8', errors='ignore').decode('utf8')
-    
+
     # Find the start position of the clause in the text
     start_position = text.find(clause)
     

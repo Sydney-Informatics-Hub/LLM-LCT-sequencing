@@ -357,7 +357,6 @@ def eval_exp(df, outpath_exp, seq_classes):
 
 
 
-
 def run_pipe(
         outpath = "../results/", 
         path_schema = '../schemas', 
@@ -424,7 +423,6 @@ def run_pipe(
         excel_to_json(os.path.join(path_schema, filename_definitions), 
                     os.path.join(path_schema, json_filename_out))
         filename_definitions = json_filename_out
-
 
     # initialize token_counter
     token_count = 0
@@ -525,7 +523,7 @@ def run_pipe(
         'reasoning'])
 
     # Initiate LLM with API key
-    llm = LLM(filename_openai_key='../../openai_key.txt', model_name = modelname_llm)
+    llm = LLM(filename_openai_key=None, model_name = modelname_llm)
 
     # Loop over test sample in list_test_str
     n_test = 0
