@@ -2,8 +2,6 @@ from os.path import dirname, realpath
 
 from .AnnotationDAO import AnnotationDAO
 from .DatastoreBuilder import DatastoreBuilder
-from .SourceFileLoader import SourceFileLoader
-
 
 _data_store_path: str = dirname(realpath(__file__)) + "/data_store/"
 ref_text_ds_path: str = _data_store_path + "reference_text.txt"

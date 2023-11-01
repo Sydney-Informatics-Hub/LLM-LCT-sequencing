@@ -1,3 +1,4 @@
+from io import BytesIO
 from typing import Optional
 
 from pandas import DataFrame, read_csv
@@ -5,7 +6,7 @@ from pandas import DataFrame, read_csv
 from annotation.model.data_structures import ClauseSequence, TextRange, Classification, SequenceTuple
 from annotation.model.database import AnnotationDAO, ref_text_ds_path, clauses_ds_path, sequences_ds_path, \
     DatastoreBuilder
-from annotation.model.database import SourceFileLoader
+from annotation.model.clausing import SourceFileLoader
 
 
 class AnnotationService:
@@ -13,14 +14,17 @@ class AnnotationService:
         self.annotation_dao: AnnotationDAO = AnnotationDAO(ref_text_ds_path, clauses_ds_path, sequences_ds_path)
         self.annotation_dao.clear_all_data_stores()
 
-    def load_source_file(self, source_file_content):
+    def load_source_file(self, source_file_content: BytesIO, filetype: str):
         ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao)
 
-        source_loader: SourceFileLoader = SourceFileLoader(source_file_content)
+        source_loader: SourceFileLoader = SourceFileLoader(source_file_content, filetype)
         text_content: str = source_loader.get_text()
-        clause_df: DataFrame = source_loader.generate_clause_dataframe()
-
-        # large_language_processor = LLMProcess(clause_df) # TODO: insert LLM processor
+        # clause_df: DataFrame = source_loader.generate_clause_dataframe()
+        # clause_df.to_csv("/Users/hcro4489/My Drive/USYD SIH/Repos/LLM-LCT-sequencing/clauser.csv")
+        # clause_pair_generator = ClausePairGenerator(clause_df)
+        # clause_pair_df = clause_pair_generator.generate_df()
+        #
+        # large_language_processor = LLMProcess(clause_pair_csv_path, text_path) # TODO: insert LLM processor
         # master_sequence_df: DataFrame = large_language_processor.generate_dataframe()
         master_sequence_df: DataFrame = read_csv(filepath_or_buffer="",
                                                  header=0,

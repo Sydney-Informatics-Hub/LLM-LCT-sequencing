@@ -1,4 +1,5 @@
 from io import BytesIO
+from typing import Callable
 
 from pandas import DataFrame
 
@@ -11,14 +12,21 @@ from docx.table import Table
 class SourceFileLoader:
     NLP = spacy.load("en_core_web_sm")
 
-    def __init__(self, source_file: str | BytesIO):
-        self.source_text: str = SourceFileLoader.read_docx(source_file)
+    def __init__(self, source_file: BytesIO, filetype: str):
+        self.source_text: str
+        if filetype == "docx":
+            self.source_text = SourceFileLoader.read_docx(source_file)
+        elif filetype == "txt":
+            self.source_text = SourceFileLoader.read_txt(source_file)
+        else:
+            raise ValueError(f"File type {filetype} is not a valid source file type")
 
     def get_text(self) -> str:
         return self.source_text
 
     @staticmethod
-    def read_docx(docx_file: str | BytesIO) -> str:
+    def read_docx(docx_file: BytesIO) -> str:
+        docx_file.seek(0)
         try:
             doc = Document(docx_file)
         except Exception:
@@ -45,16 +53,27 @@ class SourceFileLoader:
         return doc_text
 
     @staticmethod
+    def read_txt(txt_file: BytesIO) -> str:
+        txt_file.seek(0)
+        txt_bytes: bytes = txt_file.read()
+        try:
+            txt_content: str = txt_bytes.decode('utf-8')
+        except UnicodeDecodeError:
+            raise ValueError("Text file must be encoded in UTF-8")
+
+        return txt_content
+
+    @staticmethod
     def _get_clause_subtrees(doc: Doc) -> list[tuple[int, int, list]]:
         clause_subtrees: list[tuple[int, int, list]] = []
         for tok in doc:
-            if tok.pos_ == 'VERB':
+            if tok.pos_ == 'VERB' or tok.dep_ == "ROOT":
                 subtree_toks = []
                 if tok.dep_ == 'aux':
                     continue
                 for child in tok.children:
-                    if child.dep_ == 'conj' or child.pos_ == 'CCONJ':
-                        continue
+                    # if child.dep_ == 'conj' or child.pos_ == 'CCONJ':
+                    #     continue
                     subtree_toks.extend(child.subtree)
                 subtree_toks.append(tok)
                 subtree_toks.sort(key=lambda ch: ch.i)

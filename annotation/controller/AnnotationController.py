@@ -113,10 +113,10 @@ class AnnotationController:
 
     # Data control methods
 
-    def load_source_file(self, source_file_content: BytesIO):
+    def load_source_file(self, source_file_content: BytesIO, filetype: str):
         try:
             self.set_loading_msg("Loading source file")
-            self.annotation_service.load_source_file(source_file_content)
+            self.annotation_service.load_source_file(source_file_content, filetype)
             self.display_success("File successfully loaded")
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())

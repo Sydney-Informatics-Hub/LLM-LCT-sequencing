@@ -10,7 +10,7 @@ class FileUploadWidget:
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
 
-        self.file_input = FileInput(accept=".docx", multiple=False)
+        self.file_input = FileInput(accept=".docx,.txt", multiple=False)
         self.load_file_button = Button(name="Load file", button_type="success", button_style="outline")
         self.load_file_button.on_click(self.load_file)
 
@@ -28,4 +28,5 @@ class FileUploadWidget:
         else:
             file_content = BytesIO()
             self.file_input.save(file_content)
-            self.controller.load_source_file(file_content)
+            filetype: str = self.file_input.filename.split('.')[-1]
+            self.controller.load_source_file(file_content, filetype)
