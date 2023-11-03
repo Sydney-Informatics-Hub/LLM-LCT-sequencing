@@ -119,12 +119,13 @@ class LLMProcess():
     - output path of results csv file and prompt/response txt files
     """
 
-    def __init__(self, filename_pairs, 
+    def __init__(self, 
+                 filename_pairs, 
                  filename_text,
                  filename_examples, 
-                 filename_definitions, 
-                 filename_zero_prompt, 
-                 outpath, 
+                 filename_definitions = "../schemas/sequencing_types.xlsx", 
+                 filename_zero_prompt = "../schemas/instruction_prompt.txt", 
+                 outpath = "../results_llm/", 
                  modelname_llm = 'gpt-3.5-turbo-instruct'):
         """
         Initialize LLMProcess class.
@@ -297,6 +298,11 @@ class LLMProcess():
     def run(self, filename_openai_key=None):
         """
         Run the LLM process pipeline for each clausing pair
+
+        Parameters:
+        -----------
+        - filename_openai_key (str): The filename of the OpenAI key file. 
+            If None provided, openai.api_key need to be set manually beforehand.
         
         """
         # load sequencing_classes, sequencing_definition
@@ -468,6 +474,7 @@ def test_llmprocess():
     
     #with open(filename_openai_key, 'r') as f:
     #    openai.api_key = f.read()
+    #llm_process.run()
     
     llm_process.run(filename_openai_key)
 
@@ -475,12 +482,12 @@ def test_llmprocess():
 if __name__ == "__main__":
     # get arguments from command line
     parser = argparse.ArgumentParser()
-    parser.add_argument('--outpath', type=str, default="../results/", help='The path to the output folder.', required=True)
-    parser.add_argument('--filename_pairs', type=str, default="../data/sequencing_pairs.csv", help='The filename of the csv table with clausing pairs.', required=True)
-    parser.add_argument('--filename_text', type=str, default="../data/sequencing_text.txt", help='The filename of the text file with the text to be claused.', required=True)
-    parser.add_argument('--filename_examples', type=str, default="sequencing_examples_reason.json", help='The path+filename of the examples json file.', required=False)
-    parser.add_argument('--filename_definitions', type=str, default="sequencing_types.json", help='The path+filename of the definitions json file.', required=False)
-    parser.add_argument('--filename_zero_prompt', type=str, default="instruction_prompt.txt", help='The path+filename of the zero-shot instruction prompt text file.', required=False)
+    parser.add_argument('--outpath', type=str, default="../results_llm/", help='The path to the output folder.', required=True)
+    parser.add_argument('--filename_pairs', type=str, default="../tests/sequences_test.csv", help='The path+filename of the csv table with clausing pairs.', required=True)
+    parser.add_argument('--filename_text', type=str, default="../tests/reference_text.txt", help='The path+filename of the text file with the text to be claused.', required=True)
+    parser.add_argument('--filename_examples', type=str, default="../tests/sequencing_examples.xlsx", help='The path+filename of the examples json file.', required=False)
+    parser.add_argument('--filename_definitions', type=str, default="../schemas/sequencing_types.xlsx", help='The path+filename of the definitions json file.', required=False)
+    parser.add_argument('--filename_zero_prompt', type=str, default="../schemas/instruction_prompt.txt", help='The path+filename of the zero-shot instruction prompt text file.', required=False)
     parser.add_argument('--modelname_llm', type=str, default='gpt-3.5-turbo-instruct', help='The name of the LLM model to use.', required=False)
     args = parser.parse_args()
 
