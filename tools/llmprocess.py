@@ -30,8 +30,6 @@ from excel_json_converter import excel_to_json
 from utils_llm import LLM
 
 
-
-
 def load_text(filename):
     """
     Load text from a file.
@@ -162,9 +160,24 @@ class LLMProcess():
         self.filename_examples = filename_examples
         self.filename_definitions = filename_definitions
         self.filename_zero_prompt = filename_zero_prompt
-        os.makedirs(outpath, exist_ok=True)
         self.outpath = outpath
         self.modelname_llm = modelname_llm
+
+        # check if outpath includes a folder that starts with string 'results'
+        # if so, add 1 to the number of the folder
+        # if not, create folder 'results1'
+        os.makedirs(outpath, exist_ok=True)
+        list_folders = os.listdir(outpath)
+        list_exp_folders = [folder for folder in list_folders if folder.startswith('results')]
+        if len(list_exp_folders) == 0:
+            outpath = os.path.join(outpath, 'results1')
+        else:
+            exp_folder_numbers = [int(folder[7:]) for folder in list_exp_folders]
+            exp_folder_numbers.sort()
+            last_exp_folder_number = exp_folder_numbers[-1]
+            outpath = os.path.join(outpath, f'results{last_exp_folder_number+1}')
+        os.makedirs(outpath, exist_ok=True)
+        self.outpath = outpath
 
         # load examples from json file
         examples = load_json(self.filename_examples)
@@ -424,27 +437,25 @@ def test_llmprocess():
     # Path to schemas and excel files for definitions and examples:
     path_schema = "../schemas/"
 
+    # Path to data files:
+    path_data = "../tests"
+
     # Filename for sequencing definitions (.json or .xlsx), assumed to be in folder path_schema:
     filename_definitions = "sequencing_types.xlsx"
 
-    # Filename for prompt instructions
+    # Filename for prompt instructions, assumed to be in folder path_schema:
     filename_zero_prompt = "instruction_prompt.txt"
 
-    path_data = "../tests"
+    # Filename for clausing pairs, assumed to be in path data:
+    filename_pairs = "sequences_test.csv"
 
-    # Filename for clausing pairs
-    filename_pairs = "sequences.csv"
-
-    # Filename for text to be claused
+    # Filename for text to be claused, assumed to be in path data:
     filename_text = "reference_text.txt"
 
-    # Filename for examples (.json or .xlsx), assume to be in folder path_schema:
+    # Filename for examples (.json or .xlsx), assume to be in folder path_data:
     filename_examples = "sequencing_examples.xlsx"
 
-    # Model name of LLM
-    modelname_llm = 'gpt-3.5-turbo-instruct'
-
-    # read OpenAI key from file (do not save on Github)
+    # OpenAI key file (do not share this file)
     filename_openai_key = "../../openai_key.txt"
     
     # run LLM process
@@ -453,8 +464,7 @@ def test_llmprocess():
                                 filename_examples = os.path.join(path_data, filename_examples),
                                 filename_definitions = os.path.join(path_schema, filename_definitions),
                                 filename_zero_prompt = os.path.join(path_schema, filename_zero_prompt),
-                                outpath = outpath,
-                                modelname_llm = modelname_llm)
+                                outpath = outpath)
     
     #with open(filename_openai_key, 'r') as f:
     #    openai.api_key = f.read()
