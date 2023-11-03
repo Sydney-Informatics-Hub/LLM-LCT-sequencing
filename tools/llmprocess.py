@@ -96,16 +96,6 @@ def merge_definitions_examples(definitions, example_subset, linkage_subset):
     return class_str
 
 
-class Classification(Enum):
-    INT = 1
-    SUB = 2
-    CON = 3
-    SEQ = 4
-    REI = 5
-    REP = 6
-    COH = 7
-    INC = 8
-
 
 class LLMProcess():
     """
@@ -272,6 +262,14 @@ class LLMProcess():
     def get_text_chunks(self, fname_text, c1_start, c1_end, c2_start, c2_end):
         """
         get text for two clauses with idx_start and idx_end.
+
+        Parameters:
+        -----------
+        - fname_text (str): The filename of the text file with the text to be claused.
+        - c1_start (int): The start index of clause 1.
+        - c1_end (int): The end index of clause 1.
+        - c2_start (int): The start index of clause 2.
+        - c2_end (int): The end index of clause 2.
 
         Returns:
         --------
