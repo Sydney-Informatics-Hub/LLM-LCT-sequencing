@@ -1,5 +1,4 @@
 from io import BytesIO
-from typing import Callable
 
 from pandas import DataFrame
 
@@ -8,16 +7,20 @@ from spacy.tokens.doc import Doc
 from docx import Document
 from docx.table import Table
 
+CLAUSE_FIELD: str = "clause"
+START_FIELD: str = "start_idx"
+END_FIELD: str = "end_idx"
 
-class SourceFileLoader:
+
+class SourceFileClauser:
     NLP = spacy.load("en_core_web_sm")
 
     def __init__(self, source_file: BytesIO, filetype: str):
         self.source_text: str
         if filetype == "docx":
-            self.source_text = SourceFileLoader.read_docx(source_file)
+            self.source_text = SourceFileClauser.read_docx(source_file)
         elif filetype == "txt":
-            self.source_text = SourceFileLoader.read_txt(source_file)
+            self.source_text = SourceFileClauser.read_txt(source_file)
         else:
             raise ValueError(f"File type {filetype} is not a valid source file type")
 
@@ -48,7 +51,7 @@ class SourceFileLoader:
 
         for row in text_table.rows[1:]:
             cell = row.cells[content_col]
-            doc_text += f"{cell.text}\n"
+            doc_text += f"{cell.text} \n"
 
         return doc_text
 
@@ -72,8 +75,8 @@ class SourceFileLoader:
                 if tok.dep_ == 'aux':
                     continue
                 for child in tok.children:
-                    # if child.dep_ == 'conj' or child.pos_ == 'CCONJ':
-                    #     continue
+                    if child.dep_ == 'conj' or child.pos_ == 'CCONJ':
+                        continue
                     subtree_toks.extend(child.subtree)
                 subtree_toks.append(tok)
                 subtree_toks.sort(key=lambda ch: ch.i)
@@ -89,9 +92,9 @@ class SourceFileLoader:
     @staticmethod
     def _get_clause_items(doc: Doc):
         items: list[dict] = []
-        for start_idx, end_idx, subtree_toks in SourceFileLoader._get_clause_subtrees(doc):
-            item = {'start_idx': start_idx, 'end_idx': end_idx,
-                    'clause': ''.join(tok.text + tok.whitespace_
+        for start_idx, end_idx, subtree_toks in SourceFileClauser._get_clause_subtrees(doc):
+            item = {START_FIELD: start_idx, END_FIELD: end_idx,
+                    CLAUSE_FIELD: ''.join(tok.text_with_ws
                                       for tok in subtree_toks
                                       if not tok.is_space)}
             items.append(item)
@@ -99,7 +102,7 @@ class SourceFileLoader:
         return items
 
     def generate_clause_dataframe(self) -> DataFrame:
-        doc = SourceFileLoader.NLP(self.source_text)
-        clauses: list[dict] = SourceFileLoader._get_clause_items(doc)
+        doc = SourceFileClauser.NLP(self.source_text)
+        clauses: list[dict] = SourceFileClauser._get_clause_items(doc)
 
         return DataFrame(clauses, columns=["clause", "start_idx", "end_idx"])
