@@ -3,10 +3,11 @@ Main class for processing data with LLMs.
 
 The process will read in a csv table with clausing pairs and generate a prompt for each pair to ask for the sequencing class, linkage word and reasoning.
 The prompt will be sent to the LLM API and the response will be saved to a file. 
-Sequencing class, linkage words, and resaoning will be appended to the table and saved to a csv file.
+Sequencing class, linkage words, and reasoning will be appended to the table and saved to a csv file.
 
 Input:
 - csv table with clausing pairs
+- text filename
 - filename for instruction txt file for prompt generation
 - filename for example excel/json file to include in prompt
 - filename for excel/json file with sequencing class definitions to include in prompt
@@ -20,12 +21,15 @@ import pandas as pd
 import numpy as np
 import json
 import argparse
+from enum import Enum
 
 from load_schema_json import load_json, validate_json, json_to_dataframe
 from excel_json_converter import excel_to_json
 #import importlib
 #importlib.reload(utils_llm)
 from utils_llm import LLM
+
+
 
 
 def load_text(filename):
@@ -92,6 +96,16 @@ def merge_definitions_examples(definitions, example_subset, linkage_subset):
     return class_str
 
 
+class Classification(Enum):
+    INT = 1
+    SUB = 2
+    CON = 3
+    SEQ = 4
+    REI = 5
+    REP = 6
+    COH = 7
+    INC = 8
+
 
 class LLMProcess():
     """
@@ -111,19 +125,27 @@ class LLMProcess():
 
     Input:
     - csv table with clausing pairs
+    - text filename
     - filename for instruction txt file for prompt generation
     - fileanme for example excel/json file to include in prompt
     - filename for excel/json file with sequencing class definitions to include in prompt
     - output path of results csv file and prompt/response txt files
     """
 
-    def __init__(self, filename_pairs, filename_examples, filename_definitions, filename_zero_prompt, outpath, modelname_llm):
+    def __init__(self, filename_pairs, 
+                 filename_text,
+                 filename_examples, 
+                 filename_definitions, 
+                 filename_zero_prompt, 
+                 outpath, 
+                 modelname_llm):
         """
         Initialize LLMProcess class.
 
         Parameters:
         -----------
         - filename_pairs (str): The filename of the csv table with clausing pairs.
+        - filename_text (str): The filename of the text file with the text to be claused.
         - filename_examples (str): The filename of the examples json file.
         - filename_definitions (str): The filename of the definitions json file.
         - filename_zero_prompt (str): The filename of the zero-shot instruction prompt text file.
@@ -147,6 +169,7 @@ class LLMProcess():
 
 
         self.filename_pairs = filename_pairs
+        self.filename_text = filename_text
         self.filename_examples = filename_examples
         self.filename_definitions = filename_definitions
         self.filename_zero_prompt = filename_zero_prompt
@@ -245,18 +268,44 @@ class LLMProcess():
         os.makedirs(self.outpath_prompts, exist_ok=True)
 
 
-    def run(self):
+    
+    def get_text_chunks(self, fname_text, c1_start, c1_end, c2_start, c2_end):
+        """
+        get text for two clauses with idx_start and idx_end.
 
+        Returns:
+        --------
+        - text_chunk_1 (str): The text of clause 1.
+        - text_chunk_2 (str): The text of clause 2.
+        - text_content (str): The text content of the whole text between c1_start and c2_end.
+        """
+        # read text file and encode to utf-8
+        text = load_text(fname_text)
+        text = text.encode('utf-8').decode('utf-8')
+        # get text content
+        text_content = text[c1_start:c2_end]
+        # get text chunks
+        text_chunk_1 = text[c1_start:c1_end]
+        text_chunk_2 = text[c2_start:c2_end]
+        return text_chunk_1, text_chunk_2, text_content
+
+
+    def run(self):
+        """
+        Run the LLM process pipeline for each clasuing pair
+        
+        """
         # path to results
         self.fname_results = os.path.join(self.outpath, 'results.csv')
 
         for index, row in self.df_pairs.iterrows():
-            # get text content
-            text_content = row['Text_Content']
-            # get text chunks
-            text_chunk_1 = row['clause_1']
-            text_chunk_1 = row['clause_2']
-
+             # get text content and clauses 
+            text_chunk_1, text_chunk_2, text_content = self.get_text_chunks(self.filename_text, 
+                                                                            row['c1_start'].value, 
+                                                                            row['c1_end'].value,
+                                                                            row['c2_start'].value,
+                                                                            row['c2_end'].value)
+           
             self.prompt = self.zero_shot_prompt.copy()
             self.prompt = self.prompt.replace('TEXT_CONTENT', text_content)
             self.prompt = self.prompt.replace('CHUNK_1', text_chunk_1)
@@ -363,6 +412,26 @@ class LLMProcess():
 
         print(f'Experiment finished! Results saved to folder {self.outpath}')
 
+def test_llmprocess():
+    outpath = "../results_process/"
+
+    # Path to schemas and excel files for definitions and examples:
+    path_schema = "../schemas/"
+
+    # Filename for examples (.json or .xlsx), assume to be in folder path_schema:
+    filename_examples = "sequencing_examples_process.xlsx"
+
+    # Filename for sequencing definitions (.json or .xlsx), assumed to be in folder path_schema:
+    filename_definitions = "sequencing_types.xlsx"
+
+    # Filename for prompt instructions
+    filename_zero_prompt = "instruction_prompt.txt"
+
+    # Filename for clausing pairs
+    filename_pairs = "../testdata/sequencing_pairs.csv"
+
+    # Filename for text to be claused
+    filename_text = "../testdata/sequencing_text.txt"
 
 
 if __name__ == "__main__":
@@ -370,6 +439,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--outpath', type=str, default="../results/", help='The path to the output folder.', required=False)
     parser.add_argument('--filename_pairs', type=str, default="../data/sequencing_pairs.csv", help='The filename of the csv table with clausing pairs.', required=False)
+    parser.add_argument('--filename_text', type=str, default="../data/sequencing_text.txt", help='The filename of the text file with the text to be claused.', required=False)
     parser.add_argument('--filename_examples', type=str, default="sequencing_examples_reason.json", help='The path+filename of the examples json file.', required=False)
     parser.add_argument('--filename_definitions', type=str, default="sequencing_types.json", help='The path+filename of the definitions json file.', required=False)
     parser.add_argument('--filename_zero_prompt', type=str, default="instruction_prompt.txt", help='The path+filename of the zero-shot instruction prompt text file.', required=False)
@@ -378,6 +448,7 @@ if __name__ == "__main__":
 
     # run experiment pipeline
     llm_process = LLMProcess(filename_pairs = args.filename_pairs,
+                             filename_text = args.filename_text,             
                             filename_examples = args.filename_examples,
                             filename_definitions = args.filename_definitions,
                             filename_zero_prompt = args.filename_zero_prompt,
