@@ -1,8 +1,8 @@
 """ 
-Main class for processing data with LLMs.
+Process for sequencing classification and reasoning with LLM.
 
-The process will read in a csv table with clausing pairs and generate a prompt for each pair to ask for the sequencing class, linkage word and reasoning.
-The prompt will be sent to the LLM API and the response will be saved to a file. 
+The LLM process will read in a csv table with clausing pairs and generate a prompt for each pair to ask for the sequencing class, linkage word and reasoning.
+The prompt will be send to the LLM and the response will be saved to a file. 
 Sequencing class, linkage words, and reasoning will be appended to the table and saved to a csv file.
 
 Input:
@@ -21,7 +21,7 @@ import pandas as pd
 import numpy as np
 import json
 import argparse
-from enum import Enum
+import openai
 
 from load_schema_json import load_json, validate_json, json_to_dataframe
 from excel_json_converter import excel_to_json
@@ -96,7 +96,6 @@ def merge_definitions_examples(definitions, example_subset, linkage_subset):
     return class_str
 
 
-
 class LLMProcess():
     """
     Main class for processing data with LLMs.
@@ -128,7 +127,7 @@ class LLMProcess():
                  filename_definitions, 
                  filename_zero_prompt, 
                  outpath, 
-                 modelname_llm):
+                 modelname_llm = 'gpt-3.5-turbo-instruct'):
         """
         Initialize LLMProcess class.
 
@@ -154,7 +153,7 @@ class LLMProcess():
         if filename_definitions.endswith(".xlsx"):
             # convert filename_definitions to json
             json_filename_out = filename_definitions.replace(".xlsx", "_converted.json")
-            excel_to_json(filename_definitions, json_filename_out))
+            excel_to_json(filename_definitions, json_filename_out)
             filename_definitions = json_filename_out
 
 
@@ -174,7 +173,7 @@ class LLMProcess():
         self.df_examples = json_to_dataframe(examples)
 
         # load clausing pairs
-        self.df_pairs = pd.read_csv(self.filename_pairs)
+        self.df_sequences = pd.read_csv(self.filename_pairs)
 
         # Select examples for each type
         self.example_types = self.df_examples['Sub_Subtype'].unique()
@@ -182,17 +181,14 @@ class LLMProcess():
         # get first three letter characters of example types and write in captial letters
         self.example_types_short = [example_type[:3].upper() for example_type in self.example_types]
 
-        # load sequencing_classes, sequencing_definition
-        self.get_sequencing_classes(self.filename_definitions)
-
-        # generate main part of prompt consisting of instructions, definitions, and examples
-        self.preprocess_prompt()
+        # get instructions
+        self.zero_shot_prompt = load_text(self.filename_zero_prompt)
 
         # initialize token_counter
         self.token_count = 0
 
         # initiate results dataframe
-        self.df_res = self.df_pairs.copy()
+        self.df_res = self.df_sequences.copy()
         self.df_res['pred_class'] = np.nan
         self.df_res['pred_class_prob'] = np.nan
         self.df_res['pred_linkage'] = np.nan
@@ -203,14 +199,11 @@ class LLMProcess():
         self.df_res['modelname_llm'] = np.nan
         self.df_res['reasoning'] = np.nan
 
-        # Initiate LLM with API key
-        self.llm = LLM(filename_openai_key=None, model_name = self.modelname_llm)
-
 
     def preprocess_prompt(self):
         # generate main part of prompt consisting of instructions, definitions, and examples
         example_string = """ """
-        for index, row in self.examples.iterrows():
+        for index, row in self.df_examples.iterrows():
             clause1 = row['Linked_Chunk_1']
             clause2 = row['Linked_Chunk_2']
             text = row['Example']
@@ -288,23 +281,37 @@ class LLMProcess():
         return text_chunk_1, text_chunk_2, text_content
 
 
-    def run(self):
+    def run(self, filename_openai_key=None):
         """
-        Run the LLM process pipeline for each clasuing pair
+        Run the LLM process pipeline for each clausing pair
         
         """
+        # load sequencing_classes, sequencing_definition
+        self.get_sequencing_classes(self.filename_definitions)
+
+        # generate main part of prompt consisting of instructions, definitions, and examples
+        self.preprocess_prompt()
+
+        # Initiate LLM with API key
+        self.llm = LLM(filename_openai_key, model_name = self.modelname_llm)
+
         # path to results
         self.fname_results = os.path.join(self.outpath, 'results.csv')
 
-        for index, row in self.df_pairs.iterrows():
+        for index, row in self.df_sequences.iterrows():
              # get text content and clauses 
             text_chunk_1, text_chunk_2, text_content = self.get_text_chunks(self.filename_text, 
-                                                                            row['c1_start'].value, 
-                                                                            row['c1_end'].value,
-                                                                            row['c2_start'].value,
-                                                                            row['c2_end'].value)
+                                                                            row['c1_start'], 
+                                                                            row['c1_end'],
+                                                                            row['c2_start'],
+                                                                            row['c2_end'])
+            
+            print(f"Clauses for index {index}:")
+            print("text1:", text_chunk_1)
+            print("text2:", text_chunk_2)
            
-            self.prompt = self.zero_shot_prompt.copy()
+            # copy string self.zero_shot_prompt
+            self.prompt = self.zero_shot_prompt
             self.prompt = self.prompt.replace('TEXT_CONTENT', text_content)
             self.prompt = self.prompt.replace('CHUNK_1', text_chunk_1)
             self.prompt = self.prompt.replace('CHUNK_2', text_chunk_2)
@@ -316,7 +323,7 @@ class LLMProcess():
             #logprobs = None
 
             # tokens_used
-            self.token_count += self.tokens_used
+            self.token_count += tokens_used
 
             # save prompt to file
             filename_prompt = f'prompt_{chat_id}.txt'
@@ -403,6 +410,7 @@ class LLMProcess():
 
             #print results
             print(f'Index: {index} | Prediction: {class_predicted} | Probability: {class_prob} | Used tokens: {tokens_used} ')
+            print('')
 
         # Write token count to file
         filename_token_count = f'token_count_{self.modelname_llm}.txt'
@@ -416,28 +424,50 @@ def test_llmprocess():
     # Path to schemas and excel files for definitions and examples:
     path_schema = "../schemas/"
 
-    # Filename for examples (.json or .xlsx), assume to be in folder path_schema:
-    filename_examples = "sequencing_examples_process.xlsx"
-
     # Filename for sequencing definitions (.json or .xlsx), assumed to be in folder path_schema:
     filename_definitions = "sequencing_types.xlsx"
 
     # Filename for prompt instructions
     filename_zero_prompt = "instruction_prompt.txt"
 
+    path_data = "../tests"
+
     # Filename for clausing pairs
-    filename_pairs = "../testdata/sequencing_pairs.csv"
+    filename_pairs = "sequences.csv"
 
     # Filename for text to be claused
-    filename_text = "../testdata/sequencing_text.txt"
+    filename_text = "reference_text.txt"
+
+    # Filename for examples (.json or .xlsx), assume to be in folder path_schema:
+    filename_examples = "sequencing_examples.xlsx"
+
+    # Model name of LLM
+    modelname_llm = 'gpt-3.5-turbo-instruct'
+
+    # read OpenAI key from file (do not save on Github)
+    filename_openai_key = "../../openai_key.txt"
+    
+    # run LLM process
+    llm_process = LLMProcess(filename_pairs = os.path.join(path_data,filename_pairs),
+                                filename_text = os.path.join(path_data, filename_text),
+                                filename_examples = os.path.join(path_data, filename_examples),
+                                filename_definitions = os.path.join(path_schema, filename_definitions),
+                                filename_zero_prompt = os.path.join(path_schema, filename_zero_prompt),
+                                outpath = outpath,
+                                modelname_llm = modelname_llm)
+    
+    #with open(filename_openai_key, 'r') as f:
+    #    openai.api_key = f.read()
+    
+    llm_process.run(filename_openai_key)
 
 
 if __name__ == "__main__":
     # get arguments from command line
     parser = argparse.ArgumentParser()
-    parser.add_argument('--outpath', type=str, default="../results/", help='The path to the output folder.', required=False)
-    parser.add_argument('--filename_pairs', type=str, default="../data/sequencing_pairs.csv", help='The filename of the csv table with clausing pairs.', required=False)
-    parser.add_argument('--filename_text', type=str, default="../data/sequencing_text.txt", help='The filename of the text file with the text to be claused.', required=False)
+    parser.add_argument('--outpath', type=str, default="../results/", help='The path to the output folder.', required=True)
+    parser.add_argument('--filename_pairs', type=str, default="../data/sequencing_pairs.csv", help='The filename of the csv table with clausing pairs.', required=True)
+    parser.add_argument('--filename_text', type=str, default="../data/sequencing_text.txt", help='The filename of the text file with the text to be claused.', required=True)
     parser.add_argument('--filename_examples', type=str, default="sequencing_examples_reason.json", help='The path+filename of the examples json file.', required=False)
     parser.add_argument('--filename_definitions', type=str, default="sequencing_types.json", help='The path+filename of the definitions json file.', required=False)
     parser.add_argument('--filename_zero_prompt', type=str, default="instruction_prompt.txt", help='The path+filename of the zero-shot instruction prompt text file.', required=False)
