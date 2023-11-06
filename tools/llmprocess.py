@@ -13,6 +13,12 @@ Input:
 - filename for excel/json file with sequencing class definitions to include in prompt
 - output path of results csv file and prompt/response txt files
 
+The results csv includes at least the following columns needed for the annotation tool:
+sequence_id,c1_start, c1_end, c2_start,c2_end, linkage_words, predicted_classes, reasoning, confidence, window_start, window_end
+
+in addition, the following columns are added:
+prompt_id, filename_prompt, filename_response, tokens, modelname_llm
+
 """
 
 import os
@@ -203,9 +209,11 @@ class LLMProcess():
 
         # initiate results dataframe
         self.df_res = self.df_sequences.copy()
-        self.df_res['pred_class'] = np.nan
-        self.df_res['pred_class_prob'] = np.nan
-        self.df_res['pred_linkage'] = np.nan
+        self.df_res['predicted_classes'] = np.nan
+        self.df_res['confidence'] = np.nan
+        self.df_res['linkage_words'] = np.nan
+        self.df_res['window_start'] = np.nan
+        self.df_res['window_end'] = np.nan
         self.df_res['prompt_id'] = np.nan
         self.df_res['filename_prompt'] = np.nan
         self.df_res['filename_response'] = np.nan
@@ -266,7 +274,7 @@ class LLMProcess():
 
 
     
-    def get_text_chunks(self, fname_text, c1_start, c1_end, c2_start, c2_end):
+    def get_text_chunks(self, fname_text, c1_start, c1_end, c2_start, c2_end, window_start, window_end):
         """
         get text for two clauses with idx_start and idx_end.
 
@@ -277,6 +285,8 @@ class LLMProcess():
         - c1_end (int): The end index of clause 1.
         - c2_start (int): The start index of clause 2.
         - c2_end (int): The end index of clause 2.
+        - window_start (int): The start index of the window.
+        - window_end (int): The end index of the window.
 
         Returns:
         --------
@@ -288,7 +298,7 @@ class LLMProcess():
         text = load_text(fname_text)
         text = text.encode('utf-8').decode('utf-8')
         # get text content
-        text_content = text[c1_start:c2_end]
+        text_content = text[window_start:window_end]
         # get text chunks
         text_chunk_1 = text[c1_start:c1_end]
         text_chunk_2 = text[c2_start:c2_end]
@@ -319,11 +329,16 @@ class LLMProcess():
 
         for index, row in self.df_sequences.iterrows():
              # get text content and clauses 
+            # Set context window for now to all context between c1 and c2
+            window_start = row['c1_start']
+            window_end = row['c2_end']
             text_chunk_1, text_chunk_2, text_content = self.get_text_chunks(self.filename_text, 
                                                                             row['c1_start'], 
                                                                             row['c1_end'],
                                                                             row['c2_start'],
-                                                                            row['c2_end'])
+                                                                            row['c2_end'],
+                                                                            window_start,
+                                                                            window_end)
             
             print(f"Clauses for index {index}:")
             print("text1:", text_chunk_1)
@@ -414,9 +429,11 @@ class LLMProcess():
             class_prob = round(np.exp(class_prob),3)
             
             # add results to dataframe
-            self.df_res.loc[index, 'pred_class'] = class_predicted
-            self.df_res.loc[index, 'pred_class_prob'] = class_prob
-            self.df_res.loc[index, 'pred_linkage'] = linkage_predicted
+            self.df_res.loc[index, 'predicted_classes'] = class_predicted
+            self.df_res.loc[index, 'confidence'] = class_prob
+            self.df_res.loc[index, 'linkage_words'] = linkage_predicted
+            self.df_res.loc[index, 'window_start'] = window_start
+            self.df_res.loc[index, 'window_end'] = window_end
             self.df_res.loc[index, 'prompt_id'] = chat_id
             self.df_res.loc[index, 'filename_prompt'] = filename_prompt
             self.df_res.loc[index, 'filename_response'] = filename_response
