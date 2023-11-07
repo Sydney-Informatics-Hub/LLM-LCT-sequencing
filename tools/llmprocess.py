@@ -28,6 +28,7 @@ import numpy as np
 import json
 import argparse
 import openai
+from enum import Enum
 
 from load_schema_json import load_json, validate_json, json_to_dataframe
 from excel_json_converter import excel_to_json
@@ -98,6 +99,32 @@ def merge_definitions_examples(definitions, example_subset, linkage_subset):
         class_str += "\n"
 
     return class_str
+
+class LCTclasses(Enum):
+    """
+    Enum for LCT classes.
+    """
+    NA = 0
+    INT = 1
+    SUB = 2
+    CON = 3
+    SEQ = 4
+    REI = 5
+    REP = 6
+    COH = 7
+    INC = 8
+
+def lct_string_to_int(s):
+    """
+    Convert LCT sequence string to integer.
+    """
+    result = getattr(LCTclasses, s, None)
+    if result is None:
+        print(f"'{s}' does not correspond to any known Classification.")
+        print(f"Need to be one of {list(LCTclasses.__members__.keys())}")
+        return None
+    else:
+        return result.value
 
 
 class LLMProcess():
