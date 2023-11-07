@@ -236,17 +236,18 @@ class LLMProcess():
 
         # initiate results dataframe
         self.df_res = self.df_sequences.copy()
-        self.df_res['predicted_classes'] = np.nan
+        self.df_res['predicted_classes'] = None
+        self.df_res['predicted_classes_name'] = None
         self.df_res['confidence'] = np.nan
-        self.df_res['linkage_words'] = np.nan
-        self.df_res['window_start'] = np.nan
-        self.df_res['window_end'] = np.nan
-        self.df_res['prompt_id'] = np.nan
-        self.df_res['filename_prompt'] = np.nan
-        self.df_res['filename_response'] = np.nan
-        self.df_res['tokens'] = np.nan
-        self.df_res['modelname_llm'] = np.nan
-        self.df_res['reasoning'] = np.nan
+        self.df_res['linkage_words'] = None
+        self.df_res['window_start'] =None
+        self.df_res['window_end'] = None
+        self.df_res['prompt_id'] = None
+        self.df_res['filename_prompt'] = None
+        self.df_res['filename_response'] = None
+        self.df_res['tokens'] = None
+        self.df_res['modelname_llm'] = None
+        self.df_res['reasoning'] = None
 
 
     def preprocess_prompt(self):
@@ -456,7 +457,8 @@ class LLMProcess():
             class_prob = round(np.exp(class_prob),3)
             
             # add results to dataframe
-            self.df_res.loc[index, 'predicted_classes'] = class_predicted
+            self.df_res.loc[index, 'predicted_classes'] = lct_string_to_int(class_predicted)
+            self.df_res.loc[index, 'predicted_classes_name'] = class_predicted
             self.df_res.loc[index, 'confidence'] = class_prob
             self.df_res.loc[index, 'linkage_words'] = linkage_predicted
             self.df_res.loc[index, 'window_start'] = window_start
