@@ -1,5 +1,6 @@
 import os
 from csv import DictReader
+from pathlib import Path
 
 from numpy import ndarray
 from pandas import DataFrame, read_csv
@@ -15,16 +16,21 @@ class TextRangeCSVRepository(TextRangeRepository):
     FIELD_DTYPES: dict = {RANGE_ID_FIELD: int, RANGE_START_FIELD: int, RANGE_END_FIELD: int}
     REQUIRED_FIELDS: list[str, ...] = [field for field in FIELD_DTYPES.keys()]
 
-    def __init__(self, database_csv_filename: str):
-        self._database_filename: str = database_csv_filename
+    def __init__(self, database_csv_path: Path):
+        self._database_path: Path = database_csv_path
         self._database_cache: DataFrame = DataFrame(columns=TextRangeCSVRepository.REQUIRED_FIELDS)
         self._cache_updated: bool = False
 
+        # If file does not exist, create parent directories and file with only headers
+        if not os.path.exists(database_csv_path):
+            database_csv_path.parent.mkdir(parents=True, exist_ok=True)
+            database_csv_path.write_text(",".join(TextRangeCSVRepository.REQUIRED_FIELDS))
+
         # Validate the file can be opened with read and write permissions
-        if not os.access(self._database_filename, os.R_OK):
-            raise PermissionError(f"No permissions to read the file: {self._database_filename}")
-        if not os.access(self._database_filename, os.W_OK):
-            raise PermissionError(f"No permissions to write to the file: {self._database_filename}")
+        if not os.access(database_csv_path, os.R_OK):
+            raise PermissionError(f"No permissions to read the file: {database_csv_path}")
+        if not os.access(database_csv_path, os.W_OK):
+            raise PermissionError(f"No permissions to write to the file: {database_csv_path}")
 
         self._read_database_into_cache()
 
@@ -34,7 +40,7 @@ class TextRangeCSVRepository(TextRangeRepository):
         Additional unnecessary fields are ignored. Does not validate the data itself.
         If all fields are present, returns None. If a field is missing, the method raises a DatabaseFieldError
         """
-        with open(self._database_filename, 'r') as csv_f:
+        with open(self._database_path, 'r') as csv_f:
             reader = DictReader(csv_f)
             for field in TextRangeCSVRepository.REQUIRED_FIELDS:
                 if field not in reader.fieldnames:
@@ -45,14 +51,14 @@ class TextRangeCSVRepository(TextRangeRepository):
             return
 
         self._validate_database_fields()
-        self._database_cache = read_csv(filepath_or_buffer=self._database_filename,
+        self._database_cache = read_csv(filepath_or_buffer=self._database_path,
                                         header=0,
                                         names=TextRangeCSVRepository.REQUIRED_FIELDS,
                                         dtype=TextRangeCSVRepository.FIELD_DTYPES)
         self._cache_updated = True
 
     def _write_cache_to_database(self):
-        self._database_cache.to_csv(path_or_buf=self._database_filename, index=False,
+        self._database_cache.to_csv(path_or_buf=self._database_path, index=False,
                                     columns=TextRangeCSVRepository.REQUIRED_FIELDS)
         self._cache_updated = True
 

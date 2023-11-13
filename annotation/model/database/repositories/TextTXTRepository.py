@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from annotation.model.database.DatabaseExceptions import DatabaseFileSizeError
 from annotation.model.database.repositories import TextRepository
@@ -7,18 +8,25 @@ from annotation.model.database.repositories import TextRepository
 class TextTXTRepository(TextRepository):
     MAX_SIZE_BYTES: int = 2000000
 
-    def __init__(self, text_txt_filename: str):
-        self._database_filename: str = text_txt_filename
+    def __init__(self, text_txt_path: Path):
+        self._database_path: Path = text_txt_path
         self._database_cache: str = ""
         self._cache_updated: bool = False
 
-        # Validate the file can be opened with read permissions
-        if not os.access(self._database_filename, os.R_OK):
-            raise PermissionError(f"No permissions to read the file: {self._database_filename}")
+        # If file does not exist, create parent directories and file with no content
+        if not os.path.exists(text_txt_path):
+            text_txt_path.parent.mkdir(parents=True, exist_ok=True)
+            text_txt_path.write_text("")
+
+        # Validate the file can be opened with read and write permissions
+        if not os.access(text_txt_path, os.R_OK):
+            raise PermissionError(f"No permissions to read the file: {text_txt_path}")
+        if not os.access(text_txt_path, os.W_OK):
+            raise PermissionError(f"No permissions to write to the file: {text_txt_path}")
 
         # Validate the file is not too large to be read into memory
-        if os.path.getsize(self._database_filename) > TextTXTRepository.MAX_SIZE_BYTES:
-            raise DatabaseFileSizeError(f"Database file is too large: {self._database_filename}")
+        if os.path.getsize(text_txt_path) > TextTXTRepository.MAX_SIZE_BYTES:
+            raise DatabaseFileSizeError(f"Database file is too large: {text_txt_path}")
 
         self._read_database_into_cache()
 
@@ -26,13 +34,13 @@ class TextTXTRepository(TextRepository):
         if self._cache_updated:
             return
 
-        with open(self._database_filename) as f:
+        with open(self._database_path) as f:
             self._database_cache = f.read()
 
         self._cache_updated = True
 
     def _write_cache_to_database(self):
-        with open(self._database_filename, 'w') as f:
+        with open(self._database_path, 'w') as f:
             f.write(self._database_cache)
 
         self._cache_updated = True

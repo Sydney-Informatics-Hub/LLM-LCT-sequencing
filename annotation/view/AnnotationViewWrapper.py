@@ -3,7 +3,7 @@ from panel import Row, Column
 
 from annotation.controller import AnnotationController
 from annotation.view.global_notifiers import LoadingIndicator
-from annotation.view.gui import Controls, TextDisplay, FileUploadWidget
+from annotation.view.gui import Controls, TextDisplay, SourceLoader
 from annotation.view.gui.styles import main_column_style, top_bar_style
 
 pn.extension(notifications=True)
@@ -14,10 +14,10 @@ class AnnotationViewWrapper:
         self.controller = controller
 
         self.loading_indicator = LoadingIndicator(controller)
-        self.file_uploader = FileUploadWidget(controller)
+        self.source_loader = SourceLoader(controller)
         self.text_display = TextDisplay(controller)
         self.controls = Controls(controller)
-        self.layout = Column(Row(self.file_uploader.get_component(),
+        self.layout = Column(Row(self.source_loader.get_component(),
                                  self.loading_indicator.get_component(),
                                  styles=top_bar_style,
                                  sizing_mode='stretch_width'),

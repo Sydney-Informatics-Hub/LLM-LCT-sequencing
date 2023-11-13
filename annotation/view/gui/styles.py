@@ -3,7 +3,6 @@ main_column_style = {
 }
 
 top_bar_style = {
-    "height": "60px"
 }
 
 text_display_style = {

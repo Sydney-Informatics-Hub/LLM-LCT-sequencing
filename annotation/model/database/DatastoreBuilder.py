@@ -1,4 +1,4 @@
-from pandas import DataFrame, read_csv, Series
+from pandas import DataFrame, Series
 
 from annotation.model.database import AnnotationDAO
 
@@ -10,7 +10,7 @@ class DatastoreBuilder:
     C2_START_FIELD: str = "c2_start"
     C2_END_FIELD: str = "c2_end"
     LINKAGE_FIELD: str = "linkage_words"
-    PREDICTED_FIELD: str = "classes_predict"
+    PREDICTED_FIELD: str = "predicted_classes"
     REASONING_FIELD: str = "reasoning"
     CONFIDENCE_FIELD: str = "confidence"
     WINDOW_START_FIELD: str = "window_start"
@@ -40,12 +40,8 @@ class DatastoreBuilder:
 
         self.annotation_dao.create_sequence(c1_id, c2_id, linkage_words, predicted_classes)
 
-    def build_data_stores(self, text_file_content: str, master_sequence_df: DataFrame):
+    def build_text_datastore(self, text_file_content: str):
         self.annotation_dao.write_text_file(text_file_content)
 
-        # sequence_source_df: DataFrame = read_csv(filepath_or_buffer=sequence_source_db_path,
-        #                                          header=0,
-        #                                          names=DatastoreBuilder.REQUIRED_FIELDS,
-        #                                          dtype=DatastoreBuilder.FIELD_DTYPES)
-
+    def build_clause_datastores(self, master_sequence_df: DataFrame):
         master_sequence_df.apply(self._write_database_row, axis=1)

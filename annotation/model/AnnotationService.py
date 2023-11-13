@@ -1,12 +1,16 @@
 from io import BytesIO
+from pathlib import Path
 from typing import Optional
 
 from pandas import DataFrame, read_csv
 
+from annotation.model.clausing.SequencingTool import SequencingTool
 from annotation.model.data_structures import ClauseSequence, TextRange, Classification, SequenceTuple
-from annotation.model.database import AnnotationDAO, ref_text_ds_path, clauses_ds_path, sequences_ds_path, \
-    DatastoreBuilder
-from annotation.model.clausing import SourceFileLoader
+from annotation.model.database import AnnotationDAO, DatastoreBuilder
+from annotation.model.database import (llm_data_store_dir, ref_text_ds_path, clauses_ds_path,
+                                       sequences_ds_path, pre_llm_sequence_path)
+from annotation.model.clausing import SourceFileClauser
+from llm import LLMProcess
 
 
 class AnnotationService:
@@ -17,21 +21,42 @@ class AnnotationService:
     def load_source_file(self, source_file_content: BytesIO, filetype: str):
         ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao)
 
-        source_loader: SourceFileLoader = SourceFileLoader(source_file_content, filetype)
+        source_loader: SourceFileClauser = SourceFileClauser(source_file_content, filetype)
         text_content: str = source_loader.get_text()
-        # clause_df: DataFrame = source_loader.generate_clause_dataframe()
-        # clause_df.to_csv("/Users/hcro4489/My Drive/USYD SIH/Repos/LLM-LCT-sequencing/clauser.csv")
-        # clause_pair_generator = ClausePairGenerator(clause_df)
-        # clause_pair_df = clause_pair_generator.generate_df()
-        #
-        # large_language_processor = LLMProcess(clause_pair_csv_path, text_path) # TODO: insert LLM processor
-        # master_sequence_df: DataFrame = large_language_processor.generate_dataframe()
-        master_sequence_df: DataFrame = read_csv(filepath_or_buffer="",
-                                                 header=0,
-                                                 names=DatastoreBuilder.REQUIRED_FIELDS,
+        ds_builder.build_text_datastore(text_content)
+
+        clause_df: DataFrame = source_loader.generate_clause_dataframe()
+        sequence_generator = SequencingTool(clause_df)
+        sequence_df = sequence_generator.generate_sequence_df()
+        sequence_df.to_csv(pre_llm_sequence_path, index=False)
+
+    def build_datastore(self, llm_examples_path: Path,
+                        llm_definitions_path: Path,
+                        llm_zero_prompt_path: Path) -> str:
+        llm_process = LLMProcess(filename_pairs=str(pre_llm_sequence_path.resolve()),
+                                 filename_text=str(ref_text_ds_path.resolve()),
+                                 filename_examples=str(llm_examples_path.resolve()),
+                                 filename_definitions=str(llm_definitions_path.resolve()),
+                                 filename_zero_prompt=str(llm_zero_prompt_path.resolve()),
+                                 outpath=str(llm_data_store_dir.resolve()))
+        llm_results_path: str = llm_process.run()
+
+        master_sequence_df: DataFrame = read_csv(filepath_or_buffer=llm_results_path,
+                                                 usecols=DatastoreBuilder.REQUIRED_FIELDS,
                                                  dtype=DatastoreBuilder.FIELD_DTYPES)
 
-        ds_builder.build_data_stores(text_content, master_sequence_df)
+        ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao)
+        ds_builder.build_clause_datastores(master_sequence_df)
+
+        return llm_results_path
+
+    def build_datastore_preprocessed(self, llm_results: BytesIO):
+        master_sequence_df: DataFrame = read_csv(filepath_or_buffer=llm_results,
+                                                 usecols=DatastoreBuilder.REQUIRED_FIELDS,
+                                                 dtype=DatastoreBuilder.FIELD_DTYPES)
+
+        ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao)
+        ds_builder.build_clause_datastores(master_sequence_df)
 
     def get_text(self) -> str:
         return self.annotation_dao.get_text()
@@ -42,7 +67,7 @@ class AnnotationService:
 
         clause_str_dict: dict[int, str] = {}
         for clause in clauses:
-            clause_text = text[clause.start: clause.end+1]
+            clause_text = text[clause.start: clause.end + 1]
             clause_str_dict[clause.range_id] = clause_text
 
         return clause_str_dict

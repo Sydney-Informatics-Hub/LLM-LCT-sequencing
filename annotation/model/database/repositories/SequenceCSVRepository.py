@@ -1,5 +1,6 @@
 import os
 from csv import DictReader
+from pathlib import Path
 
 from numpy import ndarray
 from pandas import DataFrame, read_csv
@@ -13,8 +14,8 @@ class SequenceCSVRepository(SequenceRepository):
     CLAUSE_A_ID_FIELD: str = "c1_id"
     CLAUSE_B_ID_FIELD: str = "c2_id"
     LINKAGE_FIELD: str = "linkage_words"
-    PREDICTED_CLASSES: str = "classes_predict"
-    CORRECTED_CLASSES: str = "classes_correct"
+    PREDICTED_CLASSES: str = "predicted_classes"
+    CORRECTED_CLASSES: str = "corrected_classes"
     FIELD_DTYPES: dict = {SEQUENCE_ID_FIELD: int, CLAUSE_A_ID_FIELD: int, CLAUSE_B_ID_FIELD: int,
                           LINKAGE_FIELD: str, PREDICTED_CLASSES: str, CORRECTED_CLASSES: str}
     REQUIRED_FIELDS: list[str, ...] = [field for field in FIELD_DTYPES.keys()]
@@ -22,16 +23,21 @@ class SequenceCSVRepository(SequenceRepository):
     CLASS_LS_DELIMITER: str = ','
     LINKAGE_LS_DELIMITER: str = ','
 
-    def __init__(self, database_csv_filename: str):
-        self._database_filename: str = database_csv_filename
+    def __init__(self, database_csv_path: Path):
+        self._database_filename: Path = database_csv_path
         self._database_cache: DataFrame = DataFrame(columns=SequenceCSVRepository.REQUIRED_FIELDS)
         self._cache_updated: bool = False
 
+        # If file does not exist, create parent directories and file with only headers
+        if not os.path.exists(database_csv_path):
+            database_csv_path.parent.mkdir(parents=True, exist_ok=True)
+            database_csv_path.write_text(",".join(SequenceCSVRepository.REQUIRED_FIELDS))
+
         # Validate the file can be opened with read and write permissions
-        if not os.access(self._database_filename, os.R_OK):
-            raise PermissionError(f"No permissions to read the file: {self._database_filename}")
-        if not os.access(self._database_filename, os.W_OK):
-            raise PermissionError(f"No permissions to write to the file: {self._database_filename}")
+        if not os.access(database_csv_path, os.R_OK):
+            raise PermissionError(f"No permissions to read the file: {database_csv_path}")
+        if not os.access(database_csv_path, os.W_OK):
+            raise PermissionError(f"No permissions to write to the file: {database_csv_path}")
 
         self._read_database_into_cache()
 

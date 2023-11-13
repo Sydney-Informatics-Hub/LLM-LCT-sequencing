@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from numpy import ndarray
@@ -9,7 +10,7 @@ from annotation.model.database.repositories import TextRepository, TextTXTReposi
 
 
 class AnnotationDAO:
-    def __init__(self, text_database_fn: str, clause_database_fn: str, sequence_database_fn: str):
+    def __init__(self, text_database_fn: Path, clause_database_fn: Path, sequence_database_fn: Path):
         self.text_repository: TextRepository = TextTXTRepository(text_database_fn)
         self.clause_repository: TextRangeRepository = TextRangeCSVRepository(clause_database_fn)
         self.sequence_repository: SequenceRepository = SequenceCSVRepository(sequence_database_fn)
