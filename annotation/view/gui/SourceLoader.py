@@ -97,7 +97,7 @@ class UnprocessedModeLoader:
                                          llm_examples_content, llm_prompt_content)
         preprocessed_file_path: Optional[str] = self.controller.get_postprocess_file_path()
         self.download_preprocessed_modal.objects = [
-            FileDownload(file=preprocessed_file_path, filename="llm_results.csv")]
+            FileDownload(file=preprocessed_file_path, filename="llm_preprocessed.csv")]
 
 
 class PreprocessedModeLoader:
