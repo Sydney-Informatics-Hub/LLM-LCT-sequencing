@@ -39,11 +39,17 @@ class TextRender:
 
     def _repr_html_(self) -> str:
         text_ls: list[str] = list(self.raw_text)
+        # Append an empty string to allow for the closing span tag at the end of the text
+        text_ls.append('')
 
         for i, char in enumerate(text_ls):
             # Replace file newline characters with HTML newlines
             if (char == "\n") or (char == "\r\n"):
                 text_ls[i] = "<br>"
+
+        for linkage_word_range in self.linkage_word_ranges:
+            text_ls[linkage_word_range[0]] = "<span class=\"linkage_word\">" + text_ls[linkage_word_range[0]]
+            text_ls[linkage_word_range[1]-1] = text_ls[linkage_word_range[1]-1] + "</span>"
 
         clauses_overlap: bool = self.do_clauses_overlap()
         if clauses_overlap:
@@ -56,14 +62,11 @@ class TextRender:
         else:
             if self.clause_a_range is not None:
                 text_ls[self.clause_a_range[0]] = "<span class=\"first_clause\">" + text_ls[self.clause_a_range[0]]
-                text_ls[self.clause_a_range[1]] = "</span>" + text_ls[self.clause_a_range[1]]
             if self.clause_b_range is not None:
                 text_ls[self.clause_b_range[0]] = "<span class=\"second_clause\">" + text_ls[self.clause_b_range[0]]
                 text_ls[self.clause_b_range[1]] = "</span>" + text_ls[self.clause_b_range[1]]
-
-        for linkage_word_range in self.linkage_word_ranges:
-            text_ls[linkage_word_range[0]] = "<span class=\"linkage_word\">" + text_ls[linkage_word_range[0]]
-            text_ls[linkage_word_range[1]-1] = text_ls[linkage_word_range[1]-1] + "</span>"
+            if self.clause_a_range is not None:
+                text_ls[self.clause_a_range[1]] = "</span>" + text_ls[self.clause_a_range[1]]
 
         window_start: int = 0
         window_end: int = -1
