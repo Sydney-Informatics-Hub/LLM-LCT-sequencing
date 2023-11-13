@@ -1,14 +1,17 @@
 # Python tool to export and import excel files to and from the json
+from os.path import dirname, abspath
 
 import pandas as pd
-import os
 import json
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from load_schema_json import load_json, validate_json, json_to_dataframe, json_to_dataframe_definitions
-from openpyxl.styles import PatternFill, Border, Side, Font
+from .load_schema_json import load_json, validate_json, json_to_dataframe, json_to_dataframe_definitions
+
+
+parent_dir = dirname(dirname(abspath(__file__)))
+schema_dir = parent_dir + "/schemas/"
 
 def excel_to_json(excel_filename, json_filename_out):
     """
@@ -39,7 +42,7 @@ def excel_to_json(excel_filename, json_filename_out):
 
     if df.shape[1] >= 6:
        # validate the data
-       json_schema = "../schemas/schema_sequencing_examples_reason.json"
+       json_schema = schema_dir + "schema_sequencing_examples_reason.json"
        schema = load_json(json_schema)
        data_loaded = load_json(json_filename_out)
        assert validate_json(data_loaded, schema), "JSON data is invalid!"
@@ -133,12 +136,10 @@ def dataframe_to_json_definitions(df):
     return result
 
 
-
-
 def json_to_excel(
     json_filename, 
     excel_filename, 
-    json_schema =  "../schemas/schema_sequencing_examples_reason.json"):
+    json_schema = schema_dir + "schema_sequencing_examples_reason.json"):
     """
     Convert the JSON data to an Excel file.
 
@@ -266,8 +267,8 @@ def test_json_to_excel():
     """
     Test json_to_excel().
     """
-    json_filename = "../schemas/sequencing_examples_reason.json"
-    excel_filename = "../schemas/sequencing_examples_reason.xlsx"
+    json_filename = schema_dir + "sequencing_examples_reason.json"
+    excel_filename = schema_dir + "sequencing_examples_reason.xlsx"
     json_to_excel(json_filename, excel_filename)
 
 
@@ -276,13 +277,14 @@ def test_excel_to_json():
     Test json_to_excel().
     """
     
-    excel_filename = "../schemas/sequencing_examples_reason.xlsx"
-    json_filename_out = "../schemas/sequencing_examples_reason_recovered.json"
+    excel_filename = schema_dir + "sequencing_examples_reason.xlsx"
+    json_filename_out = schema_dir + "sequencing_examples_reason_recovered.json"
     excel_to_json(excel_filename, json_filename_out)
 
 
 def test_json_to_excel_definitions():
-    json_to_excel_definitions("../schemas/sequencing_types.json", "../schemas/sequencing_types.xlsx")
+    json_to_excel_definitions(schema_dir + "sequencing_types.json", schema_dir + "sequencing_types.xlsx")
+
 
 def test_excel_to_json_definitions():
-    excel_to_json("../schemas/sequencing_types.xlsx", "../schemas/sequencing_types_recovered.json")
+    excel_to_json(schema_dir + "sequencing_types.xlsx", schema_dir + "sequencing_types_recovered.json")

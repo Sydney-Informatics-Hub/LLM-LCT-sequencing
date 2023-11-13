@@ -12,7 +12,7 @@ import openai
 import panel as pn
 from openai.error import AuthenticationError, APIConnectionError
 import logging
-logger = logging.getLogger(__name__)
+
 
 class LLM:
     """
@@ -31,16 +31,16 @@ class LLM:
             # check if API key is valid
             try:
                 ailist = openai.Model.list()
-                print('LLM initialized.')
+                logging.debug('LLM initialized.')
             except openai.error.AuthenticationError:
-                print("No valid OpenAI API key found. Please enter your OpenAI API key.")
+                logging.debug("No valid OpenAI API key found. Please enter your OpenAI API key.")
         else:
             # Check if file exists
             if not os.path.isfile(filename_openai_key):
                 raise FileNotFoundError("OpenAI key file does not exist: {}".format(filename_openai_key))
             with open(filename_openai_key, 'r') as f:
                 openai.api_key = f.read()
-            print('LLM initialized with API key from file: {}'.format(filename_openai_key))
+            logging.debug('LLM initialized with API key from file: {}'.format(filename_openai_key))
         self.model_name = model_name
 
 
@@ -86,7 +86,7 @@ class LLM:
             logprobs = None
         model_name = self.model_name
         if model_name == 'gpt-3.5-turbo':
-            print("Warning: gpt-3.5-turbo is not available for completions API. Using gpt-3.5-turbo-instruct instead.")
+            logging.warning("Warning: gpt-3.5-turbo is not available for completions API. Using gpt-3.5-turbo-instruct instead.")
             model_name = 'gpt-3.5-turbo-instruct'
         completion_response = openai.Completion.create(
                                 prompt=prompt,
@@ -172,10 +172,10 @@ def openai_apikey_input():
                 except AuthenticationError as ae:
                     return str(ae)
                 except APIConnectionError as ace:
-                    logger.debug(ace)
+                    logging.debug(ace)
                     return "Something is wrong with your network connection. Please try again."
                 except Exception as e:
-                    logger.debug(str(e))
+                    logging.debug(str(e))
                     return "Something went wrong when validating API Key. Please try again."
             return "Incorrect API key provided. Must be 51 characters."
 
@@ -232,11 +232,11 @@ def test_llm_completion():
     example: Testing and LLM is fun or not!\n
     Answer: """
     llm = LLM()
-    print(f'prompt: {prompt}')
+    logging.debug(f'prompt: {prompt}')
     completion_text, tokens_used, chat_id, logprobs = llm.request_completion(prompt)
-    print(f'completion_text: {completion_text}')
-    print(f'tokens_used: {tokens_used}')
-    print(f'token logprobs: {logprobs}')
+    logging.debug(f'completion_text: {completion_text}')
+    logging.debug(f'tokens_used: {tokens_used}')
+    logging.debug(f'token logprobs: {logprobs}')
 
 
 def test_llm_chatcompletion():
@@ -247,7 +247,7 @@ def test_llm_chatcompletion():
     example: Testing and LLM is fun or not!\n
     Answer: """
     llm = LLM()
-    print(f'prompt: {prompt}')
+    logging.debug(f'prompt: {prompt}')
     completion_text, tokens_used, chat_id, message = llm.request_chatcompletion(prompt)
-    print(f'completion_text: {completion_text}')
-    print(f'tokens_used: {tokens_used}')
+    logging.debug(f'completion_text: {completion_text}')
+    logging.debug(f'tokens_used: {tokens_used}')

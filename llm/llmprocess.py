@@ -22,19 +22,16 @@ prompt_id, filename_prompt, filename_response, tokens, modelname_llm
 """
 
 import os
-import json
 import pandas as pd
 import numpy as np
 import json
 import argparse
-import openai
 from enum import Enum
+import logging
 
-from load_schema_json import load_json, validate_json, json_to_dataframe
-from excel_json_converter import excel_to_json
-#import importlib
-#importlib.reload(utils_llm)
-from utils_llm import LLM
+from .load_schema_json import load_json, json_to_dataframe
+from .excel_json_converter import excel_to_json
+from .utils_llm import LLM
 
 
 def load_text(filename):
@@ -54,13 +51,13 @@ def load_text(filename):
         text = f.read()
     return text
 
+
 def save_text(text, filename):
     """
     Save text to a file.
     """
     with open(filename, 'w') as f:
         f.write(text)
-
 
 
 def merge_definitions_examples(definitions, example_subset, linkage_subset):
@@ -100,6 +97,7 @@ def merge_definitions_examples(definitions, example_subset, linkage_subset):
 
     return class_str
 
+
 class LCTclasses(Enum):
     """
     Enum for LCT classes.
@@ -114,14 +112,15 @@ class LCTclasses(Enum):
     COH = 7
     INC = 8
 
+
 def lct_string_to_int(s):
     """
     Convert LCT sequence string to integer.
     """
     result = getattr(LCTclasses, s, None)
     if result is None:
-        print(f"'{s}' does not correspond to any known Classification.")
-        print(f"Need to be one of {list(LCTclasses.__members__.keys())}")
+        logging.debug(f"'{s}' does not correspond to any known Classification.")
+        logging.debug(f"Need to be one of {list(LCTclasses.__members__.keys())}")
         return None
     else:
         return result.value
@@ -136,7 +135,7 @@ class LLMProcess():
     Sequencing class, linkage words, and resaoning will be appended to the table and saved to a csv file.
 
     This LLM process pipeline includes the following main steps:
-    - load and and pre-process examples, sequencing definitions, instruction prompts 
+    - load and pre-process examples, sequencing definitions, instruction prompts
     - load clausing pairs
     - generate prompt string
     - call OpenAI API
@@ -156,10 +155,10 @@ class LLMProcess():
                  filename_pairs, 
                  filename_text,
                  filename_examples, 
-                 filename_definitions = "../schemas/sequencing_types.xlsx", 
-                 filename_zero_prompt = "../schemas/instruction_prompt.txt", 
-                 outpath = "../results_llm/", 
-                 modelname_llm = 'gpt-3.5-turbo-instruct'):
+                 filename_definitions="../schemas/sequencing_types.xlsx",
+                 filename_zero_prompt="../schemas/instruction_prompt.txt",
+                 outpath="../results_llm/",
+                 modelname_llm="gpt-3.5-turbo-instruct"):
         """
         Initialize LLMProcess class.
 
@@ -188,7 +187,6 @@ class LLMProcess():
             excel_to_json(filename_definitions, json_filename_out)
             filename_definitions = json_filename_out
 
-
         self.filename_pairs = filename_pairs
         self.filename_text = filename_text
         self.filename_examples = filename_examples
@@ -215,8 +213,8 @@ class LLMProcess():
 
         # load examples from json file
         examples = load_json(self.filename_examples)
-        #self.schema = load_json(self.filename_schema)
-        #assert validate_json(self.examples, self.schema)
+        # self.schema = load_json(self.filename_schema)
+        # assert validate_json(self.examples, self.schema)
         self.df_examples = json_to_dataframe(examples)
 
         # load clausing pairs
@@ -249,7 +247,6 @@ class LLMProcess():
         self.df_res['modelname_llm'] = None
         self.df_res['reasoning'] = None
 
-
     def preprocess_prompt(self):
         # generate main part of prompt consisting of instructions, definitions, and examples
         example_string = """ """
@@ -276,7 +273,6 @@ class LLMProcess():
         self.zero_shot_prompt = self.zero_shot_prompt.replace('SEQUENCING_CLASSES', self.sequencing_classes)
         self.zero_shot_prompt = self.zero_shot_prompt.replace('DESCRIPTION_CLASSES', self.sequencing_definition)
 
-
     def get_sequencing_classes(self, filename_definitions):
         definitions = load_json(filename_definitions)
         self.sequencing_definition = json.dumps(definitions, indent=2)
@@ -300,8 +296,6 @@ class LLMProcess():
         self.outpath_prompts = os.path.join(self.outpath, 'prompts_responses')
         os.makedirs(self.outpath_prompts, exist_ok=True)
 
-
-    
     def get_text_chunks(self, fname_text, c1_start, c1_end, c2_start, c2_end, window_start, window_end):
         """
         get text for two clauses with idx_start and idx_end.
@@ -331,7 +325,6 @@ class LLMProcess():
         text_chunk_1 = text[c1_start:c1_end]
         text_chunk_2 = text[c2_start:c2_end]
         return text_chunk_1, text_chunk_2, text_content
-
 
     def run(self, filename_openai_key=None):
         """
@@ -368,9 +361,9 @@ class LLMProcess():
                                                                             window_start,
                                                                             window_end)
             
-            print(f"Clauses for index {index}:")
-            print("text1:", text_chunk_1)
-            print("text2:", text_chunk_2)
+            logging.debug(f"Clauses for index {index}:")
+            logging.debug("text1:", text_chunk_1)
+            logging.debug("text2:", text_chunk_2)
            
             # copy string self.zero_shot_prompt
             self.prompt = self.zero_shot_prompt
@@ -379,7 +372,7 @@ class LLMProcess():
             self.prompt = self.prompt.replace('CHUNK_2', text_chunk_2)
 
             # call OPenAi API with prompt
-            completion_text, tokens_used, chat_id, logprobs = self.llm.request_completion(self.prompt, max_tokens = 300)
+            completion_text, tokens_used, chat_id, logprobs = self.llm.request_completion(self.prompt, max_tokens=300)
             # for gpt-4:
             #completion_text, tokens_used, chat_id, message_response = llm.request_chatcompletion(prompt, max_tokens = 300)
             #logprobs = None
@@ -404,23 +397,23 @@ class LLMProcess():
                 try:
                     class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
                 except:
-                    print('WARNING: completion_text not correct format! Skipping test sample')
-                    print(completion_text)
+                    logging.warning('WARNING: completion_text not correct format! Skipping test sample')
+                    logging.warning(completion_text)
                     completion_text = completion_text.split('\n')[0]
                 # linkage word of test sample
                 try:
                     linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
                 except:
-                    print('WARNING: completion_text not correct format for linkage word!')
-                    print(completion_text)
+                    logging.warning('WARNING: completion_text not correct format for linkage word!')
+                    logging.warning(completion_text)
                     linkage_predicted = 'NA'
 
                 # get reasoning
                 try:
                     reasoning = completion_text.split('\n')[2].split(':')[1].strip()
                 except:
-                    print('WARNING: completion_text not correct format for reasoning!')
-                    print(completion_text)
+                    logging.warning('WARNING: completion_text not correct format for reasoning!')
+                    logging.warning(completion_text)
                     reasoning = 'NA'
 
                 # probability of predicted class
@@ -429,17 +422,17 @@ class LLMProcess():
                 else:
                     class_prob = 0
             elif (len(completion_text.split('\n')) == 2) and completion_text.split('\n')[0].startswith('classification'):
-                print('WARNING: completion_text has only 2 lines! Skipping reasoning')
+                logging.warning('WARNING: completion_text has only 2 lines! Skipping reasoning')
                 try:
                     class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
                 except:
-                    print('WARNING: completion_text not correct format! Skipping test sample')
-                    print(completion_text)
+                    logging.warning('WARNING: completion_text not correct format! Skipping test sample')
+                    logging.warning(completion_text)
                     completion_text = completion_text.split('\n')[0]
                 try:
                     linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
                 except:
-                    print('WARNING: completion_text not correct format for linkage word!')
+                    logging.warning('WARNING: completion_text not correct format for linkage word!')
                     linkage_predicted = 'NA'
                 reasoning = 'NA'
                 if logprobs is not None:
@@ -447,8 +440,8 @@ class LLMProcess():
                 else:
                     class_prob = 0
             else:
-                print('WARNING: completion_text has not not enough lines!')
-                print(completion_text)
+                logging.warning('WARNING: completion_text has not not enough lines!')
+                logging.warning(completion_text)
                 class_predicted = 'NA'
                 linkage_predicted = 'NA'
                 reasoning = 'NA'
@@ -474,14 +467,17 @@ class LLMProcess():
             self.df_res.to_csv(self.fname_results, index=False)
 
             #print results
-            print(f'Index: {index} | Prediction: {class_predicted} | Probability: {class_prob} | Used tokens: {tokens_used} ')
-            print('')
+            logging.debug(f'Index: {index} | Prediction: {class_predicted} | Probability: {class_prob} | Used tokens: {tokens_used} ')
+            logging.debug('')
 
         # Write token count to file
         filename_token_count = f'token_count_{self.modelname_llm}.txt'
         save_text(str(self.token_count), os.path.join(self.outpath, filename_token_count))
 
-        print(f'Experiment finished! Results saved to folder {self.outpath}')
+        logging.debug(f'Experiment finished! Results saved to folder {self.outpath}')
+
+        return self.fname_results
+
 
 def test_llmprocess():
     outpath = "../results_process/"
@@ -511,12 +507,12 @@ def test_llmprocess():
     filename_openai_key = "../../openai_key.txt"
     
     # run LLM process
-    llm_process = LLMProcess(filename_pairs = os.path.join(path_data,filename_pairs),
-                                filename_text = os.path.join(path_data, filename_text),
-                                filename_examples = os.path.join(path_data, filename_examples),
-                                filename_definitions = os.path.join(path_schema, filename_definitions),
-                                filename_zero_prompt = os.path.join(path_schema, filename_zero_prompt),
-                                outpath = outpath)
+    llm_process = LLMProcess(filename_pairs=os.path.join(path_data,filename_pairs),
+                             filename_text=os.path.join(path_data, filename_text),
+                             filename_examples=os.path.join(path_data, filename_examples),
+                             filename_definitions=os.path.join(path_schema, filename_definitions),
+                             filename_zero_prompt=os.path.join(path_schema, filename_zero_prompt),
+                             outpath=outpath)
     
     #with open(filename_openai_key, 'r') as f:
     #    openai.api_key = f.read()
@@ -538,11 +534,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # run experiment pipeline
-    llm_process = LLMProcess(filename_pairs = args.filename_pairs,
-                             filename_text = args.filename_text,             
-                            filename_examples = args.filename_examples,
-                            filename_definitions = args.filename_definitions,
-                            filename_zero_prompt = args.filename_zero_prompt,
-                            outpath = args.outpath,
-                            modelname_llm = args.modelname_llm)
+    llm_process = LLMProcess(filename_pairs=args.filename_pairs,
+                             filename_text=args.filename_text,
+                            filename_examples=args.filename_examples,
+                            filename_definitions=args.filename_definitions,
+                            filename_zero_prompt=args.filename_zero_prompt,
+                            outpath=args.outpath,
+                            modelname_llm=args.modelname_llm)
     llm_process.run()
