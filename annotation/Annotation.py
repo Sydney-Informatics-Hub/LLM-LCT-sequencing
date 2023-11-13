@@ -17,7 +17,7 @@ class Annotation:
                                                                 llm_examples_path,
                                                                 llm_definitions_path,
                                                                 llm_zero_prompt_path,
-                                                                log_file_path, debug=True)
+                                                                log_file_path, debug=False)
         self.view: AnnotationViewWrapper = AnnotationViewWrapper(controller)
 
     def run(self):
