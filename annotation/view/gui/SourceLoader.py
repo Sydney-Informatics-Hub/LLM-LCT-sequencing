@@ -162,7 +162,6 @@ class SourceLoader:
         return self.component
 
     def toggle_unprocessed_mode(self, *args):
-        self.preprocessed_mode_loader.set_visible(False)
         self.preprocessed_mode_button.button_style = "outline"
 
         if self.unprocessed_mode_loader.get_visible():
@@ -171,9 +170,9 @@ class SourceLoader:
         else:
             self.unprocessed_mode_button.button_style = "solid"
             self.unprocessed_mode_loader.set_visible(True)
+        self.preprocessed_mode_loader.set_visible(False)
 
     def toggle_preprocessed_mode(self, *args):
-        self.unprocessed_mode_loader.set_visible(False)
         self.unprocessed_mode_button.button_style = "outline"
 
         if self.preprocessed_mode_loader.get_visible():
@@ -182,3 +181,4 @@ class SourceLoader:
         else:
             self.preprocessed_mode_button.button_style = "solid"
             self.preprocessed_mode_loader.set_visible(True)
+        self.unprocessed_mode_loader.set_visible(False)
