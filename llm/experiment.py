@@ -18,7 +18,6 @@ Example:
 """
 
 import os
-import json
 import random
 import pandas as pd
 import numpy as np
@@ -28,11 +27,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-from load_schema_json import load_json, validate_json, json_to_dataframe
-from excel_json_converter import excel_to_json
+from .load_schema_json import load_json, validate_json, json_to_dataframe
+from .excel_json_converter import excel_to_json
 #import importlib
 #importlib.reload(utils_llm)
-from utils_llm import LLM
+from .utils_llm import LLM
 
 """
 # some paths and filenames
