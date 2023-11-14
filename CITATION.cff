@@ -1,0 +1,50 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  AI Semantic Insights: LLM Toolkit for Analysing
+  Educational Practices and Knowledge Building
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Karl
+    family-names: Maton
+    email: karl.maton@sydney.edu.au
+    affiliation: >-
+      Professor of Sociology; Director, LCT Centre for
+      Knowledge-Building, University of Sydney
+  - given-names: Yaegan
+    email: yaegan.doran@acu.edu.au
+    family-names: Doran
+    name-particle: Dr.
+    affiliation: >-
+      Senior Lecturer, Language and Literacy Education,
+      Australian Catholic University
+  - given-names: Chao
+    family-names: Sun
+    name-particle: Dr.
+    email: chao.sun@sydney.edu.au
+    affiliation: >-
+      Sydney Informatics Hub, a core research facility of
+      the University of Sydney
+  - given-names: Sebastian
+    family-names: Haan
+    email: sebastian.haan@sydney.edu.au
+    affiliation: >-
+      Sydney Informatics Hub, a core research facility of
+      the University of Sydney
+  - given-names: Hamish
+    family-names: Croser
+    affiliation: >-
+      Sydney Informatics Hub, a core research facility of
+      the University of Sydney
+    email: hamish.croser@sydney.edu.au
+repository-code: >-
+  https://github.com/Sydney-Informatics-Hub/LLM-LCT-sequencing
+keywords:
+  - Legitimation Code Theory
+  - LCT
+license: MIT

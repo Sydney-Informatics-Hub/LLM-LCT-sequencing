@@ -64,6 +64,42 @@ Annotation-Tool --> Clausing-Pairs
 
 The aim of the LCT analysis tool is to provide researchers an automatic classification system that detects and identifies the sequencing types of combination of passages (clauses). Existing large language models (LLMs), such as OpenAI GPT, are applied for automatic sequencing classification.
 
+## Usage and dependencies
+
+### Web version
+
+Click the following link to use a web version of the tool hosted on Binderhub courtesy of the Australian Text Analytics Platform
+
+**Note**: CILogon authentication is required. You can use your institutional, Google or Microsoft account to log in.
+
+[![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Sydney-Informatics-Hub/LLM-LCT-sequencing/main?labpath=annotation-tool.ipynb)
+
+### Self-host
+
+Run the following commands in a terminal or any Bash environment.
+
+Clone the repository and navigate into the newly created directory:
+
+```shell
+git clone https://github.com/Sydney-Informatics-Hub/LLM-LCT-sequencing.git
+cd LLM-LCT-sequencing
+```
+
+To install dependencies, ensure you have Python 3.10 and pip installed, then run the following command:
+
+```shell
+pip install -r requirements.txt
+```
+
+Serve the application locally using the following command:
+
+```shell
+panel serve annotation-tool.ipynb
+```
+
+The application will be usable in a browser at the link provided (http://localhost:5006/annotation-tool)
+
+
 ## References
 
 - Maton, Karl, and Yaegan J. Doran. "Condensation: A translation device for revealing complexity of knowledge practices in discourse, part 2—clausing and sequencing." Onomázein (2017): 77-110
