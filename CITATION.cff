@@ -12,6 +12,7 @@ type: software
 authors:
   - given-names: Karl
     family-names: Maton
+    name-particle: Prof.
     email: karl.maton@sydney.edu.au
     affiliation: >-
       Professor of Sociology; Director, LCT Centre for
