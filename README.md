@@ -70,7 +70,7 @@ The aim of the LCT analysis tool is to provide researchers an automatic classifi
 
 Click the following link to use a web version of the tool hosted on Binderhub courtesy of the Australian Text Analytics Platform
 
-**Note**: CILogon authentication is required. You can use your institutional, Google or Microsoft account to log in.
+**Note**: CILogon authentication is required. You can use your institutional, Google or Microsoft account to log in. If you have trouble authenticating, please refer to the [CILogon troubleshooting guide](docs/cilogon-troubleshooting.pdf).
 
 [![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Sydney-Informatics-Hub/LLM-LCT-sequencing/main?labpath=annotation-tool.ipynb)
 
@@ -110,4 +110,3 @@ Acknowledgments are an important way for us to demonstrate the value we bring to
 If you make use of this software for your research project, please include the following acknowledgment:
 
 “This research was supported by the Sydney Informatics Hub, a Core Research Facility of the University of Sydney."
-
