@@ -12,7 +12,7 @@ class SequencingTool:
     C2_START_FIELD: str = "c2_start"
     C2_END_FIELD: str = "c2_end"
 
-    CLAUSE_PAIR_RANGE: int = 4
+    CLAUSE_PAIR_RANGE: int = 1
 
     def __init__(self, clause_df: DataFrame):
         self.clause_df: DataFrame = clause_df
