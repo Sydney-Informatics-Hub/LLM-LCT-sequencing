@@ -1,0 +1,29 @@
+You are a linguistic research assistant. You are analysing the relationships between text clauses and classifying them into one of eight sequencing categories. 
+The eight sequencing classes are SEQUENCING_CLASSES. These are sub-subtypes of higher level classes.
+A detailed description of each sequencing class is given below in the dictionary. 
+You are also given a list of examples for each class.
+
+You are given a text below Text-to-classify that includes two clauses (Clause1 and Clause2) and you are asked to classify the sequential relation between these two clauses into one of the eight sequencing classes.
+
+You are given the following instructions:
+If you can tell what the sequencing classification of the clause relation  is, respond in same format as the examples, i.e. say 'classification:' followed by the class name. Only use the 3 character abbreviation of the class name.
+If you can't tell what it is, say 'class: None'.
+Next, extract the linkage word for the given text that is characteristic of the sequencing type, i.e. say 'linkage word:' followed by a word that links the clauses. 
+The linkage word must be a word that is included in the given text.
+If you can't find of a linkage word, say 'linkage word: None'.
+Next, give a reason for your classification, i.e. say 'reason:' followed by a reason. The reason should be brief and not more than 2 sentences.
+
+Dictionary of description of the eight sequencing classes:
+DESCRIPTION_CLASSES
+                      
+Examples for each class:
+EXAMPLES_CLASSES
+
+Text content:
+TEXT_CONTENT
+
+Clause pair to classify:
+Clause 1: CHUNK_1
+Clause 2: CHUNK_2
+
+The answer is:

@@ -6,15 +6,15 @@
       "Subtypes": [
         {
           "Subtype": "Vertical Sequencing",
-          "Description": "Condenses meanings from one or more passages and transports those meanings into another passage. Vertical sequencing only involves instances where a word or phrase refers back to a full clause or larger stretch of text. It does not include anaphoric reference to another noun, such as it being used to refer to a frog in 'I saw a frog. It was very big.'. Characteristics are: 1) Reference Mechanism: Utilize demonstratives (e.g., this, that, these, those) and 3rd person non-gendered pronouns (it, they) to refer to prior text; 2) Nominalization: Often transform verbs into nouns, e.g., 'fuse' becomes 'fusion'; 3) Semiotic Entities: Use language constructs (e.g., arguments, issues. story) combined with definite determiners (this, those, such, the).",
+          "Description": "Condenses meanings from one or more passages and transports those meanings into another passage. Integrative and subsumptive sequencing is where a stretch of text is referred to and packed up into a single word or noun phrase. Note that integrative and subsumptive sequencing only involves instances where a word or phrase refers back to a full clause or larger stretch of text. It does not include anaphoric reference to another noun, such as it being used to refer to a frog in 'I saw a frog. It was very big.'. Characteristics are: 1) Reference Mechanism: Utilize demonstratives (e.g., this, that, these, those) and 3rd person non-gendered pronouns (it, they) to refer to prior text; 2) Nominalization: Often transform verbs into nouns, e.g., 'fuse' becomes 'fusion'; 3) Semiotic Entities: Use language constructs (e.g., arguments, issues. story) combined with definite determiners (this, those, such, the).",
           "Sub_Subtypes": [
             {
               "Sub_Subtype": "Integrative Sequencing",
-              "Description": "Condenses and transports meanings from more than one passage. Involves the reference to a larger stretch of text, where the essence of a more extensive segment is condensed and referred to by a single word or noun phrase."
+              "Description": "Integrative sequences involving referring back to stretches of text, without there being any nominalisation of a verb or adjective from the previous sentence. Integrative sequences often: a) use demonstratives (e.g. this, that, these, those) and 3rd person non-gendered pronouns (it, they) to refer back or forward to text. b) use \u2018semiotic entities\u2019 referring to language (e.g. arguments, issues, story etc.) + definite determiners (this, those, such, the etc.). e.g. \u2018Such arguments are rubbish\u2019, \u2019All of the points we\u2019ve said\u2019, \u2019That last decision that you made', \u2019Those discussions\u2019, \u2019This argument\u2019, \u2019Examples such as these\u2019"
             },
             {
               "Sub_Subtype": "Subsumptive Sequencing",
-              "Description": "Condenses and transports meanings from within a single passage. Often involves successive passages."
+              "Description": "Subsumptive sequences involve the referring back to a stretch of text by virtue of a nominalisation of a verb or adjective from the previous sentence. E.g. the shift from fuse to fusion. Note that not all nominalisations will be subsumptive \u2013 it will only be subsumptive if: The nominalisation is of a verb or adjective from the previous sentence; and the nominalisation refers to the action of the verb or the quality of the adjective itself (what is known as grammatical metaphor in one branch of linguistics), not to some entity involved in the action or quality. For example, \u2018He ran\u2019 to \u2018This run\u2019 is a subsumptive example, because \u2018this run\u2019 refers to the action of running, but does so as a noun. Whereas \u2018He ran\u2019 to \u2018He is a runner\u2019 is not a subsumptive, as \u2018runner\u2019 refers to the person that does the run, rather than the action of running itself. Like for integratives, it will often use demonstratives  (e.g. this, that, these, those) to refer back to the previous text."
             }
           ]
         },
@@ -48,7 +48,7 @@
             },
             {
               "Sub_Subtype": "Coherent Sequencing",
-              "Description": "Involves the sequencing of passages that offer continuity.Coherent sequencing is generally any stretch of text that uses only `and` or does not have any linkers or referring items used as subsumptive or integrative sequencing. It can also be viewed as the default category if a sequence does not accord with any other category. Example linker words: And, Or, Whilst, While"
+              "Description": "Involves the sequencing of passages that offer continuity. Coherent sequencing is generally any stretch of text that uses only `and` or does not have any linkers or referring items used as subsumptive or integrative sequencing. Linker words that can occur with coherent sequencing include: And, Or, Whilst, While"
             }
           ]
         },
@@ -62,7 +62,7 @@
             },
             {
               "Sub_Subtype": "Reiterative Sequencing",
-              "Description": "Involves similar passages with sufficient difference to add meanings. Involves two or more clauses repeat meanings in different ways, sometimes through the use of synonyms of the verbs or one of the noun phrases, other times with quite different wordings. It is a sequence that essentially says \u2018that is\u2019, or \u2018in other words\u2019."
+              "Description": "Involves similar passages with sufficient difference to add meanings. Involves two or more clauses repeat meanings in different ways, sometimes through the use of synonyms of the verbs or one of the noun phrases, other times with quite different wordings. It is a sequence that essentially says \u2018that is\u2019, or \u2018in other words\u2019. Examples of conjunctions that may be used in reiterative sequences are:  \u2018That is\u2019, \u2018In other words\u2019, \u2018i.e.\u2019, \u2018indeed\u2019, \u2018similarly\u2019"
             }
           ]
         }
