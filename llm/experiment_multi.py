@@ -587,13 +587,14 @@ def run_pipe(
             completion_text = completion_text[1:]
 
         # check if response is json
-        if completion_text.startswith('{') and completion_text.endswith('}'):
-            completion_text = json.loads(completion_text)
+        if completion_text.startswith('{') and completion_text.endswith('}'):              
             try:
+                #completion_text = json.loads(completion_text)
+                completion_text = load_json(os.path.join(outpath_exp, filename_response))
                 keys = completion_text.keys()
-                list_reasoning = [completion_text[key]['Reason'] for key in keys]
-                list_class_pred = [completion_text[key]['Classification'] for key in keys]
-                list_linkage_pred = [completion_text[key]['Linkage word'] for key in keys]
+                list_reasoning = [completion_text[key]['reason'] for key in keys]
+                list_class_pred = [completion_text[key]['classification'] for key in keys]
+                list_linkage_pred = [completion_text[key]['linkage word'] for key in keys]
             except:
                 print('WARNING: completion_text not correct format! Skipping test samples')
                 print(completion_text)
@@ -602,6 +603,9 @@ def run_pipe(
                 list_linkage_pred = ['NA'] * nseq
         else:
             print('WARNING: completion_text not in json format! Skipping test samples')
+
+        # load json file
+
     
 
         #add a new row to df_results
