@@ -112,7 +112,6 @@ class LCTclasses(Enum):
     COH = 7
     INC = 8
 
-
 def lct_string_to_int(s):
     """
     Convert LCT sequence string to integer.
@@ -246,6 +245,56 @@ class LLMProcess():
         self.df_res['tokens'] = None
         self.df_res['modelname_llm'] = None
         self.df_res['reasoning'] = None
+
+    def estimate_compute_cost(self, 
+                              path_cost = '../schemas/openai_pricing.json',
+                              avg_token_input = 2700,
+                              avg_token_output = 450,
+                              avg_time = 1.31):
+        """
+        Estimate compute resources:
+            - the costs for the LLM process.
+            - the compute time for the LLM process.
+
+        Parameters:
+        -----------
+        - path_cost (str): The path to the cost schema (incl costs in $/1k token)
+        - avg_token_input (int): The average number of tokens needed for the input.
+        - avg_token_output (int): The average number of tokens needed for the output.
+        - avg_time (float): The average time in seconds needed for the LLM process.
+
+        Returns:
+        --------
+        - cost_estimate (dict): A dictionary with the estimated compute resources.
+        """
+        # load cost schema
+        cost_schema = load_json(path_cost)
+        ntokens_in = len(self.df_examples) * avg_token_input / 1000
+        ntokens_out= len(self.df_examples) * avg_token_output / 1000
+        compute_time = len(self.df_examples) * avg_time
+
+
+        # check if modelname_llm is in cost_schema
+        if self.modelname_llm not in cost_schema.keys():
+            logging.warning(f'WARNING: {self.modelname_llm} not in cost_schema!')
+            costs = None
+        else:
+            modelcost = cost_schema['self.modelname_llm']
+            # check if modelcost includes "input" and "output"
+            if 'input' in modelcost.keys() and 'output' in modelcost.keys():
+                costs = modelcost['input'] * avg_token_input + modelcost['output'] * avg_token_output
+
+            elif 'input_usage' in modelcost.keys() and 'output_usage' in modelcost.keys():
+                costs = modelcost['input_usage'] * avg_token_input + modelcost['output_usage'] * avg_token_output
+            else:
+                logging.warning('WARNING: modelcost does not include "input" or "output"!')
+                costs = None
+
+        cost_estimate = {'compute_time': compute_time,
+                         'costs': costs}
+        
+        return cost_estimate
+
 
     def preprocess_prompt(self):
         # generate main part of prompt consisting of instructions, definitions, and examples
