@@ -228,7 +228,6 @@ def gen_multiprompt(zero_shot_prompt, sequencing_classes, description_classes, e
         text_str += str({'Sample ID': i, 'Text Content': text_content[i], 'Clause 1': text_chunk_1[i], 'Clause 2': text_chunk_2[i]}) + '\n'
   
     #text_dict = {'text content': text_content, 'Clause 1': text_chunk_1, 'Clause 2': text_chunk_2}
-
     zero_shot_prompt = zero_shot_prompt.replace('TEXT_CONTENT', text_str)
     return zero_shot_prompt
 
@@ -473,9 +472,9 @@ def run_pipe(
         example_string += f"""Input\nText content: {row['Example']}\n"""
         example_string += f"""Clause 1: {row['Linked_Chunk_1']}\n"""
         example_string += f"""Clause 2: {row['Linked_Chunk_2']}\n"""
+        example_string += f"""Reason: {row['Reasoning']}\n"""
         example_string += f"""\nAnswer\nClassification: {row['Sub_Subtype']}\n"""
         example_string += f"""Linkage word: {row['Linkage_Word']}\n"""
-        example_string += f"""Reason: {row['Reasoning']}\n"""
         example_string += f"""\n"""
 
     # replace example_types with example_types_short in example_string
@@ -557,7 +556,7 @@ def run_pipe(
     # Loop over test sample in list_test_class_multi
     n_test = 0
     for test_str, test_chunk1, test_chunk2, test_class, test_linkage in zip(list_test_str_multi, list_test_chunk1_multi, list_test_chunk2_multi, list_test_class_multi, list_test_linkage_multi):
-        print(f"Test sample {n_test} of {len(list_test_str)}")
+        print(f"Test samples {n_test} to {n_test+nseq_per_prompt} of {len(list_test_str)}")
         # generate prompt 
         prompt = gen_multiprompt(zero_shot_prompt, sequencing_classes, sequencing_definition, example_string, test_str, test_chunk1, test_chunk2)
 
@@ -566,7 +565,7 @@ def run_pipe(
             prompt = prompt.replace(example_type, f'{example_type} ({example_type_short})')
 
         # call OPenAi API with prompt
-        completion_text, tokens_used, chat_id, logprobs = llm.request_completion(prompt, max_tokens = 300)
+        completion_text, tokens_used, chat_id, logprobs = llm.request_chatcompletion(prompt, max_tokens = nseq_per_prompt * 300)
         # for gpt-4:
         #completion_text, tokens_used, chat_id, message_response = llm.request_chatcompletion(prompt, max_tokens = 300)
         #logprobs = None
@@ -663,7 +662,7 @@ def run_pipe(
         df_results.loc[len(df_results)] = row
 
         # increase n_test
-        n_test += 1
+        n_test += nseq_per_prompt
 
     # convert class_prob from log to prob
     df_results['pred_class_prob'] = df_results['pred_class_prob'].apply(lambda x: np.exp(x))
