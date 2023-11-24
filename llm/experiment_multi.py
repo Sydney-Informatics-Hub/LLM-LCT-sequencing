@@ -533,10 +533,8 @@ def run_pipe(
         'test_chunk2',
         'test_class', 
         'test_linkage', 
-        'pred_class', 
-        'pred_class_prob',  
+        'pred_class',  
         'pred_linkage', 
-        'prompt_id', 
         'filename_prompt', 
         'filename_response', 
         'tokens', 
@@ -556,7 +554,11 @@ def run_pipe(
     # Loop over test sample in list_test_class_multi
     n_test = 0
     for test_str, test_chunk1, test_chunk2, test_class, test_linkage in zip(list_test_str_multi, list_test_chunk1_multi, list_test_chunk2_multi, list_test_class_multi, list_test_linkage_multi):
-        print(f"Test samples {n_test} to {n_test+nseq_per_prompt} of {len(list_test_str)}")
+        if n_test+nseq_per_prompt <= len(list_test_str):
+            nseq = nseq_per_prompt
+        else:
+            nseq = len(list_test_str) - n_test
+        print(f"Processing samples {n_test} to {n_test+nseq} of {len(list_test_str)}...")
         # generate prompt 
         prompt = gen_multiprompt(zero_shot_prompt, sequencing_classes, sequencing_definition, example_string, test_str, test_chunk1, test_chunk2)
 
@@ -584,88 +586,45 @@ def run_pipe(
         if completion_text.startswith('\n'):
             completion_text = completion_text[1:]
 
-        # check if there are 3 lines in completion_text
-        if len(completion_text.split('\n')) == 3:
-            # class of test sample
+        # check if response is json
+        if completion_text.startswith('{') and completion_text.endswith('}'):
+            completion_text = json.loads(completion_text)
             try:
-                class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
+                keys = completion_text.keys()
+                list_reasoning = [completion_text[key]['Reason'] for key in keys]
+                list_class_pred = [completion_text[key]['Classification'] for key in keys]
+                list_linkage_pred = [completion_text[key]['Linkage word'] for key in keys]
             except:
-                print('WARNING: completion_text not correct format! Skipping test sample')
+                print('WARNING: completion_text not correct format! Skipping test samples')
                 print(completion_text)
-                completion_text = completion_text.split('\n')[0]
-            # linkage word of test sample
-            try:
-                linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
-            except:
-                print('WARNING: completion_text not correct format for linkage word!')
-                print(completion_text)
-                linkage_predicted = 'NA'
-
-            # get reasoning
-            try:
-                reasoning = completion_text.split('\n')[2].split(':')[1].strip()
-            except:
-                print('WARNING: completion_text not correct format for reasoning!')
-                print(completion_text)
-                reasoning = 'NA'
-
-            # probability of predicted class
-            if logprobs is not None:
-                class_prob = logprobs[3]
-            else:
-                class_prob = 0
-        elif (len(completion_text.split('\n')) == 2) and completion_text.split('\n')[0].startswith('classification'):
-            print('WARNING: completion_text has only 2 lines! Skipping reasoning')
-            try:
-                class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
-            except:
-                print('WARNING: completion_text not correct format! Skipping test sample')
-                print(completion_text)
-                completion_text = completion_text.split('\n')[0]
-            try:
-                linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
-            except:
-                print('WARNING: completion_text not correct format for linkage word!')
-                linkage_predicted = 'NA'
-            reasoning = 'NA'
-            if logprobs is not None:
-                class_prob = logprobs[3]
-            else:
-                class_prob = 0
+                list_reasoning = ['NA'] * nseq
+                list_class_pred = ['NA'] * nseq
+                list_linkage_pred = ['NA'] * nseq
         else:
-            print('WARNING: completion_text has not not enough lines!')
-            print(completion_text)
-            class_predicted = 'NA'
-            linkage_predicted = 'NA'
-            reasoning = 'NA'
-            class_prob = 0
-
-        #print results
-        print(f'Test class: {test_class} | Prediction: {class_predicted} | Probability: {round(np.exp(class_prob),3)} | Used tokens: {tokens_used} ')
+            print('WARNING: completion_text not in json format! Skipping test samples')
+    
 
         #add a new row to df_results
-        row = [
+        lst_nseq = [
             test_str, 
             test_chunk1,
             test_chunk2,
             test_class, 
             test_linkage, 
-            class_predicted, 
-            class_prob, 
-            linkage_predicted, 
-            chat_id, 
-            filename_prompt, 
-            filename_response, 
-            tokens_used, 
-            modelname_llm, 
-            reasoning]
-        df_results.loc[len(df_results)] = row
+            list_class_pred, 
+            list_linkage_pred, 
+            [filename_prompt] * nseq, 
+            [filename_response] * nseq, 
+            [tokens_used/nseq] * nseq,
+            [modelname_llm]* nseq, 
+            list_reasoning
+        ]
+        transposed_list = [list(column) for column in zip(*lst_nseq)]
+        for i, col in enumerate(transposed_list):
+            df_results.loc[len(df_results)] = col
 
         # increase n_test
-        n_test += nseq_per_prompt
-
-    # convert class_prob from log to prob
-    df_results['pred_class_prob'] = df_results['pred_class_prob'].apply(lambda x: np.exp(x))
+        n_test += nseq
 
     # save results to csv file
     filename_results = f'results_{modelname_llm}.csv'
