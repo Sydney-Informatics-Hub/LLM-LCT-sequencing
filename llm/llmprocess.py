@@ -439,7 +439,6 @@ class LLMProcess():
         list_window_start_multi = [list_window_start[i:i + self.nseq_per_prompt] for i in range(0, len(list_window_start), self.nseq_per_prompt)]
         list_window_end_multi = [list_window_end[i:i + self.nseq_per_prompt] for i in range(0, len(list_window_end), self.nseq_per_prompt)]
         
-        n_sample = 0
         for index_multi, text_content_multi, text_chunk1_multi, text_chunk2_multi, window_start_multi, window_end_multi in zip(list_index_multi, 
                                                                                          list_text_content_multi, 
                                                                                          list_text_chunk1_multi, 
@@ -447,10 +446,8 @@ class LLMProcess():
                                                                                          list_window_start_multi,
                                                                                          list_window_end_multi):
 
-            if n_sample+self.nseq_per_prompt <= len(index_multi):
-                nseq = self.nseq_per_prompt
-            else:
-                nseq = len(index_multi) - n_sample
+            
+            nseq = len(index_multi)
             
             logging.debug(f"Clauses for samples {n_sample} to {n_sample + nseq}:")
            
@@ -517,8 +514,6 @@ class LLMProcess():
             #print results
             logging.debug(f'Index: {index_multi} | Prediction: {list_class_pred} | Used tokens: {tokens_used} ')
             logging.debug('')
-
-            n_sample += nseq
 
             # wait 3 seconds for API
             time.sleep(3)
