@@ -249,7 +249,7 @@ class LLMProcess():
         self.df_res['reasoning'] = None
 
     def estimate_compute_cost(self, 
-                              path_cost = '../schemas/openai_pricing.json',
+                              path_cost = './schemas/openai_pricing.json',
                               avg_token_instruction = 2500,
                               avg_token_sample = 200,
                               avg_token_output_per_seq = 450,
@@ -282,7 +282,7 @@ class LLMProcess():
             logging.warning(f'WARNING: {self.modelname_llm} not in cost_schema!')
             costs = None
         else:
-            modelcost = cost_schema['self.modelname_llm']
+            modelcost = cost_schema[self.modelname_llm]
             # check if modelcost includes "input" and "output"
             if 'input' in modelcost.keys() and 'output' in modelcost.keys():
                 costs = modelcost['input'] * ntokens_in + modelcost['output'] * ntokens_out
@@ -533,13 +533,13 @@ class LLMProcess():
 
 
 def test_llmprocess():
-    outpath = "../results_process/"
+    outpath = "./results_process/"
 
     # Path to schemas and excel files for definitions and examples:
-    path_schema = "../schemas/"
+    path_schema = "./schemas/"
 
     # Path to data files:
-    path_data = "../tests"
+    path_data = "./tests"
 
     # Filename for sequencing definitions (.json or .xlsx), assumed to be in folder path_schema:
     filename_definitions = "sequencing_types.xlsx"
@@ -557,7 +557,7 @@ def test_llmprocess():
     filename_examples = "sequencing_examples.xlsx"
 
     # OpenAI key file (do not share this file)
-    filename_openai_key = "../../openai_key.txt"
+    filename_openai_key = "../openai_key.txt"
     
     # run LLM process
     llm_process = LLMProcess(filename_pairs=os.path.join(path_data,filename_pairs),
@@ -569,6 +569,7 @@ def test_llmprocess():
     
     # Estimate costs:
     compute_cost = llm_process.estimate_compute_cost()
+    print(compute_cost)
     
     #with open(filename_openai_key, 'r') as f:
     #    openai.api_key = f.read()
