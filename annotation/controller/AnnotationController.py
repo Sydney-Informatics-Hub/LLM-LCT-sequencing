@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 import traceback
 from io import BytesIO
 from pathlib import Path
@@ -148,13 +149,19 @@ class AnnotationController:
 
         try:
             self.set_loading_msg("Loading source file")
+            load_source_duration_start = time.time()
             self.annotation_service.load_source_file(source_file_content, source_filetype)
+            load_source_duration_total = time.time() - load_source_duration_start
+            logging.error(f"Source file loading time: {load_source_duration_total} s")
             self.display_success("File successfully loaded")
 
             self.set_loading_msg("Performing LLM sequence classification")
+            llm_process_duration_start = time.time()
             self.llm_post_process_path = self.annotation_service.build_datastore(self.llm_examples_path,
                                                                                  self.llm_definitions_path,
                                                                                  self.llm_zero_prompt_path)
+            llm_process_duration_total = time.time() - llm_process_duration_start
+            logging.error(f"LLM process time: {llm_process_duration_total} s")
             self.display_success("LLM classification complete")
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
@@ -167,12 +174,18 @@ class AnnotationController:
                                       preprocessed_content: BytesIO):
         try:
             self.set_loading_msg("Loading source file")
+            load_source_duration_start = time.time()
             self.annotation_service.load_source_file(source_file_content, source_filetype)
+            load_source_duration_total = time.time() - load_source_duration_start
+            logging.error(f"Source file loading time: {load_source_duration_total} s")
             self.display_success("File successfully loaded")
 
-            self.set_loading_msg("Performing LLM sequence classification")
+            self.set_loading_msg("Loading preprocessed file")
+            preprocessed_load_duration_start = time.time()
             self.annotation_service.build_datastore_preprocessed(preprocessed_content)
-            self.display_success("LLM classification complete")
+            preprocessed_load__duration_total = time.time() - preprocessed_load_duration_start
+            logging.error(f"Preprocessed file load time: {preprocessed_load__duration_total} s")
+            self.display_success("Preprocessed file loading complete")
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
             self.display_error(str(e))
