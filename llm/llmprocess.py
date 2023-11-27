@@ -29,6 +29,7 @@ import argparse
 from enum import Enum
 import logging
 import time
+import math
 
 from .load_schema_json import load_json, json_to_dataframe
 from .excel_json_converter import excel_to_json
@@ -251,9 +252,9 @@ class LLMProcess():
     def estimate_compute_cost(self, 
                               path_cost = './schemas/openai_pricing.json',
                               avg_token_instruction = 2500,
-                              avg_token_sample = 200,
+                              avg_token_sample = 250,
                               avg_token_output_per_seq = 450,
-                              avg_time_per_seq = 1):
+                              avg_time_per_seq = 2):
         """
         Estimate compute resources:
             - the costs for the LLM process.
@@ -272,9 +273,9 @@ class LLMProcess():
         """
         # load cost schema
         cost_schema = load_json(path_cost)
-        ntokens_in = len(self.df_examples) * (avg_token_instruction + avg_token_sample * self.nseq_per_prompt) / 1000 
-        ntokens_out= len(self.df_examples) * avg_token_output_per_seq / 1000 * self.nseq_per_prompt
-        compute_time = len(self.df_examples) * avg_time_per_seq * self.nseq_per_prompt
+        ntokens_in = math.ceil(len(self.df_examples) / self.nseq_per_prompt) * (avg_token_instruction + avg_token_sample * self.nseq_per_prompt) / 1000 
+        ntokens_out= len(self.df_examples) * avg_token_output_per_seq / 1000
+        compute_time = len(self.df_examples) * avg_time_per_seq 
 
 
         # check if modelname_llm is in cost_schema
@@ -449,7 +450,7 @@ class LLMProcess():
             
             nseq = len(index_multi)
             
-            logging.debug(f"Clauses for samples {n_sample} to {n_sample + nseq}:")
+            logging.debug(f"Clauses for samples {index_multi[0]} to {index_multi[-1]}:")
            
             # copy string self.zero_shot_prompt
             self.prompt = self.gen_multiprompt(text_content_multi, 
@@ -528,6 +529,10 @@ class LLMProcess():
 
 
 def test_llmprocess():
+
+    # get time for compute time estimation
+    start_time = time.time()
+
     outpath = "./results_process/"
 
     # Path to schemas and excel files for definitions and examples:
@@ -571,6 +576,10 @@ def test_llmprocess():
     #llm_process.run()
     
     llm_process.run(filename_openai_key)
+
+    # get time for compute time estimation and print in seconds
+    compute_time = time.time() - start_time
+    print(f'Compute time: {round(compute_time,1)} seconds')
 
 
 if __name__ == "__main__":
