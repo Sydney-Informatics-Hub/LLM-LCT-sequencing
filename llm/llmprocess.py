@@ -28,6 +28,7 @@ import json
 import argparse
 from enum import Enum
 import logging
+import time
 
 from .load_schema_json import load_json, json_to_dataframe
 from .excel_json_converter import excel_to_json
@@ -238,11 +239,9 @@ class LLMProcess():
         self.df_res = self.df_sequences.copy()
         self.df_res['predicted_classes'] = None
         self.df_res['predicted_classes_name'] = None
-        self.df_res['confidence'] = np.nan
         self.df_res['linkage_words'] = None
         self.df_res['window_start'] =None
         self.df_res['window_end'] = None
-        self.df_res['prompt_id'] = None
         self.df_res['filename_prompt'] = None
         self.df_res['filename_response'] = None
         self.df_res['tokens'] = None
@@ -415,6 +414,8 @@ class LLMProcess():
         list_text_chunk2 = []
         list_text_content = []
         list_index = []
+        list_window_start = []
+        list_window_end = []
         for index, row in self.df_sequences.iterrows():
              # get text content and clauses 
             # Set context window for now to all context between c1 and c2
@@ -431,18 +432,29 @@ class LLMProcess():
             list_text_chunk2.append(text_chunk_2)
             list_text_content.append(text_content)
             list_index.append(index)
+            list_window_start.append(window_start)
+            list_window_end.append(window_end)
         list_text_content_multi = [list_text_content[i:i + self.nseq_per_prompt] for i in range(0, len(list_text_content), self.nseq_per_prompt)]
         list_text_chunk1_multi = [list_text_chunk1[i:i + self.nseq_per_prompt] for i in range(0, len(list_text_chunk1), self.nseq_per_prompt)]
         list_text_chunk2_multi = [list_text_chunk2[i:i + self.nseq_per_prompt] for i in range(0, len(list_text_chunk2), self.nseq_per_prompt)]
         list_index_multi = [list_index[i:i + self.nseq_per_prompt] for i in range(0, len(list_index), self.nseq_per_prompt)]
+        list_window_start_multi = [list_window_start[i:i + self.nseq_per_prompt] for i in range(0, len(list_window_start), self.nseq_per_prompt)]
+        list_window_end_multi = [list_window_end[i:i + self.nseq_per_prompt] for i in range(0, len(list_window_end), self.nseq_per_prompt)]
         
-        for index_multi, text_content_multi, text_chunk1_multi, text_chunk2_multi in zip(list_index_multi, 
+        n_sample = 0
+        for index_multi, text_content_multi, text_chunk1_multi, text_chunk2_multi, window_start_multi, window_end_multi in zip(list_index_multi, 
                                                                                          list_text_content_multi, 
                                                                                          list_text_chunk1_multi, 
-                                                                                         list_text_chunk2_multi):
+                                                                                         list_text_chunk2_multi,
+                                                                                         list_window_start_multi,
+                                                                                         list_window_end_multi):
 
-
-            logging.debug(f"Clauses for index {index_multi[0]} to {index_multi[-1]}:")
+            if n_sample+self.nseq_per_prompt <= len(index_multi):
+                nseq = self.nseq_per_prompt
+            else:
+                nseq = len(index_multi) - n_sample
+            
+            logging.debug(f"Clauses for samples {n_sample} to {n_sample + nseq}:")
            
             # copy string self.zero_shot_prompt
             self.prompt = self.gen_multiprompt(text_content_multi, 
@@ -451,10 +463,7 @@ class LLMProcess():
 
 
             # call OPenAi API with prompt
-            completion_text, tokens_used, chat_id, logprobs = self.llm.request_completion(self.prompt, max_tokens=self.nseq_per_prompt * 300)
-            # for gpt-4:
-            #completion_text, tokens_used, chat_id, message_response = llm.request_chatcompletion(prompt, max_tokens = 300)
-            #logprobs = None
+            completion_text, tokens_used, chat_id, logprobs = self.llm.request_chatcompletion(self.prompt, max_tokens=self.nseq_per_prompt * 300)
 
             # tokens_used
             self.token_count += tokens_used
@@ -463,91 +472,58 @@ class LLMProcess():
             filename_prompt = f'prompt_{chat_id}.txt'
             save_text(self.prompt, os.path.join(self.outpath_prompts, filename_prompt))
 
-            # save response to file
-            filename_response = f'response_{chat_id}.txt'
-            save_text(completion_text, os.path.join(self.outpath_prompts, filename_response))
-
             if completion_text.startswith('\n'):
                 completion_text = completion_text[1:]
 
-            # check if there are 3 lines in completion_text
-            if len(completion_text.split('\n')) == 3:
-                # class of test sample
+            # check if response is json
+            if completion_text.startswith('{') and completion_text.endswith('}'): 
+                # save response to json file
+                completion_text = json.loads(completion_text)
+                filename_response = f'response_{chat_id}.json'    
+                with open(os.path.join(self.outpath_prompts, filename_response), 'w') as f:
+                    json.dump(completion_text, f, indent=2)         
                 try:
-                    class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
+                    keys = completion_text.keys()
+                    list_reasoning = [completion_text[key]['reason'] for key in keys]
+                    list_class_pred = [completion_text[key]['classification'] for key in keys]
+                    list_linkage_pred = [completion_text[key]['linkage word'] for key in keys]
                 except:
-                    logging.warning('WARNING: completion_text not correct format! Skipping test sample')
+                    logging.warning('WARNING: completion_text not correct format! Skipping test samples')
                     logging.warning(completion_text)
-                    completion_text = completion_text.split('\n')[0]
-                # linkage word of test sample
-                try:
-                    linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
-                except:
-                    logging.warning('WARNING: completion_text not correct format for linkage word!')
-                    logging.warning(completion_text)
-                    linkage_predicted = 'NA'
-
-                # get reasoning
-                try:
-                    reasoning = completion_text.split('\n')[2].split(':')[1].strip()
-                except:
-                    logging.warning('WARNING: completion_text not correct format for reasoning!')
-                    logging.warning(completion_text)
-                    reasoning = 'NA'
-
-                # probability of predicted class
-                if logprobs is not None:
-                    class_prob = logprobs[3]
-                else:
-                    class_prob = 0
-            elif (len(completion_text.split('\n')) == 2) and completion_text.split('\n')[0].startswith('classification'):
-                logging.warning('WARNING: completion_text has only 2 lines! Skipping reasoning')
-                try:
-                    class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
-                except:
-                    logging.warning('WARNING: completion_text not correct format! Skipping test sample')
-                    logging.warning(completion_text)
-                    completion_text = completion_text.split('\n')[0]
-                try:
-                    linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
-                except:
-                    logging.warning('WARNING: completion_text not correct format for linkage word!')
-                    linkage_predicted = 'NA'
-                reasoning = 'NA'
-                if logprobs is not None:
-                    class_prob = logprobs[3]
-                else:
-                    class_prob = 0
+                    list_reasoning = ['NA'] * nseq
+                    list_class_pred = ['NA'] * nseq
+                    list_linkage_pred = ['NA'] * nseq
             else:
-                logging.warning('WARNING: completion_text has not not enough lines!')
-                logging.warning(completion_text)
-                class_predicted = 'NA'
-                linkage_predicted = 'NA'
-                reasoning = 'NA'
-                class_prob = 0
+                logging.warning('WARNING: completion_text not in json format! Skipping test samples')
+                filename_response = f'response_{chat_id}.txt' 
+                save_text(completion_text, os.path.join(self.outpath_prompts, filename_response))
 
-            class_prob = round(np.exp(class_prob),3)
             
+            # convert class_pred to int
+            list_class_pred_int = [lct_string_to_int(class_pred) for class_pred in list_class_pred]
             # add results to dataframe
-            self.df_res.loc[index, 'predicted_classes'] = lct_string_to_int(class_predicted)
-            self.df_res.loc[index, 'predicted_classes_name'] = class_predicted
-            self.df_res.loc[index, 'confidence'] = class_prob
-            self.df_res.loc[index, 'linkage_words'] = linkage_predicted
-            self.df_res.loc[index, 'window_start'] = window_start
-            self.df_res.loc[index, 'window_end'] = window_end
-            self.df_res.loc[index, 'prompt_id'] = chat_id
-            self.df_res.loc[index, 'filename_prompt'] = filename_prompt
-            self.df_res.loc[index, 'filename_response'] = filename_response
-            self.df_res.loc[index, 'tokens'] = tokens_used
-            self.df_res.loc[index, 'modelname_llm'] = self.modelname_llm
-            self.df_res.loc[index, 'reasoning'] = reasoning
+            self.df_res.loc[index_multi, 'predicted_classes'] = list_class_pred_int
+            self.df_res.loc[index_multi, 'predicted_classes_name'] = list_class_pred
+            self.df_res.loc[index_multi, 'linkage_words'] = list_linkage_pred
+            self.df_res.loc[index_multi, 'window_start'] = window_start_multi
+            self.df_res.loc[index_multi, 'window_end'] = window_end_multi
+            self.df_res.loc[index_multi, 'filename_prompt'] = [filename_prompt] * nseq
+            self.df_res.loc[index_multi, 'filename_response'] = [filename_response] * nseq
+            self.df_res.loc[index_multi, 'tokens'] = [tokens_used/nseq] * nseq
+            self.df_res.loc[index_multi, 'modelname_llm'] = [self.modelname_llm]* nseq
+            self.df_res.loc[index_multi, 'reasoning'] = list_reasoning
 
             # save intermediate results to disk
             self.df_res.to_csv(self.fname_results, index=False)
 
             #print results
-            logging.debug(f'Index: {index} | Prediction: {class_predicted} | Probability: {class_prob} | Used tokens: {tokens_used} ')
+            logging.debug(f'Index: {index_multi} | Prediction: {list_class_pred} | Used tokens: {tokens_used} ')
             logging.debug('')
+
+            n_sample += nseq
+
+            # wait 3 seconds for API
+            time.sleep(3)
 
         # Write token count to file
         filename_token_count = f'token_count_{self.modelname_llm}.txt'
