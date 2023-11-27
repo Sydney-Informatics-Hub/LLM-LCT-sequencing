@@ -12,12 +12,11 @@ class DatastoreBuilder:
     LINKAGE_FIELD: str = "linkage_words"
     PREDICTED_FIELD: str = "predicted_classes"
     REASONING_FIELD: str = "reasoning"
-    CONFIDENCE_FIELD: str = "confidence"
     WINDOW_START_FIELD: str = "window_start"
     WINDOW_END_FIELD: str = "window_end"
     FIELD_DTYPES: dict = {SEQ_ID_FIELD: int, C1_START_FIELD: int, C1_END_FIELD: int,
                           C2_START_FIELD: int, C2_END_FIELD: int, LINKAGE_FIELD: str,
-                          PREDICTED_FIELD: str, REASONING_FIELD: str, CONFIDENCE_FIELD: float,
+                          PREDICTED_FIELD: str, REASONING_FIELD: str,
                           WINDOW_START_FIELD: int, WINDOW_END_FIELD: int}
     REQUIRED_FIELDS: list[str, ...] = [field for field in FIELD_DTYPES.keys()]
 
