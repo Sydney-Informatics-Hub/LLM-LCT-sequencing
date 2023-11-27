@@ -9,10 +9,10 @@ You are given the following instructions:
 For each sample in Text-samples-to-analyse add an entry to the answer dictionary that includes the following three keys in the same same dict format as the examples:
 First, try to analyse and reason the classification, i.e. output 'reason': followed by your classification reasoning. The reason should be brief and not more than 2 sentences.
 Next if you found what the sequencing classification of the clause relation is, output 'classification': followed by the class name. Only use the 3 character abbreviation of the class name.
-If you can't tell what it is or are not sure, output 'classification': None.
+If you can't tell what it is or are not sure, output 'classification': 'NA'.
 Next, extract the linkage word for the given text that is characteristic of the sequencing type, i.e. output 'linkage word': followed by a word that links the clauses. 
 The linkage word must be a word that is included in the given text.
-If you can't find of a linkage word, output 'linkage word': None.
+If you can't find of a linkage word, output 'linkage word': 'NA'.
 
 Dictionary of description of the eight sequencing classes:
 DESCRIPTION_CLASSES
