@@ -277,7 +277,8 @@ def gen_confusion_matrix(classes_test, classes_pred, class_labels, outfname_plot
                          dropna=False)
     
     # Reindex the matrix to ensure all classes are present
-    matrix = matrix.reindex(index=class_labels + [np.nan], columns=class_labels + [np.nan], fill_value=0)
+    #matrix = matrix.reindex(index=class_labels + [np.nan], columns=class_labels + [np.nan], fill_value=0)
+    matrix = matrix.reindex(index=class_labels + ['NA'], columns=class_labels + ['NA'], fill_value=0)
 
     # plot matrix
     plt.figure(figsize=(10, 7))
