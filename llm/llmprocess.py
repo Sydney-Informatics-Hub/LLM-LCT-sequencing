@@ -155,9 +155,10 @@ class LLMProcess():
                  filename_text,
                  filename_examples, 
                  filename_definitions="../schemas/sequencing_types.xlsx",
-                 filename_zero_prompt="../schemas/instruction_prompt.txt",
+                 filename_zero_prompt="../schemas/instruction_multiprompt.txt",
                  outpath="../results_llm/",
-                 modelname_llm="gpt-3.5-turbo-instruct"):
+                 modelname_llm="gpt-3.5-turbo-1106",
+                 nseq_per_prompt = 8):
         """
         Initialize LLMProcess class.
 
@@ -170,6 +171,7 @@ class LLMProcess():
         - filename_zero_prompt (str): The filename of the zero-shot instruction prompt text file.
         - outpath (str): The path to the output folder.
         - modelname_llm (str): The name of the LLM model to use.
+        - nseq_per_prompt (int): The number of sequences per prompt.
 
         """
         # Check if filename_examples is excel file
@@ -193,6 +195,7 @@ class LLMProcess():
         self.filename_zero_prompt = filename_zero_prompt
         self.outpath = outpath
         self.modelname_llm = modelname_llm
+        self.nseq_per_prompt = nseq_per_prompt
 
         # check if outpath includes a folder that starts with string 'results'
         # if so, add 1 to the number of the folder
@@ -322,6 +325,14 @@ class LLMProcess():
         self.zero_shot_prompt = self.zero_shot_prompt.replace('SEQUENCING_CLASSES', self.sequencing_classes)
         self.zero_shot_prompt = self.zero_shot_prompt.replace('DESCRIPTION_CLASSES', self.sequencing_definition)
 
+    def gen_multiprompt(self, text_content_multi, text_chunk1_multi, text_chunk2_multi):
+        # generate dict for each text in text_content_multi in format {text content: text_content, chunk 1: text_chunk_1, chunk 2: text_chunk_2}
+        text_str = """"""
+        id = range(0, len(text_content_multi))
+        for i in id:
+            text_str += str({'Sample ID': i, 'Text Content': text_content_multi[i], 'Clause 1': text_chunk1_multi[i], 'Clause 2': text_chunk2_multi[i]}) + '\n'
+        return self.zero_shot_prompt.replace('TEXT_CONTENT', text_str)
+
     def get_sequencing_classes(self, filename_definitions):
         definitions = load_json(filename_definitions)
         self.sequencing_definition = json.dumps(definitions, indent=2)
@@ -397,6 +408,13 @@ class LLMProcess():
         # path to results
         self.fname_results = os.path.join(self.outpath, 'results.csv')
 
+        # split samples in chunks of nseq_per_prompt
+
+        # split test samples in chunks of nseq_per_prompt
+        list_text_chunk1 = []
+        list_text_chunk2 = []
+        list_text_content = []
+        list_index = []
         for index, row in self.df_sequences.iterrows():
              # get text content and clauses 
             # Set context window for now to all context between c1 and c2
@@ -409,19 +427,31 @@ class LLMProcess():
                                                                             row['c2_end'],
                                                                             window_start,
                                                                             window_end)
-            
-            logging.debug(f"Clauses for index {index}:")
-            logging.debug("text1:", text_chunk_1)
-            logging.debug("text2:", text_chunk_2)
+            list_text_chunk1.append(text_chunk_1)
+            list_text_chunk2.append(text_chunk_2)
+            list_text_content.append(text_content)
+            list_index.append(index)
+        list_text_content_multi = [list_text_content[i:i + self.nseq_per_prompt] for i in range(0, len(list_text_content), self.nseq_per_prompt)]
+        list_text_chunk1_multi = [list_text_chunk1[i:i + self.nseq_per_prompt] for i in range(0, len(list_text_chunk1), self.nseq_per_prompt)]
+        list_text_chunk2_multi = [list_text_chunk2[i:i + self.nseq_per_prompt] for i in range(0, len(list_text_chunk2), self.nseq_per_prompt)]
+        list_index_multi = [list_index[i:i + self.nseq_per_prompt] for i in range(0, len(list_index), self.nseq_per_prompt)]
+        
+        for index_multi, text_content_multi, text_chunk1_multi, text_chunk2_multi in zip(list_index_multi, 
+                                                                                         list_text_content_multi, 
+                                                                                         list_text_chunk1_multi, 
+                                                                                         list_text_chunk2_multi):
+
+
+            logging.debug(f"Clauses for index {index_multi[0]} to {index_multi[-1]}:")
            
             # copy string self.zero_shot_prompt
-            self.prompt = self.zero_shot_prompt
-            self.prompt = self.prompt.replace('TEXT_CONTENT', text_content)
-            self.prompt = self.prompt.replace('CHUNK_1', text_chunk_1)
-            self.prompt = self.prompt.replace('CHUNK_2', text_chunk_2)
+            self.prompt = self.gen_multiprompt(text_content_multi, 
+                                               text_chunk1_multi, 
+                                               text_chunk2_multi)
+
 
             # call OPenAi API with prompt
-            completion_text, tokens_used, chat_id, logprobs = self.llm.request_completion(self.prompt, max_tokens=300)
+            completion_text, tokens_used, chat_id, logprobs = self.llm.request_completion(self.prompt, max_tokens=self.nseq_per_prompt * 300)
             # for gpt-4:
             #completion_text, tokens_used, chat_id, message_response = llm.request_chatcompletion(prompt, max_tokens = 300)
             #logprobs = None
