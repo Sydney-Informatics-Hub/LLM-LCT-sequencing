@@ -307,9 +307,9 @@ class LLMProcess():
             example_string += f"""Input\nText content: {row['Example']}\n"""
             example_string += f"""Clause 1: {row['Linked_Chunk_1']}\n"""
             example_string += f"""Clause 2: {row['Linked_Chunk_2']}\n"""
+            example_string += f"""Reason: {row['Reasoning']}\n"""
             example_string += f"""\nAnswer\nClassification: {row['Sub_Subtype']}\n"""
             example_string += f"""Linkage word: {row['Linkage_Word']}\n"""
-            example_string += f"""Reason: {row['Reasoning']}\n"""
             example_string += f"""\n"""
 
         # replace example_types with example_types_short in example_string
