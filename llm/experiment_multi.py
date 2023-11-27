@@ -25,6 +25,7 @@ import json
 import argparse
 import seaborn as sns
 import matplotlib.pyplot as plt
+import time
 
 
 from .load_schema_json import load_json, validate_json, json_to_dataframe
@@ -579,18 +580,19 @@ def run_pipe(
         filename_prompt = f'prompt_{chat_id}.txt'
         save_text(prompt, os.path.join(outpath_exp, filename_prompt))
 
-        # save response to file
-        filename_response = f'response_{chat_id}.txt'
-        save_text(completion_text, os.path.join(outpath_exp, filename_response))
-
         if completion_text.startswith('\n'):
             completion_text = completion_text[1:]
 
         # check if response is json
-        if completion_text.startswith('{') and completion_text.endswith('}'):              
+        if completion_text.startswith('{') and completion_text.endswith('}'): 
+            # save response to json file
+            completion_text = json.loads(completion_text)
+            filename_response = f'response_{chat_id}.json'    
+            with open(os.path.join(outpath_exp, filename_response), 'w') as f:
+                json.dump(completion_text, f, indent=2)         
             try:
                 #completion_text = json.loads(completion_text)
-                completion_text = load_json(os.path.join(outpath_exp, filename_response))
+                #completion_text = load_json(os.path.join(outpath_exp, filename_response))
                 keys = completion_text.keys()
                 list_reasoning = [completion_text[key]['reason'] for key in keys]
                 list_class_pred = [completion_text[key]['classification'] for key in keys]
@@ -603,10 +605,10 @@ def run_pipe(
                 list_linkage_pred = ['NA'] * nseq
         else:
             print('WARNING: completion_text not in json format! Skipping test samples')
+            filename_response = f'response_{chat_id}.txt' 
+            save_text(completion_text, os.path.join(outpath_exp, filename_response))
 
         # load json file
-
-    
 
         #add a new row to df_results
         lst_nseq = [
@@ -629,6 +631,9 @@ def run_pipe(
 
         # increase n_test
         n_test += nseq
+
+        # wait 1 seq to not exceed API limit
+        time.sleep(3)
 
     # save results to csv file
     filename_results = f'results_{modelname_llm}.csv'
