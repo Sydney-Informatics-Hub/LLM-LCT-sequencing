@@ -11,7 +11,7 @@ from openai.error import AuthenticationError, APIConnectionError
 
 from annotation.model import AnnotationService
 from annotation.model.data_structures import SequenceTuple
-from annotation.model.export import ExportService
+from annotation.model.import_export import ImportExportService
 from annotation.view.global_notifiers import NotifierService
 
 
@@ -20,7 +20,7 @@ class AnnotationController:
 
     def __init__(self, annotation_service: AnnotationService,
                  notifier_service: NotifierService,
-                 export_service: ExportService,
+                 import_export_service: ImportExportService,
                  llm_examples_path: Path,
                  llm_definitions_path: Path,
                  llm_zero_prompt_path: Path,
@@ -34,7 +34,7 @@ class AnnotationController:
 
         self.annotation_service: AnnotationService = annotation_service
         self.notifier_service: NotifierService = notifier_service
-        self.export_service: ExportService = export_service
+        self.import_export_service: ImportExportService = import_export_service
 
         self._update_display_callables: list[Callable] = []
         self.curr_sequence_id: int = 1
@@ -94,8 +94,8 @@ class AnnotationController:
     def get_text(self) -> str:
         return self.annotation_service.get_text()
 
-    def get_clauses(self) -> dict[int, str]:
-        return self.annotation_service.get_clauses()
+    def get_all_clause_text(self) -> dict[int, str]:
+        return self.annotation_service.get_all_clause_text()
 
     def get_curr_sequence_ranges(self) -> Optional[SequenceTuple]:
         try:
@@ -267,11 +267,11 @@ class AnnotationController:
 
     def export(self, filetype: str) -> Optional[BytesIO]:
         try:
-            return self.export_service.export(filetype, self.annotation_service.get_dataframe_for_export())
+            return self.import_export_service.export(filetype, self.annotation_service.get_dataframe_for_export())
         except ValueError as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
             self.display_error(str(e))
             return
 
     def get_export_file_formats(self) -> list[str]:
-        return self.export_service.get_filetypes()
+        return self.import_export_service.get_filetypes()

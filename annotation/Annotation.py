@@ -1,7 +1,7 @@
 from annotation import log_file_path, llm_examples_path, llm_definitions_path, llm_zero_prompt_path
 from annotation.controller.AnnotationController import AnnotationController
 from annotation.model.AnnotationService import AnnotationService
-from annotation.model.export import ExportService
+from annotation.model.import_export import ImportExportService
 from annotation.view.AnnotationViewWrapper import AnnotationViewWrapper
 from annotation.view.global_notifiers import NotifierService
 
@@ -10,13 +10,10 @@ class Annotation:
     def __init__(self):
         annotation_service = AnnotationService()
         notifier_service = NotifierService()
-        export_service = ExportService()
-        controller: AnnotationController = AnnotationController(annotation_service,
-                                                                notifier_service,
-                                                                export_service,
-                                                                llm_examples_path,
-                                                                llm_definitions_path,
-                                                                llm_zero_prompt_path,
+        import_export_service = ImportExportService()
+        controller: AnnotationController = AnnotationController(annotation_service, notifier_service,
+                                                                import_export_service, llm_examples_path,
+                                                                llm_definitions_path, llm_zero_prompt_path,
                                                                 log_file_path, debug=False)
         self.view: AnnotationViewWrapper = AnnotationViewWrapper(controller)
 
