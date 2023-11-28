@@ -9,11 +9,13 @@ class ClauseSequence:
     def __init__(self, sequence_id: int, first_clause: TextRange,
                  second_clause: TextRange, linkage_words: list[str],
                  predicted_class: Optional[list[Classification]] = None,
-                 correct_class: Optional[list[Classification]] = None):
+                 correct_class: Optional[list[Classification]] = None,
+                 reasoning: str = ''):
         self.sequence_id: int = sequence_id
         self.first_clause: TextRange = first_clause
         self.second_clause: TextRange = second_clause
         self.linkage_words: list[str] = linkage_words
+        self.reasoning: str = reasoning
         self.predicted_classes: Optional[list[Classification]] = predicted_class
         self.correct_classes: Optional[list[Classification]] = correct_class
 
@@ -42,6 +44,9 @@ class ClauseSequence:
     def get_clause_ranges(self) -> SequenceTuple:
         return (tuple(self.first_clause.get_range()),
                 tuple(self.second_clause.get_range()))
+
+    def get_reasoning(self) -> str:
+        return self.reasoning
 
     def get_predicted_classes(self) -> Optional[list[Classification]]:
         return self.predicted_classes

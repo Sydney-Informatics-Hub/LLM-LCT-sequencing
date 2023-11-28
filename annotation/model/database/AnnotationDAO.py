@@ -65,6 +65,7 @@ class AnnotationDAO:
         linkage_words: str | float = sequence_data[3]
         class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[4])
         class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[5])
+        reasoning: str = sequence_data[6]
 
         clause_a_data: tuple = self.clause_repository.read_by_id(clause_a_id)
         if len(clause_a_data) == 0:
@@ -98,7 +99,8 @@ class AnnotationDAO:
         if len(corrected_classes) == 0:
             corrected_classes = None
 
-        return ClauseSequence(sequence_id, clause_a, clause_b, linkage_words_list, predicted_classes, corrected_classes)
+        return ClauseSequence(sequence_id, clause_a, clause_b, linkage_words_list,
+                              predicted_classes, corrected_classes, reasoning)
 
     def get_sequence_by_id(self, sequence_id: int) -> Optional[ClauseSequence]:
         sequence_data: tuple = self.sequence_repository.read_by_id(sequence_id)
