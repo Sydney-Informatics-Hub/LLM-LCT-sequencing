@@ -28,6 +28,8 @@ import json
 import argparse
 from enum import Enum
 import logging
+import time
+import math
 
 from .load_schema_json import load_json, json_to_dataframe
 from .excel_json_converter import excel_to_json
@@ -112,7 +114,6 @@ class LCTclasses(Enum):
     COH = 7
     INC = 8
 
-
 def lct_string_to_int(s):
     """
     Convert LCT sequence string to integer.
@@ -156,9 +157,10 @@ class LLMProcess():
                  filename_text,
                  filename_examples, 
                  filename_definitions="../schemas/sequencing_types.xlsx",
-                 filename_zero_prompt="../schemas/instruction_prompt.txt",
+                 filename_zero_prompt="../schemas/instruction_multiprompt.txt",
                  outpath="../results_llm/",
-                 modelname_llm="gpt-3.5-turbo-instruct"):
+                 modelname_llm="gpt-3.5-turbo-1106",
+                 nseq_per_prompt = 8):
         """
         Initialize LLMProcess class.
 
@@ -171,6 +173,7 @@ class LLMProcess():
         - filename_zero_prompt (str): The filename of the zero-shot instruction prompt text file.
         - outpath (str): The path to the output folder.
         - modelname_llm (str): The name of the LLM model to use.
+        - nseq_per_prompt (int): The number of sequences per prompt.
 
         """
         # Check if filename_examples is excel file
@@ -194,6 +197,7 @@ class LLMProcess():
         self.filename_zero_prompt = filename_zero_prompt
         self.outpath = outpath
         self.modelname_llm = modelname_llm
+        self.nseq_per_prompt = nseq_per_prompt
 
         # check if outpath includes a folder that starts with string 'results'
         # if so, add 1 to the number of the folder
@@ -236,16 +240,65 @@ class LLMProcess():
         self.df_res = self.df_sequences.copy()
         self.df_res['predicted_classes'] = None
         self.df_res['predicted_classes_name'] = None
-        self.df_res['confidence'] = np.nan
         self.df_res['linkage_words'] = None
         self.df_res['window_start'] =None
         self.df_res['window_end'] = None
-        self.df_res['prompt_id'] = None
         self.df_res['filename_prompt'] = None
         self.df_res['filename_response'] = None
         self.df_res['tokens'] = None
         self.df_res['modelname_llm'] = None
         self.df_res['reasoning'] = None
+
+    def estimate_compute_cost(self, 
+                              path_cost = './schemas/openai_pricing.json',
+                              avg_token_instruction = 2500,
+                              avg_token_sample = 250,
+                              avg_token_output_per_seq = 450,
+                              avg_time_per_seq = 2):
+        """
+        Estimate compute resources:
+            - the costs for the LLM process.
+            - the compute time for the LLM process.
+
+        Parameters:
+        -----------
+        - path_cost (str): The path to the cost schema (incl costs in $/1k token)
+        - avg_token_input (int): The average number of tokens needed for the input.
+        - avg_token_output (int): The average number of tokens needed for the output.
+        - avg_time (float): The average time in seconds needed for the LLM process.
+
+        Returns:
+        --------
+        - cost_estimate (dict): A dictionary with the estimated compute resources.
+        """
+        # load cost schema
+        cost_schema = load_json(path_cost)
+        ntokens_in = math.ceil(len(self.df_examples) / self.nseq_per_prompt) * (avg_token_instruction + avg_token_sample * self.nseq_per_prompt) / 1000 
+        ntokens_out= len(self.df_examples) * avg_token_output_per_seq / 1000
+        compute_time = len(self.df_examples) * avg_time_per_seq 
+
+
+        # check if modelname_llm is in cost_schema
+        if self.modelname_llm not in cost_schema.keys():
+            logging.warning(f'WARNING: {self.modelname_llm} not in cost_schema!')
+            costs = None
+        else:
+            modelcost = cost_schema[self.modelname_llm]
+            # check if modelcost includes "input" and "output"
+            if 'input' in modelcost.keys() and 'output' in modelcost.keys():
+                costs = modelcost['input'] * ntokens_in + modelcost['output'] * ntokens_out
+
+            elif 'input_usage' in modelcost.keys() and 'output_usage' in modelcost.keys():
+                costs = modelcost['input_usage'] * ntokens_in + modelcost['output_usage'] * ntokens_out
+            else:
+                logging.warning('WARNING: modelcost does not include "input" or "output"!')
+                costs = None
+
+        cost_estimate = {'compute_time': compute_time,
+                         'costs': costs}
+        
+        return cost_estimate
+
 
     def preprocess_prompt(self):
         # generate main part of prompt consisting of instructions, definitions, and examples
@@ -258,9 +311,9 @@ class LLMProcess():
             example_string += f"""Input\nText content: {row['Example']}\n"""
             example_string += f"""Clause 1: {row['Linked_Chunk_1']}\n"""
             example_string += f"""Clause 2: {row['Linked_Chunk_2']}\n"""
-            example_string += f"""\nAnswer\nClassification: {row['Sub_Subtype']}\n"""
+            example_string += f"""\nAnswer\nReason: {row['Reasoning']}\n"""
+            example_string += f"""Classification: {row['Sub_Subtype']}\n"""
             example_string += f"""Linkage word: {row['Linkage_Word']}\n"""
-            example_string += f"""Reason: {row['Reasoning']}\n"""
             example_string += f"""\n"""
 
         # replace example_types with example_types_short in example_string
@@ -272,6 +325,14 @@ class LLMProcess():
         # add definitions to main_prompt
         self.zero_shot_prompt = self.zero_shot_prompt.replace('SEQUENCING_CLASSES', self.sequencing_classes)
         self.zero_shot_prompt = self.zero_shot_prompt.replace('DESCRIPTION_CLASSES', self.sequencing_definition)
+
+    def gen_multiprompt(self, text_content_multi, text_chunk1_multi, text_chunk2_multi):
+        # generate dict for each text in text_content_multi in format {text content: text_content, chunk 1: text_chunk_1, chunk 2: text_chunk_2}
+        text_str = """"""
+        id = range(0, len(text_content_multi))
+        for i in id:
+            text_str += str({'Sample ID': i, 'Text Content': text_content_multi[i], 'Clause 1': text_chunk1_multi[i], 'Clause 2': text_chunk2_multi[i]}) + '\n'
+        return self.zero_shot_prompt.replace('TEXT_CONTENT', text_str)
 
     def get_sequencing_classes(self, filename_definitions):
         definitions = load_json(filename_definitions)
@@ -334,7 +395,6 @@ class LLMProcess():
         -----------
         - filename_openai_key (str): The filename of the OpenAI key file. 
             If None provided, openai.api_key need to be set manually beforehand.
-        
         """
         # load sequencing_classes, sequencing_definition
         self.get_sequencing_classes(self.filename_definitions)
@@ -348,6 +408,13 @@ class LLMProcess():
         # path to results
         self.fname_results = os.path.join(self.outpath, 'results.csv')
 
+        # split test samples in chunks of nseq_per_prompt
+        list_text_chunk1 = []
+        list_text_chunk2 = []
+        list_text_content = []
+        list_index = []
+        list_window_start = []
+        list_window_end = []
         for index, row in self.df_sequences.iterrows():
              # get text content and clauses 
             # Set context window for now to all context between c1 and c2
@@ -360,22 +427,39 @@ class LLMProcess():
                                                                             row['c2_end'],
                                                                             window_start,
                                                                             window_end)
+            list_text_chunk1.append(text_chunk_1)
+            list_text_chunk2.append(text_chunk_2)
+            list_text_content.append(text_content)
+            list_index.append(index)
+            list_window_start.append(window_start)
+            list_window_end.append(window_end)
+        list_text_content_multi = [list_text_content[i:i + self.nseq_per_prompt] for i in range(0, len(list_text_content), self.nseq_per_prompt)]
+        list_text_chunk1_multi = [list_text_chunk1[i:i + self.nseq_per_prompt] for i in range(0, len(list_text_chunk1), self.nseq_per_prompt)]
+        list_text_chunk2_multi = [list_text_chunk2[i:i + self.nseq_per_prompt] for i in range(0, len(list_text_chunk2), self.nseq_per_prompt)]
+        list_index_multi = [list_index[i:i + self.nseq_per_prompt] for i in range(0, len(list_index), self.nseq_per_prompt)]
+        list_window_start_multi = [list_window_start[i:i + self.nseq_per_prompt] for i in range(0, len(list_window_start), self.nseq_per_prompt)]
+        list_window_end_multi = [list_window_end[i:i + self.nseq_per_prompt] for i in range(0, len(list_window_end), self.nseq_per_prompt)]
+        
+        for index_multi, text_content_multi, text_chunk1_multi, text_chunk2_multi, window_start_multi, window_end_multi in zip(list_index_multi, 
+                                                                                         list_text_content_multi, 
+                                                                                         list_text_chunk1_multi, 
+                                                                                         list_text_chunk2_multi,
+                                                                                         list_window_start_multi,
+                                                                                         list_window_end_multi):
+
             
-            logging.debug(f"Clauses for index {index}:")
-            logging.debug("text1:", text_chunk_1)
-            logging.debug("text2:", text_chunk_2)
+            nseq = len(index_multi)
+            
+            logging.debug(f"Clauses for samples {index_multi[0]} to {index_multi[-1]}:")
            
             # copy string self.zero_shot_prompt
-            self.prompt = self.zero_shot_prompt
-            self.prompt = self.prompt.replace('TEXT_CONTENT', text_content)
-            self.prompt = self.prompt.replace('CHUNK_1', text_chunk_1)
-            self.prompt = self.prompt.replace('CHUNK_2', text_chunk_2)
+            self.prompt = self.gen_multiprompt(text_content_multi, 
+                                               text_chunk1_multi, 
+                                               text_chunk2_multi)
+
 
             # call OPenAi API with prompt
-            completion_text, tokens_used, chat_id, logprobs = self.llm.request_completion(self.prompt, max_tokens=300)
-            # for gpt-4:
-            #completion_text, tokens_used, chat_id, message_response = llm.request_chatcompletion(prompt, max_tokens = 300)
-            #logprobs = None
+            completion_text, tokens_used, chat_id, logprobs = self.llm.request_chatcompletion(self.prompt, max_tokens=self.nseq_per_prompt * 300)
 
             # tokens_used
             self.token_count += tokens_used
@@ -384,91 +468,59 @@ class LLMProcess():
             filename_prompt = f'prompt_{chat_id}.txt'
             save_text(self.prompt, os.path.join(self.outpath_prompts, filename_prompt))
 
-            # save response to file
-            filename_response = f'response_{chat_id}.txt'
-            save_text(completion_text, os.path.join(self.outpath_prompts, filename_response))
-
             if completion_text.startswith('\n'):
                 completion_text = completion_text[1:]
 
-            # check if there are 3 lines in completion_text
-            if len(completion_text.split('\n')) == 3:
-                # class of test sample
+            # check if response is json
+            if completion_text.startswith('{') and completion_text.endswith('}'): 
+                # save response to json file
+                completion_text = json.loads(completion_text)
+                filename_response = f'response_{chat_id}.json'    
+                with open(os.path.join(self.outpath_prompts, filename_response), 'w') as f:
+                    json.dump(completion_text, f, indent=2)         
                 try:
-                    class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
+                    keys = completion_text.keys()
+                    list_reasoning = [completion_text[key]['reason'] for key in keys]
+                    list_class_pred = [completion_text[key]['classification'] for key in keys]
+                    list_linkage_pred = [completion_text[key]['linkage word'] for key in keys]
                 except:
-                    logging.warning('WARNING: completion_text not correct format! Skipping test sample')
+                    logging.warning('WARNING: completion_text not correct format! Skipping test samples')
                     logging.warning(completion_text)
-                    completion_text = completion_text.split('\n')[0]
-                # linkage word of test sample
-                try:
-                    linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
-                except:
-                    logging.warning('WARNING: completion_text not correct format for linkage word!')
-                    logging.warning(completion_text)
-                    linkage_predicted = 'NA'
-
-                # get reasoning
-                try:
-                    reasoning = completion_text.split('\n')[2].split(':')[1].strip()
-                except:
-                    logging.warning('WARNING: completion_text not correct format for reasoning!')
-                    logging.warning(completion_text)
-                    reasoning = 'NA'
-
-                # probability of predicted class
-                if logprobs is not None:
-                    class_prob = logprobs[3]
-                else:
-                    class_prob = 0
-            elif (len(completion_text.split('\n')) == 2) and completion_text.split('\n')[0].startswith('classification'):
-                logging.warning('WARNING: completion_text has only 2 lines! Skipping reasoning')
-                try:
-                    class_predicted = completion_text.split('\n')[0].split(':')[1].strip()
-                except:
-                    logging.warning('WARNING: completion_text not correct format! Skipping test sample')
-                    logging.warning(completion_text)
-                    completion_text = completion_text.split('\n')[0]
-                try:
-                    linkage_predicted = completion_text.split('\n')[1].split(':')[1].strip()
-                except:
-                    logging.warning('WARNING: completion_text not correct format for linkage word!')
-                    linkage_predicted = 'NA'
-                reasoning = 'NA'
-                if logprobs is not None:
-                    class_prob = logprobs[3]
-                else:
-                    class_prob = 0
+                    list_reasoning = ['NONE'] * nseq
+                    list_class_pred = ['NONE'] * nseq
+                    list_linkage_pred = ['NONE'] * nseq
             else:
-                logging.warning('WARNING: completion_text has not not enough lines!')
-                logging.warning(completion_text)
-                class_predicted = 'NA'
-                linkage_predicted = 'NA'
-                reasoning = 'NA'
-                class_prob = 0
+                logging.warning('WARNING: completion_text not in json format! Skipping test samples')
+                filename_response = f'response_{chat_id}.txt' 
+                save_text(completion_text, os.path.join(self.outpath_prompts, filename_response))
+                list_reasoning = ['NONE'] * nseq
+                list_class_pred = ['NONE'] * nseq
+                list_linkage_pred = ['NONE'] * nseq
 
-            class_prob = round(np.exp(class_prob),3)
             
+            # convert class_pred to int
+            list_class_pred_int = [lct_string_to_int(class_pred) for class_pred in list_class_pred]
             # add results to dataframe
-            self.df_res.loc[index, 'predicted_classes'] = lct_string_to_int(class_predicted)
-            self.df_res.loc[index, 'predicted_classes_name'] = class_predicted
-            self.df_res.loc[index, 'confidence'] = class_prob
-            self.df_res.loc[index, 'linkage_words'] = linkage_predicted
-            self.df_res.loc[index, 'window_start'] = window_start
-            self.df_res.loc[index, 'window_end'] = window_end
-            self.df_res.loc[index, 'prompt_id'] = chat_id
-            self.df_res.loc[index, 'filename_prompt'] = filename_prompt
-            self.df_res.loc[index, 'filename_response'] = filename_response
-            self.df_res.loc[index, 'tokens'] = tokens_used
-            self.df_res.loc[index, 'modelname_llm'] = self.modelname_llm
-            self.df_res.loc[index, 'reasoning'] = reasoning
+            self.df_res.loc[index_multi, 'predicted_classes'] = list_class_pred_int
+            self.df_res.loc[index_multi, 'predicted_classes_name'] = list_class_pred
+            self.df_res.loc[index_multi, 'linkage_words'] = list_linkage_pred
+            self.df_res.loc[index_multi, 'window_start'] = window_start_multi
+            self.df_res.loc[index_multi, 'window_end'] = window_end_multi
+            self.df_res.loc[index_multi, 'filename_prompt'] = [filename_prompt] * nseq
+            self.df_res.loc[index_multi, 'filename_response'] = [filename_response] * nseq
+            self.df_res.loc[index_multi, 'tokens'] = [tokens_used/nseq] * nseq
+            self.df_res.loc[index_multi, 'modelname_llm'] = [self.modelname_llm]* nseq
+            self.df_res.loc[index_multi, 'reasoning'] = list_reasoning
 
             # save intermediate results to disk
             self.df_res.to_csv(self.fname_results, index=False)
 
             #print results
-            logging.debug(f'Index: {index} | Prediction: {class_predicted} | Probability: {class_prob} | Used tokens: {tokens_used} ')
+            logging.debug(f'Index: {index_multi} | Prediction: {list_class_pred} | Used tokens: {tokens_used} ')
             logging.debug('')
+
+            # wait 3 seconds for API
+            time.sleep(3)
 
         # Write token count to file
         filename_token_count = f'token_count_{self.modelname_llm}.txt'
@@ -480,19 +532,23 @@ class LLMProcess():
 
 
 def test_llmprocess():
-    outpath = "../results_process/"
+
+    # get time for compute time estimation
+    start_time = time.time()
+
+    outpath = "./results_process/"
 
     # Path to schemas and excel files for definitions and examples:
-    path_schema = "../schemas/"
+    path_schema = "./schemas/"
 
     # Path to data files:
-    path_data = "../tests"
+    path_data = "./tests"
 
     # Filename for sequencing definitions (.json or .xlsx), assumed to be in folder path_schema:
     filename_definitions = "sequencing_types.xlsx"
 
     # Filename for prompt instructions, assumed to be in folder path_schema:
-    filename_zero_prompt = "instruction_prompt.txt"
+    filename_zero_prompt = "instruction_multiprompt.txt"
 
     # Filename for clausing pairs, assumed to be in path data:
     filename_pairs = "sequences_test.csv"
@@ -504,7 +560,7 @@ def test_llmprocess():
     filename_examples = "sequencing_examples.xlsx"
 
     # OpenAI key file (do not share this file)
-    filename_openai_key = "../../openai_key.txt"
+    filename_openai_key = "../openai_key.txt"
     
     # run LLM process
     llm_process = LLMProcess(filename_pairs=os.path.join(path_data,filename_pairs),
@@ -514,11 +570,19 @@ def test_llmprocess():
                              filename_zero_prompt=os.path.join(path_schema, filename_zero_prompt),
                              outpath=outpath)
     
+    # Estimate costs:
+    compute_cost = llm_process.estimate_compute_cost()
+    print(compute_cost)
+    
     #with open(filename_openai_key, 'r') as f:
     #    openai.api_key = f.read()
     #llm_process.run()
     
     llm_process.run(filename_openai_key)
+
+    # get time for compute time estimation and print in seconds
+    compute_time = time.time() - start_time
+    print(f'Compute time: {round(compute_time,1)} seconds')
 
 
 if __name__ == "__main__":

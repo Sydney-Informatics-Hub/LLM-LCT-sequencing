@@ -1,0 +1,2 @@
+sequence_id,c1_start,c1_end,c2_start,c2_end,linkage_words,predicted_classes,reasoning,confidence,window_start,window_end
+1,0,5,5,10,"if,then","1,2,3",some_text,0.4,0,10
