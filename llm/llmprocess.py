@@ -486,13 +486,16 @@ class LLMProcess():
                 except:
                     logging.warning('WARNING: completion_text not correct format! Skipping test samples')
                     logging.warning(completion_text)
-                    list_reasoning = ['NA'] * nseq
-                    list_class_pred = ['NA'] * nseq
-                    list_linkage_pred = ['NA'] * nseq
+                    list_reasoning = ['NONE'] * nseq
+                    list_class_pred = ['NONE'] * nseq
+                    list_linkage_pred = ['NONE'] * nseq
             else:
                 logging.warning('WARNING: completion_text not in json format! Skipping test samples')
                 filename_response = f'response_{chat_id}.txt' 
                 save_text(completion_text, os.path.join(self.outpath_prompts, filename_response))
+                list_reasoning = ['NONE'] * nseq
+                list_class_pred = ['NONE'] * nseq
+                list_linkage_pred = ['NONE'] * nseq
 
             
             # convert class_pred to int
