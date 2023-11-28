@@ -6,7 +6,7 @@ from pandas import DataFrame, read_csv
 
 from annotation.model.clausing.SequencingTool import SequencingTool
 from annotation.model.data_structures import ClauseSequence, TextRange, Classification, SequenceTuple
-from annotation.model.database import AnnotationDAO, DatastoreBuilder
+from annotation.model.database import AnnotationDAO, DatastoreHandler
 from annotation.model.database import (llm_data_store_dir, ref_text_ds_path, clauses_ds_path,
                                        sequences_ds_path, pre_llm_sequence_path)
 from annotation.model.clausing import SourceFileClauser
@@ -17,13 +17,13 @@ class AnnotationService:
     def __init__(self):
         self.annotation_dao: AnnotationDAO = AnnotationDAO(ref_text_ds_path, clauses_ds_path, sequences_ds_path)
         self.annotation_dao.clear_all_data_stores()
+        self.datastore_handler: DatastoreHandler = DatastoreHandler(self.annotation_dao)
 
     def load_source_file(self, source_file_content: BytesIO, filetype: str):
-        ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao)
 
         source_loader: SourceFileClauser = SourceFileClauser(source_file_content, filetype)
         text_content: str = source_loader.get_text()
-        ds_builder.build_text_datastore(text_content)
+        self.datastore_handler.build_text_datastore(text_content)
 
         clause_df: DataFrame = source_loader.generate_clause_dataframe()
         sequence_generator = SequencingTool(clause_df)
@@ -42,35 +42,28 @@ class AnnotationService:
         llm_results_path: str = llm_process.run()
 
         master_sequence_df: DataFrame = read_csv(filepath_or_buffer=llm_results_path,
-                                                 usecols=DatastoreBuilder.REQUIRED_FIELDS,
-                                                 dtype=DatastoreBuilder.FIELD_DTYPES)
+                                                 usecols=DatastoreHandler.REQUIRED_FIELDS,
+                                                 dtype=DatastoreHandler.FIELD_DTYPES)
 
-        ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao)
-        ds_builder.build_clause_datastores(master_sequence_df)
+        self.datastore_handler.build_clause_datastores(master_sequence_df)
 
         return llm_results_path
 
-    def build_datastore_preprocessed(self, llm_results: BytesIO):
-        master_sequence_df: DataFrame = read_csv(filepath_or_buffer=llm_results,
-                                                 usecols=DatastoreBuilder.REQUIRED_FIELDS,
-                                                 dtype=DatastoreBuilder.FIELD_DTYPES)
+    def build_datastore_preprocessed(self, preprocessd_file: BytesIO):
+        master_sequence_df: DataFrame = read_csv(filepath_or_buffer=preprocessd_file,
+                                                 usecols=DatastoreHandler.REQUIRED_FIELDS,
+                                                 dtype=DatastoreHandler.FIELD_DTYPES)
 
-        ds_builder: DatastoreBuilder = DatastoreBuilder(self.annotation_dao)
-        ds_builder.build_clause_datastores(master_sequence_df)
+        self.datastore_handler.build_clause_datastores(master_sequence_df)
+
+    def get_dataframe_for_export(self) -> DataFrame:
+        return self.datastore_handler.build_export_dataframe()
 
     def get_text(self) -> str:
         return self.annotation_dao.get_text()
 
-    def get_clauses(self) -> dict[int, str]:
-        text: str = self.get_text()
-        clauses: list[TextRange] = self.annotation_dao.get_all_clauses()
-
-        clause_str_dict: dict[int, str] = {}
-        for clause in clauses:
-            clause_text = text[clause.start: clause.end + 1]
-            clause_str_dict[clause.range_id] = clause_text
-
-        return clause_str_dict
+    def get_all_clause_text(self) -> dict[int, str]:
+        return self.annotation_dao.get_all_clause_text()
 
     def get_sequence_count(self) -> int:
         return self.annotation_dao.get_sequence_count()
@@ -132,35 +125,3 @@ class AnnotationService:
 
     def delete_sequence(self, sequence_id: int):
         self.annotation_dao.delete_sequence(sequence_id)
-
-    def get_dataframe_for_export(self) -> DataFrame:
-        export_columns = ["Clause A", "Clause B", "Linkage words", "Predicted Classes", "Corrected Classes"]
-        export_data: list[dict[str, str]] = []
-
-        clause_texts: dict[int, str] = self.get_clauses()
-        sequences: list[ClauseSequence] = self.annotation_dao.get_all_sequences()
-        for sequence in sequences:
-            clause_a_text: Optional[str] = clause_texts.get(sequence.get_first_clause().get_id())
-            clause_a_text = "" if clause_a_text is None else clause_a_text
-            clause_b_text: Optional[str] = clause_texts.get(sequence.get_second_clause().get_id())
-            clause_b_text = "" if clause_b_text is None else clause_b_text
-
-            linkage_words: str = ",".join(sequence.get_linkage_words())
-
-            predicted_classes: Optional[list[Classification]] = sequence.get_predicted_classes()
-            predicted_classes_str: str = ""
-            if predicted_classes is not None:
-                predicted_classes_str = ','.join([c.name for c in predicted_classes])
-            correct_classes: Optional[list[Classification]] = sequence.get_correct_classes()
-            corrected_classes_str: str = ""
-            if correct_classes is not None:
-                corrected_classes_str = ','.join([c.name for c in correct_classes])
-
-            sequence_dict: dict[str, str] = {export_columns[0]: clause_a_text,
-                                             export_columns[1]: clause_b_text,
-                                             export_columns[2]: linkage_words,
-                                             export_columns[3]: predicted_classes_str,
-                                             export_columns[4]: corrected_classes_str}
-            export_data.append(sequence_dict)
-
-        return DataFrame(export_data, columns=export_columns)

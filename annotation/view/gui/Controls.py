@@ -195,7 +195,7 @@ class AddSequenceControls:
             return
 
         clause_selector_options = {}
-        for clause_id, clause_text in self.controller.get_clauses().items():
+        for clause_id, clause_text in self.controller.get_all_clause_text().items():
             unique_clause_text = f"{clause_id}-{clause_text}"
             clause_selector_options[unique_clause_text] = clause_id
 

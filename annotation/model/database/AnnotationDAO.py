@@ -43,6 +43,17 @@ class AnnotationDAO:
 
         return clauses
 
+    def get_all_clause_text(self) -> dict[int, str]:
+        text: str = self.get_text()
+        clauses: list[TextRange] = self.get_all_clauses()
+
+        clause_str_dict: dict[int, str] = {}
+        for clause in clauses:
+            clause_text = text[clause.start: clause.end + 1]
+            clause_str_dict[clause.range_id] = clause_text
+
+        return clause_str_dict
+
     def get_sequence_count(self) -> int:
         sequence_data: ndarray = self.sequence_repository.read_all()
         return sequence_data.shape[0]
