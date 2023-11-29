@@ -7,14 +7,14 @@ from annotation.view.global_notifiers import NotifierService
 
 
 class Annotation:
-    def __init__(self):
+    def __init__(self, debug: bool = False):
         annotation_service = AnnotationService()
         notifier_service = NotifierService()
         import_export_service = ImportExportService()
         controller: AnnotationController = AnnotationController(annotation_service, notifier_service,
                                                                 import_export_service, llm_examples_path,
                                                                 llm_definitions_path, llm_zero_prompt_path,
-                                                                log_file_path, debug=False)
+                                                                log_file_path, debug=debug)
         self.view: AnnotationViewWrapper = AnnotationViewWrapper(controller)
 
     def run(self):
