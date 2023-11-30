@@ -48,9 +48,10 @@ class UnprocessedModeLoader:
         self.llm_definitions_loader = FileUploadWidget("LLM definitions [_Optional_]", ".xlsx")
         self.llm_examples_loader = FileUploadWidget("LLM examples [_Optional_]", ".xlsx")
         self.llm_prompt_loader = FileUploadWidget("LLM prompt [_Optional_]", ".txt")
-        self.load_files_button = Button(name="Load",
-                                        button_type="success", button_style="outline")
+        self.load_files_button = Button(name="Load", button_type="success", button_style="outline")
         self.load_files_button.on_click(self.load_files)
+        self.cost_time_estimate = Markdown("", sizing_mode="stretch_width", height_policy="fit")
+
         self.download_preprocessed_modal = Row()
 
         self.component = Column(self.api_key_input,
@@ -58,7 +59,9 @@ class UnprocessedModeLoader:
                                 self.llm_definitions_loader.get_component(),
                                 self.llm_examples_loader.get_component(),
                                 self.llm_prompt_loader.get_component(),
-                                self.load_files_button,
+                                Row(self.load_files_button,
+                                    self.cost_time_estimate
+                                ),
                                 self.download_preprocessed_modal)
 
     def get_component(self):
@@ -82,19 +85,54 @@ class UnprocessedModeLoader:
             else:
                 return "Error loading API key. Please try again."
 
+    def _format_time_from_seconds(self, seconds: float) -> str:
+        seconds = int(seconds)
+        ratios: dict[str, float] = {
+            "years": 31557600,
+            "weeks": 604800,
+            "days": 86400,
+            "hours": 3600,
+            "minutes": 60
+        }
+
+        formatted: str = ""
+        for time_unit in ratios:
+            multiples = seconds // ratios[time_unit]
+            seconds -= multiples * ratios[time_unit]
+            if multiples > 0:
+                formatted += f"{multiples} {time_unit}, "
+        formatted += f"{seconds} seconds"
+
+        return formatted
+
+    def set_cost_time_estimate(self):
+        estimates: Optional[tuple[float, float]] = self.controller.get_cost_time_estimates()
+        if estimates is None:
+            return
+
+        formatted_cost: str = f"${estimates[0]:.2f}"
+        formatted_time: str = self._format_time_from_seconds(estimates[1])
+
+        formatted_estimate = f"**Estimated Cost:** {formatted_cost}. **Estimated processing time:** {formatted_time}"
+        self.cost_time_estimate.object = formatted_estimate
+
     def load_files(self, *args):
         source_file_content: Optional[BytesIO] = self.source_file_loader.get_file_content()
         if source_file_content is None:
             self.controller.display_error("No source file loaded")
             return
-
         source_filetype: Optional[str] = self.source_file_loader.get_filetype()
+
         llm_definitions_content: Optional[BytesIO] = self.llm_definitions_loader.get_file_content()
         llm_examples_content: Optional[BytesIO] = self.llm_examples_loader.get_file_content()
         llm_prompt_content: Optional[BytesIO] = self.llm_prompt_loader.get_file_content()
 
-        self.controller.load_source_file(source_file_content, source_filetype, llm_definitions_content,
-                                         llm_examples_content, llm_prompt_content)
+        self.controller.load_source_file(source_file_content, source_filetype)
+        self.controller.prepare_llm_processor(llm_definitions_content, llm_examples_content, llm_prompt_content)
+        self.set_cost_time_estimate()
+        self.controller.llm_process_sequences()
+        self.set_cost_time_estimate()
+
         preprocessed_file_path: Optional[str] = self.controller.get_postprocess_file_path()
         self.download_preprocessed_modal.objects = [
             FileDownload(file=preprocessed_file_path, filename="llm_preprocessed.csv")]
@@ -129,9 +167,10 @@ class PreprocessedModeLoader:
             self.controller.display_error("No source file loaded")
             return
         source_filetype: Optional[str] = self.source_file_loader.get_filetype()
-        preprocessed_loader: Optional[BytesIO] = self.preprocessed_loader.get_file_content()
+        preprocessed_content: Optional[BytesIO] = self.preprocessed_loader.get_file_content()
 
-        self.controller.load_source_file_preprocessed(source_file_content, source_filetype, preprocessed_loader)
+        self.controller.load_source_file(source_file_content, source_filetype)
+        self.controller.load_preprocessed_sequences(preprocessed_content)
 
 
 class SourceLoader:

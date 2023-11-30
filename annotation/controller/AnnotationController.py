@@ -11,7 +11,7 @@ from openai.error import AuthenticationError, APIConnectionError
 
 from annotation.model import AnnotationService
 from annotation.model.data_structures import SequenceTuple
-from annotation.model.export import ExportService
+from annotation.model.import_export import ImportExportService
 from annotation.view.global_notifiers import NotifierService
 
 
@@ -20,24 +20,30 @@ class AnnotationController:
 
     def __init__(self, annotation_service: AnnotationService,
                  notifier_service: NotifierService,
-                 export_service: ExportService,
+                 import_export_service: ImportExportService,
                  llm_examples_path: Path,
                  llm_definitions_path: Path,
                  llm_zero_prompt_path: Path,
-                 log_file_path: Path, debug: bool = False):
+                 llm_cost_path: Path,
+                 log_file_path: Path,
+                 debug: bool = False):
         AnnotationController.configure_logging(log_file_path, debug)
 
         self.llm_examples_path: Path = llm_examples_path
         self.llm_definitions_path: Path = llm_definitions_path
         self.llm_zero_prompt_path: Path = llm_zero_prompt_path
+        self.llm_cost_path: Path = llm_cost_path
         self.llm_post_process_path: Optional[str] = None
 
         self.annotation_service: AnnotationService = annotation_service
         self.notifier_service: NotifierService = notifier_service
-        self.export_service: ExportService = export_service
+        self.import_export_service: ImportExportService = import_export_service
 
         self._update_display_callables: list[Callable] = []
         self.curr_sequence_id: int = 1
+
+        # Stores the cost and time estimates of the LLM processing currently being done.
+        self.cost_time_estimates: Optional[dict[str, float]] = None
 
         self.loading_msg: Optional[str] = None
 
@@ -94,8 +100,8 @@ class AnnotationController:
     def get_text(self) -> str:
         return self.annotation_service.get_text()
 
-    def get_clauses(self) -> dict[int, str]:
-        return self.annotation_service.get_clauses()
+    def get_all_clause_text(self) -> dict[int, str]:
+        return self.annotation_service.get_all_clause_text()
 
     def get_curr_sequence_ranges(self) -> Optional[SequenceTuple]:
         try:
@@ -128,15 +134,39 @@ class AnnotationController:
             logging.error(str(e) + '\n' + traceback.format_exc())
             return []
 
+    def get_reasoning(self) -> str:
+        try:
+            return self.annotation_service.get_sequence_reasoning(self.curr_sequence_id)
+        except Exception as e:
+            logging.error(str(e) + '\n' + traceback.format_exc())
+            return ""
+
     def get_postprocess_file_path(self) -> Optional[str]:
         return self.llm_post_process_path
 
+    def get_cost_time_estimates(self) -> Optional[tuple[float, float]]:
+        return self.cost_time_estimates
+
     # Data control methods
 
-    def load_source_file(self, source_file_content: BytesIO, source_filetype: str,
-                         llm_definitions: Optional[BytesIO],
-                         llm_examples: Optional[BytesIO],
-                         llm_zero_prompt: Optional[BytesIO]):
+    def load_source_file(self, source_file_content: BytesIO, source_filetype: str):
+        try:
+            self.set_loading_msg("Loading source file")
+            load_source_duration_start = time.time()
+            self.annotation_service.load_source_file(source_file_content, source_filetype)
+            load_source_duration_total = time.time() - load_source_duration_start
+            logging.info(f"Source file loading time: {load_source_duration_total} s")
+            self.display_success("File successfully loaded")
+        except Exception as e:
+            logging.error(str(e) + '\n' + traceback.format_exc())
+            self.display_error(str(e))
+
+        self.stop_loading_indicator()
+        self.update_displays()
+
+    def prepare_llm_processor(self, llm_definitions: Optional[BytesIO],
+                              llm_examples: Optional[BytesIO],
+                              llm_zero_prompt: Optional[BytesIO]):
         if llm_definitions is not None:
             with open(self.llm_definitions_path, 'wb') as f:
                 f.write(llm_definitions.read())
@@ -147,44 +177,41 @@ class AnnotationController:
             with open(self.llm_zero_prompt_path, 'wb') as f:
                 f.write(llm_zero_prompt.read())
 
-        try:
-            self.set_loading_msg("Loading source file")
-            load_source_duration_start = time.time()
-            self.annotation_service.load_source_file(source_file_content, source_filetype)
-            load_source_duration_total = time.time() - load_source_duration_start
-            logging.error(f"Source file loading time: {load_source_duration_total} s")
-            self.display_success("File successfully loaded")
+        self.llm_post_process_path = self.annotation_service.initialise_llm_processor(self.llm_examples_path,
+                                                                                      self.llm_definitions_path,
+                                                                                      self.llm_zero_prompt_path)
+        self.cost_time_estimates = self.annotation_service.calculate_llm_cost_time_estimates(self.llm_cost_path)
 
+    def llm_process_sequences(self):
+        try:
             self.set_loading_msg("Performing LLM sequence classification")
             llm_process_duration_start = time.time()
-            self.llm_post_process_path = self.annotation_service.build_datastore(self.llm_examples_path,
-                                                                                 self.llm_definitions_path,
-                                                                                 self.llm_zero_prompt_path)
+
+            llm_processed_file_path: str = self.annotation_service.perform_llm_processing()
+
             llm_process_duration_total = time.time() - llm_process_duration_start
-            logging.error(f"LLM process time: {llm_process_duration_total} s")
+            logging.info(f"LLM process time: {llm_process_duration_total} s")
+
+            self.annotation_service.build_datastore(llm_processed_file_path)
+
             self.display_success("LLM classification complete")
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
             self.display_error(str(e))
 
+        self.cost_time_estimates = None
         self.stop_loading_indicator()
         self.update_displays()
 
-    def load_source_file_preprocessed(self, source_file_content: BytesIO, source_filetype: str,
-                                      preprocessed_content: BytesIO):
+    def load_preprocessed_sequences(self, preprocessed_content: BytesIO):
         try:
-            self.set_loading_msg("Loading source file")
-            load_source_duration_start = time.time()
-            self.annotation_service.load_source_file(source_file_content, source_filetype)
-            load_source_duration_total = time.time() - load_source_duration_start
-            logging.error(f"Source file loading time: {load_source_duration_total} s")
-            self.display_success("File successfully loaded")
-
             self.set_loading_msg("Loading preprocessed file")
             preprocessed_load_duration_start = time.time()
-            self.annotation_service.build_datastore_preprocessed(preprocessed_content)
+
+            self.annotation_service.build_datastore(preprocessed_content)
+
             preprocessed_load__duration_total = time.time() - preprocessed_load_duration_start
-            logging.error(f"Preprocessed file load time: {preprocessed_load__duration_total} s")
+            logging.info(f"Preprocessed file load time: {preprocessed_load__duration_total} s")
             self.display_success("Preprocessed file loading complete")
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
@@ -267,11 +294,11 @@ class AnnotationController:
 
     def export(self, filetype: str) -> Optional[BytesIO]:
         try:
-            return self.export_service.export(filetype, self.annotation_service.get_dataframe_for_export())
+            return self.import_export_service.export(filetype, self.annotation_service.get_dataframe_for_export())
         except ValueError as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
             self.display_error(str(e))
             return
 
     def get_export_file_formats(self) -> list[str]:
-        return self.export_service.get_filetypes()
+        return self.import_export_service.get_filetypes()

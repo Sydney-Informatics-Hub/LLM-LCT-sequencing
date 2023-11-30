@@ -3,7 +3,7 @@ from typing import Optional, Callable
 from panel import Row, Column, bind
 from panel.layout import Divider
 from panel.widgets import Button, CrossSelector, CheckButtonGroup, FileDownload
-from panel.pane import Str, HTML
+from panel.pane import Str, HTML, Markdown
 
 from annotation.controller.AnnotationController import AnnotationController
 from .styles import (controls_style, sequence_heading_style, delete_sequence_button_style, add_sequence_button_style,
@@ -195,7 +195,7 @@ class AddSequenceControls:
             return
 
         clause_selector_options = {}
-        for clause_id, clause_text in self.controller.get_clauses().items():
+        for clause_id, clause_text in self.controller.get_all_clause_text().items():
             unique_clause_text = f"{clause_id}-{clause_text}"
             clause_selector_options[unique_clause_text] = clause_id
 
@@ -235,11 +235,15 @@ class SequenceClassificationControls:
         self.revert_to_llm_button = Button(name="Revert to prediction", disabled=True,
                                            button_type="primary", button_style="outline")
         self.revert_to_llm_button.on_click(self.revert_to_prediction)
+        self.llm_reasoning_display = Markdown("", sizing_mode="stretch_width", height_policy="fit")
         classification_options = self.controller.get_all_classifications()
+        # The first option is 'NA', which does not need to be displayed
+        self.no_classification_text = classification_options[0]
+        classification_options = classification_options[1:]
         self.classification_selector = CheckButtonGroup(
             name="Sequence Classifications",
             options=classification_options,
-            value=self.controller.get_predicted_classifications(),
+            value=[],
             button_type="primary", button_style="outline"
         )
         selector_bound_fn = bind(self.set_correct_classification, classifications=self.classification_selector)
@@ -250,6 +254,9 @@ class SequenceClassificationControls:
             Row(self.revert_to_llm_button,
                 align="center"),
             Row(self.classification_selector,
+                align="center"),
+            Row(Markdown("**LLM Reasoning:**"),
+                self.llm_reasoning_display,
                 align="center"),
             Row(selector_bound_fn, visible=False),
             styles=sequence_classification_style,
@@ -270,6 +277,7 @@ class SequenceClassificationControls:
         if len(curr_correct_classes) == 0:
             curr_correct_classes = self.controller.get_predicted_classifications()
         self.classification_selector.value = curr_correct_classes
+        self.llm_reasoning_display.object = self.controller.get_reasoning()
 
     def revert_to_prediction(self, *args):
         self.classification_selector.value = self.controller.get_predicted_classifications()
@@ -278,12 +286,17 @@ class SequenceClassificationControls:
 
     def set_correct_classification(self, classifications: list[str]):
         predicted_classes: list[str] = self.controller.get_predicted_classifications()
-        if (predicted_classes == classifications) or (len(classifications) == 0):
-            self.revert_to_prediction()
+        if predicted_classes == classifications:
+            self.revert_to_llm_button.disabled = True
+            self.revert_to_llm_button.button_style = "outline"
         else:
             self.revert_to_llm_button.disabled = False
             self.revert_to_llm_button.button_style = "solid"
-        self.controller.set_correct_classifications(self.classification_selector.value)
+
+        if len(classifications) == 0:
+            self.controller.set_correct_classifications([self.no_classification_text])
+        else:
+            self.controller.set_correct_classifications(self.classification_selector.value)
 
 
 class ExportControls:

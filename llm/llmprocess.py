@@ -240,6 +240,7 @@ class LLMProcess():
         self.df_res = self.df_sequences.copy()
         self.df_res['predicted_classes'] = None
         self.df_res['predicted_classes_name'] = None
+        self.df_res['corrected_classes'] = None
         self.df_res['linkage_words'] = None
         self.df_res['window_start'] =None
         self.df_res['window_end'] = None
@@ -503,6 +504,7 @@ class LLMProcess():
             # add results to dataframe
             self.df_res.loc[index_multi, 'predicted_classes'] = list_class_pred_int
             self.df_res.loc[index_multi, 'predicted_classes_name'] = list_class_pred
+            self.df_res.loc[index_multi, 'corrected_classes'] = ["0"] * nseq
             self.df_res.loc[index_multi, 'linkage_words'] = list_linkage_pred
             self.df_res.loc[index_multi, 'window_start'] = window_start_multi
             self.df_res.loc[index_multi, 'window_end'] = window_end_multi

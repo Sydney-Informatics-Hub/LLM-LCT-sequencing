@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class Classification(Enum):
+    NA = -1
     INT = 1
     SUB = 2
     CON = 3

@@ -43,6 +43,17 @@ class AnnotationDAO:
 
         return clauses
 
+    def get_all_clause_text(self) -> dict[int, str]:
+        text: str = self.get_text()
+        clauses: list[TextRange] = self.get_all_clauses()
+
+        clause_str_dict: dict[int, str] = {}
+        for clause in clauses:
+            clause_text = text[clause.start: clause.end + 1]
+            clause_str_dict[clause.range_id] = clause_text
+
+        return clause_str_dict
+
     def get_sequence_count(self) -> int:
         sequence_data: ndarray = self.sequence_repository.read_all()
         return sequence_data.shape[0]
@@ -52,8 +63,9 @@ class AnnotationDAO:
         clause_a_id: int = sequence_data[1]
         clause_b_id: int = sequence_data[2]
         linkage_words: str | float = sequence_data[3]
-        class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[4])
-        class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[5])
+        class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(str(sequence_data[4]))
+        class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(str(sequence_data[5]))
+        reasoning: str = sequence_data[6]
 
         clause_a_data: tuple = self.clause_repository.read_by_id(clause_a_id)
         if len(clause_a_data) == 0:
@@ -87,7 +99,8 @@ class AnnotationDAO:
         if len(corrected_classes) == 0:
             corrected_classes = None
 
-        return ClauseSequence(sequence_id, clause_a, clause_b, linkage_words_list, predicted_classes, corrected_classes)
+        return ClauseSequence(sequence_id, clause_a, clause_b, linkage_words_list,
+                              predicted_classes, corrected_classes, reasoning)
 
     def get_sequence_by_id(self, sequence_id: int) -> Optional[ClauseSequence]:
         sequence_data: tuple = self.sequence_repository.read_by_id(sequence_id)
@@ -110,9 +123,10 @@ class AnnotationDAO:
         correct_classes_str: str = AnnotationDAO._join_str_from_int_list(correct_classes)
         self.sequence_repository.update(sequence_id, correct_classes_str)
 
-    def create_sequence(self, clause_a_id: int, clause_b_id: int,
-                        linkage_words: str = "", predicted_classes: str = "0") -> int:
-        return self.sequence_repository.create(clause_a_id, clause_b_id, linkage_words, predicted_classes)
+    def create_sequence(self, clause_a_id: int, clause_b_id: int, linkage_words: str = "",
+                        predicted_classes: str = "0", correct_classes: str = "", reasoning: str = "") -> int:
+        return self.sequence_repository.create(clause_a_id, clause_b_id, linkage_words,
+                                               predicted_classes, correct_classes, reasoning)
 
     def delete_sequence(self, sequence_id: int):
         self.sequence_repository.delete(sequence_id)
