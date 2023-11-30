@@ -5,7 +5,7 @@ from typing import Optional
 from pandas import DataFrame, read_csv
 
 from annotation.model.clausing.SequencingTool import SequencingTool
-from annotation.model.data_structures import ClauseSequence, TextRange, Classification, SequenceTuple
+from annotation.model.data_structures import ClauseSequence, Classification, SequenceTuple
 from annotation.model.database import AnnotationDAO, DatastoreHandler
 from annotation.model.database import (llm_data_store_dir, ref_text_ds_path, clauses_ds_path,
                                        sequences_ds_path, pre_llm_sequence_path)
@@ -19,6 +19,8 @@ class AnnotationService:
         self.annotation_dao.clear_all_data_stores()
         self.datastore_handler: DatastoreHandler = DatastoreHandler(self.annotation_dao)
 
+        self.llm_processor: Optional[LLMProcess] = None
+
     def load_source_file(self, source_file_content: BytesIO, filetype: str):
         self.annotation_dao.clear_all_data_stores()
 
@@ -31,26 +33,34 @@ class AnnotationService:
         sequence_df = sequence_generator.generate_sequence_df()
         sequence_df.to_csv(pre_llm_sequence_path, index=False, na_rep='')
 
-    def build_datastore(self, llm_examples_path: Path,
-                        llm_definitions_path: Path,
-                        llm_zero_prompt_path: Path) -> str:
-        llm_process = LLMProcess(filename_pairs=str(pre_llm_sequence_path.resolve()),
-                                 filename_text=str(ref_text_ds_path.resolve()),
-                                 filename_examples=str(llm_examples_path.resolve()),
-                                 filename_definitions=str(llm_definitions_path.resolve()),
-                                 filename_zero_prompt=str(llm_zero_prompt_path.resolve()),
-                                 outpath=str(llm_data_store_dir.resolve()))
-        llm_results_path: str = llm_process.run()
+    def initialise_llm_processor(self, llm_examples_path: Path,
+                                 llm_definitions_path: Path,
+                                 llm_zero_prompt_path: Path):
+        self.llm_processor = LLMProcess(filename_pairs=str(pre_llm_sequence_path.resolve()),
+                                        filename_text=str(ref_text_ds_path.resolve()),
+                                        filename_examples=str(llm_examples_path.resolve()),
+                                        filename_definitions=str(llm_definitions_path.resolve()),
+                                        filename_zero_prompt=str(llm_zero_prompt_path.resolve()),
+                                        outpath=str(llm_data_store_dir.resolve()))
 
-        master_sequence_df: DataFrame = read_csv(filepath_or_buffer=llm_results_path,
-                                                 usecols=DatastoreHandler.REQUIRED_FIELDS,
-                                                 dtype=DatastoreHandler.FIELD_DTYPES)
+    def calculate_llm_cost_time_estimates(self, llm_cost_path: Path) -> tuple[float, float]:
+        if self.llm_processor is None:
+            raise ValueError("LLM process called but no LLM processor is set")
 
-        self.datastore_handler.build_clause_datastores(master_sequence_df)
+        estimates = self.llm_processor.estimate_compute_cost(str(llm_cost_path.resolve()))
 
-        return llm_results_path
+        if (estimates['compute_time'] is None) or (estimates['costs'] is None):
+            raise ValueError("Error calculating LLM process time and costs")
 
-    def build_datastore_preprocessed(self, preprocessd_file: BytesIO):
+        return float(estimates['costs']), float(estimates['compute_time'])
+
+    def perform_llm_processing(self) -> str:
+        if self.llm_processor is None:
+            raise ValueError("LLM process called but no LLM processor is set")
+
+        return self.llm_processor.run()
+
+    def build_datastore(self, preprocessd_file: BytesIO | str):
         master_sequence_df: DataFrame = read_csv(filepath_or_buffer=preprocessd_file,
                                                  usecols=DatastoreHandler.REQUIRED_FIELDS,
                                                  dtype=DatastoreHandler.FIELD_DTYPES)
