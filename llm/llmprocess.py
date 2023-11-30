@@ -272,11 +272,11 @@ class LLMProcess():
         - cost_estimate (dict): A dictionary with the estimated compute resources.
         """
         # load cost schema
+        nsamples = len(self.df_sequences)
         cost_schema = load_json(path_cost)
-        ntokens_in = math.ceil(len(self.df_examples) / self.nseq_per_prompt) * (avg_token_instruction + avg_token_sample * self.nseq_per_prompt) / 1000 
-        ntokens_out= len(self.df_examples) * avg_token_output_per_seq / 1000
-        compute_time = len(self.df_examples) * avg_time_per_seq 
-
+        ntokens_in = math.ceil(nsamples / self.nseq_per_prompt) * (avg_token_instruction + avg_token_sample * self.nseq_per_prompt) / 1000 
+        ntokens_out= nsamples * avg_token_output_per_seq / 1000
+        compute_time = nsamples * avg_time_per_seq 
 
         # check if modelname_llm is in cost_schema
         if self.modelname_llm not in cost_schema.keys():
