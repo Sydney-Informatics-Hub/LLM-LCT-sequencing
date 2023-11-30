@@ -20,6 +20,7 @@ class AnnotationService:
         self.datastore_handler: DatastoreHandler = DatastoreHandler(self.annotation_dao)
 
     def load_source_file(self, source_file_content: BytesIO, filetype: str):
+        self.annotation_dao.clear_all_data_stores()
 
         source_loader: SourceFileClauser = SourceFileClauser(source_file_content, filetype)
         text_content: str = source_loader.get_text()
@@ -28,7 +29,7 @@ class AnnotationService:
         clause_df: DataFrame = source_loader.generate_clause_dataframe()
         sequence_generator = SequencingTool(clause_df)
         sequence_df = sequence_generator.generate_sequence_df()
-        sequence_df.to_csv(pre_llm_sequence_path, index=False)
+        sequence_df.to_csv(pre_llm_sequence_path, index=False, na_rep='')
 
     def build_datastore(self, llm_examples_path: Path,
                         llm_definitions_path: Path,
@@ -115,10 +116,15 @@ class AnnotationService:
             except KeyError:
                 continue
             correct_classes.append(correct_class)
-        if len(correct_classes) == 0:
-            correct_classes = [0]
 
         self.annotation_dao.update_sequence_classifications(sequence_id, correct_classes)
+
+    def get_sequence_reasoning(self, sequence_id: int) -> str:
+        sequence: Optional[ClauseSequence] = self.annotation_dao.get_sequence_by_id(sequence_id)
+        if sequence is None:
+            return ''
+
+        return sequence.get_reasoning()
 
     def create_sequence(self, clause_a_id: int, clause_b_id: int) -> int:
         return self.annotation_dao.create_sequence(clause_a_id, clause_b_id)

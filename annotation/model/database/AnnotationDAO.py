@@ -63,8 +63,8 @@ class AnnotationDAO:
         clause_a_id: int = sequence_data[1]
         clause_b_id: int = sequence_data[2]
         linkage_words: str | float = sequence_data[3]
-        class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[4])
-        class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[5])
+        class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(str(sequence_data[4]))
+        class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(str(sequence_data[5]))
         reasoning: str = sequence_data[6]
 
         clause_a_data: tuple = self.clause_repository.read_by_id(clause_a_id)
@@ -123,9 +123,10 @@ class AnnotationDAO:
         correct_classes_str: str = AnnotationDAO._join_str_from_int_list(correct_classes)
         self.sequence_repository.update(sequence_id, correct_classes_str)
 
-    def create_sequence(self, clause_a_id: int, clause_b_id: int,
-                        linkage_words: str = "", predicted_classes: str = "0") -> int:
-        return self.sequence_repository.create(clause_a_id, clause_b_id, linkage_words, predicted_classes)
+    def create_sequence(self, clause_a_id: int, clause_b_id: int, linkage_words: str = "",
+                        predicted_classes: str = "0", correct_classes: str = "", reasoning: str = "") -> int:
+        return self.sequence_repository.create(clause_a_id, clause_b_id, linkage_words,
+                                               predicted_classes, correct_classes, reasoning)
 
     def delete_sequence(self, sequence_id: int):
         self.sequence_repository.delete(sequence_id)

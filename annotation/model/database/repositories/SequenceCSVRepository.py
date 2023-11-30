@@ -62,12 +62,15 @@ class SequenceCSVRepository(SequenceRepository):
         self._database_cache = read_csv(filepath_or_buffer=self._database_filename,
                                         header=0,
                                         names=SequenceCSVRepository.REQUIRED_FIELDS,
-                                        dtype=SequenceCSVRepository.FIELD_DTYPES)
+                                        dtype=SequenceCSVRepository.FIELD_DTYPES,
+                                        keep_default_na=False,
+                                        na_filter=False)
+        self._database_cache.fillna('')
 
         self._cache_updated = True
 
     def _write_cache_to_database(self):
-        self._database_cache.to_csv(path_or_buf=self._database_filename, index=False,
+        self._database_cache.to_csv(path_or_buf=self._database_filename, index=False, na_rep='',
                                     columns=SequenceCSVRepository.REQUIRED_FIELDS)
 
         self._cache_updated = True
@@ -103,8 +106,8 @@ class SequenceCSVRepository(SequenceRepository):
 
         return matches
 
-    def create(self, clause_a_id: int, clause_b_id: int,
-               linkage_words: str = "", predicted_classes: str = "0", reasoning: str = "") -> int:
+    def create(self, clause_a_id: int, clause_b_id: int, linkage_words: str = "",
+               predicted_classes: str = "0", correct_classes: str = "-1", reasoning: str = "") -> int:
         if ((type(clause_a_id) is not int) or (type(clause_b_id) is not int) or
                 (type(linkage_words) is not str) or (type(predicted_classes) is not str)):
             return -1
@@ -126,8 +129,7 @@ class SequenceCSVRepository(SequenceRepository):
         if len(existing_ids) > 0:
             new_id = existing_ids.max() + 1
 
-        default_corrected = "0"
-        new_entry = [new_id, clause_a_id, clause_b_id, linkage_words, predicted_classes, default_corrected, reasoning]
+        new_entry = [new_id, clause_a_id, clause_b_id, linkage_words, predicted_classes, correct_classes, reasoning]
 
         if len(self._database_cache.index) > 0:
             self._database_cache.loc[max(self._database_cache.index) + 1] = new_entry
