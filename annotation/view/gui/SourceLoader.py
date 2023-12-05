@@ -48,9 +48,11 @@ class UnprocessedModeLoader:
         self.llm_definitions_loader = FileUploadWidget("LLM definitions [_Optional_]", ".xlsx")
         self.llm_examples_loader = FileUploadWidget("LLM examples [_Optional_]", ".xlsx")
         self.llm_prompt_loader = FileUploadWidget("LLM prompt [_Optional_]", ".txt")
-        self.load_files_button = Button(name="Load", button_type="success", button_style="outline")
+        self.load_files_button = Button(name="Load files", button_type="success", button_style="outline")
         self.load_files_button.on_click(self.load_files)
-        self.cost_time_estimate = Markdown("", sizing_mode="stretch_width", height_policy="fit")
+        self.llm_process_button = Button(name="Process with LLM", button_type="success", button_style="solid", disabled=True)
+        self.llm_process_button.on_click(self.llm_process_sequences)
+        self.cost_time_estimate = Markdown("", height_policy="fit")
 
         self.download_preprocessed_modal = Row()
 
@@ -60,7 +62,8 @@ class UnprocessedModeLoader:
                                 self.llm_examples_loader.get_component(),
                                 self.llm_prompt_loader.get_component(),
                                 Row(self.load_files_button,
-                                    self.cost_time_estimate
+                                    self.cost_time_estimate,
+                                    self.llm_process_button
                                 ),
                                 self.download_preprocessed_modal)
 
@@ -114,7 +117,7 @@ class UnprocessedModeLoader:
         formatted_cost: str = f"${estimates[0]:.2f}"
         formatted_time: str = self._format_time_from_seconds(estimates[1])
 
-        formatted_estimate = f"**Estimated Cost:** {formatted_cost}. **Estimated processing time:** {formatted_time}"
+        formatted_estimate = f"**Estimated Cost:** {formatted_cost}. **Estimated time:** {formatted_time}"
         self.cost_time_estimate.object = formatted_estimate
 
     def load_files(self, *_):
@@ -132,6 +135,10 @@ class UnprocessedModeLoader:
         self.controller.load_source_file(source_file_content, source_filetype)
         self.controller.prepare_llm_processor(llm_definitions_content, llm_examples_content, llm_prompt_content)
         self.set_cost_time_estimate()
+
+        self.llm_process_button.disabled = False
+
+    def llm_process_sequences(self, *_):
         self.controller.llm_process_sequences()
 
         preprocessed_file_path: Optional[str] = self.controller.get_postprocess_file_path()
@@ -195,8 +202,7 @@ class SourceLoader:
                                     sizing_mode="stretch_width",
                                     align="start"),
                                 self.unprocessed_mode_loader.get_component(),
-                                self.preprocessed_mode_loader.get_component()
-                                )
+                                self.preprocessed_mode_loader.get_component())
 
     def get_component(self):
         return self.component
