@@ -525,7 +525,13 @@ class LLMProcess():
             logging.debug('Index:', index_multi, ' | Prediction:', list_class_pred, ' | Used tokens:', tokens_used)
             logging.debug('')
 
-            # wait 3 seconds for API
+            # number of classes that are not 'NONE' or 'NA' in list_class_pred
+            nclasses_found = len([class_pred for class_pred in list_class_pred if class_pred not in ['NONE', 'NA']])
+
+            # print process message
+            print(f"\rProcessed samples {index_multi[0]} to {index_multi[-1]}. Number of sequencing classes found: {nclasses_found}", end="")
+
+            # wait 3 seconds to avoid API call limit
             time.sleep(3)
 
         # Write token count to file
