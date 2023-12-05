@@ -486,15 +486,19 @@ class LLMProcess():
                     list_class_pred = [completion_text[key]['classification'] for key in keys]
                     list_linkage_pred = [completion_text[key]['linkage word'] for key in keys]
                 except:
-                    logging.warning('WARNING: completion_text not correct format! Skipping test samples')
-                    logging.warning(completion_text)
+                    logging.warning('WARNING: completion_text not in correct format! Skipping test samples:', index_multi[0:-1])
+                    #logging.warning(completion_text)
+                    filename_response = f'response_{chat_id}.txt' 
+                    save_text(completion_text, os.path.join(self.outpath_prompts, filename_response))
+                    logging.warning('LLM response text written to file:', os.path.join(self.outpath_prompts, filename_response))
                     list_reasoning = ['NONE'] * nseq
                     list_class_pred = ['NONE'] * nseq
                     list_linkage_pred = ['NONE'] * nseq
             else:
-                logging.warning('WARNING: completion_text not in json format! Skipping test samples')
+                logging.warning('WARNING: completion_text not in json format! Skipping test samples:', index_multi[0:-1])
                 filename_response = f'response_{chat_id}.txt' 
                 save_text(completion_text, os.path.join(self.outpath_prompts, filename_response))
+                logging.warning('LLM response text written to file:', os.path.join(self.outpath_prompts, filename_response))
                 list_reasoning = ['NONE'] * nseq
                 list_class_pred = ['NONE'] * nseq
                 list_linkage_pred = ['NONE'] * nseq
