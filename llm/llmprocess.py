@@ -120,8 +120,8 @@ def lct_string_to_int(s):
     """
     result = getattr(LCTclasses, s, None)
     if result is None:
-        logging.debug(f"'{s}' does not correspond to any known Classification.")
-        logging.debug(f"Need to be one of {list(LCTclasses.__members__.keys())}")
+        logging.debug("No known classification exist for ", s)
+        logging.debug("Need to be one of:", list(LCTclasses.__members__.keys()))
         return None
     else:
         return result.value
@@ -281,7 +281,7 @@ class LLMProcess():
 
         # check if modelname_llm is in cost_schema
         if self.modelname_llm not in cost_schema.keys():
-            logging.warning(f'WARNING: {self.modelname_llm} not in cost_schema!')
+            logging.warning('WARNING:', self.modelname_llm, 'not in cost_schema!')
             costs = None
         else:
             modelcost = cost_schema[self.modelname_llm]
@@ -451,7 +451,7 @@ class LLMProcess():
             
             nseq = len(index_multi)
             
-            logging.debug(f"Clauses for samples {index_multi[0]} to {index_multi[-1]}:")
+            logging.debug('Processing clauses for samples', index_multi[0], ' to ', index_multi[-1])
            
             # copy string self.zero_shot_prompt
             self.prompt = self.gen_multiprompt(text_content_multi, 
@@ -487,7 +487,6 @@ class LLMProcess():
                     list_linkage_pred = [completion_text[key]['linkage word'] for key in keys]
                 except:
                     logging.warning('WARNING: completion_text not in correct format! Skipping test samples:', index_multi[0:-1])
-                    #logging.warning(completion_text)
                     filename_response = f'response_{chat_id}.txt' 
                     save_text(completion_text, os.path.join(self.outpath_prompts, filename_response))
                     logging.warning('LLM response text written to file:', os.path.join(self.outpath_prompts, filename_response))
@@ -523,7 +522,7 @@ class LLMProcess():
             self.df_res.to_csv(self.fname_results, index=False)
 
             #print results
-            logging.debug(f'Index: {index_multi} | Prediction: {list_class_pred} | Used tokens: {tokens_used} ')
+            logging.debug('Index:', index_multi, ' | Prediction:', list_class_pred, ' | Used tokens:', tokens_used)
             logging.debug('')
 
             # wait 3 seconds for API
@@ -533,12 +532,18 @@ class LLMProcess():
         filename_token_count = f'token_count_{self.modelname_llm}.txt'
         save_text(str(self.token_count), os.path.join(self.outpath, filename_token_count))
 
-        logging.debug(f'Experiment finished! Results saved to folder {self.outpath}')
+        logging.debug('Experiment finished! Results saved to folder', self.outpath)
 
         return self.fname_results
 
 
-def test_llmprocess():
+def test_llmprocess(debug = False):
+    """
+    Test function for LLMprocess.
+    """
+    # Set debug option to True for more verbose logging
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     # get time for compute time estimation
     start_time = time.time()
