@@ -473,13 +473,14 @@ class LLMProcess():
                 completion_text = completion_text[1:]
 
             # check if response is json
-            if completion_text.startswith('{') and completion_text.endswith('}'): 
-                # save response to json file
-                completion_text = json.loads(completion_text)
-                filename_response = f'response_{chat_id}.json'    
-                with open(os.path.join(self.outpath_prompts, filename_response), 'w') as f:
-                    json.dump(completion_text, f, indent=2)         
+            if completion_text.startswith('{') and completion_text.endswith('}'):     
                 try:
+                    completion_text = json.loads(completion_text)
+                    # save response to json file
+                    filename_response = f'response_{chat_id}.json'    
+                    with open(os.path.join(self.outpath_prompts, filename_response), 'w') as f:
+                        json.dump(completion_text, f, indent=2)  
+                    # Extract classification, reasoning and linkage word from completion_text
                     keys = completion_text.keys()
                     list_reasoning = [completion_text[key]['reason'] for key in keys]
                     list_class_pred = [completion_text[key]['classification'] for key in keys]
