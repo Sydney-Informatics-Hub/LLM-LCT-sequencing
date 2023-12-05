@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This repository provides AI-assisted LLM tools for classifying sequencing relations between text clauses for Legitimation Code Theory (LCT). LCT is a framework developed by Prof. Karl Maton for identify and classify the ‘epistemic-semantic density (ESD)’ in English discourse, which is an approach to analyzing knowledge practices in various social fields, including education. LCT is often used to examine the underlying principles that guide knowledge building, curriculum design, pedagogical practices, and the evaluation of student work. Utilising the LCT analytic method, the complexity of knowledge practices and knowledge-building can be conceptualised and revealed from educational texts, such as the lecture transcriptions.
+This repository provides AI-assisted Large Language Model (LLM) tools for classifying sequencing relations between text clauses for Legitimation Code Theory (LCT). LCT is a framework developed by Prof. Karl Maton for identify and classify the ‘epistemic-semantic density (ESD)’ in English discourse, which is an approach to analyzing knowledge practices in various social fields, including education. LCT is often used to examine the underlying principles that guide knowledge building, curriculum design, pedagogical practices, and the evaluation of student work. Utilising the LCT analytic method, the complexity of knowledge practices and knowledge-building can be conceptualised and revealed from educational texts, such as the lecture transcriptions.
 
 SIH has previously completed the ‘clausing tool’ (project PIPE-156), i.e. combining word-groupings into short, coherent standalone passages, and in turn classifying the clauses as one of the eight predefined types so that the EC can be quantitatively measured, and an information density profile of the text was generated.
 
@@ -10,9 +10,15 @@ This project focuses on implementing the next level of the epistemological conde
 
 ## Overview
 
-### Overview of LLM training and optimisation for development
+This project provides two processing tools:
 
+1. A LLM experiment workbench to experiment with different sequencing definitions and to optimise the LLM prompts. Please see the notebook `llm_experiment_multi.ipynb` in the notebooks folder.
 
+2. A sequencing annotation tool that allows the user to automatically extract clauses from text, and to classify the clause pairs using a pre-defined LLM (as, e.g., optimised via Step 1). To start this tool, run the notebook `annotation-tool.ipynb` or use the Web version as outlined below.
+
+The schematic process diagrams for these two tools are shown below.
+
+### Overview of LLM Experiment Workbench
 
 ```mermaid
 graph TD
@@ -40,7 +46,7 @@ LLM-Optimisation --> LLM-Model
 
 ```
 
-### Overview of Sequencing tool for production
+### Overview of Sequencing Tool for Production
 
 
 
@@ -68,7 +74,7 @@ The aim of the LCT analysis tool is to provide researchers an automatic classifi
 
 ### Web version
 
-Click the following link to use a web version of the tool hosted on Binderhub courtesy of the Australian Text Analytics Platform
+Click the `launch binder` link below to use a web version of the tool hosted on Binderhub courtesy of the Australian Text Analytics Platform.
 
 **Note**: CILogon authentication is required. You can use your institutional, Google or Microsoft account to log in. If you have trouble authenticating, please refer to the [CILogon troubleshooting guide](docs/cilogon-troubleshooting.pdf).
 
