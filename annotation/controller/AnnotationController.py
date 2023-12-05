@@ -47,6 +47,8 @@ class AnnotationController:
 
         self.loading_msg: Optional[str] = None
 
+        self.notifier_service.clear_all()
+
     @staticmethod
     def configure_logging(log_file_path: Path, debug: bool = False):
         with open(log_file_path, 'w') as log_f:
@@ -73,7 +75,11 @@ class AnnotationController:
         logging.info(f"Success displayed: {success_msg}")
         self.notifier_service.notify_success(success_msg)
 
-    def set_loading_msg(self, loading_msg: str):
+    def display_info(self, info_msg: str):
+        logging.info(f"Info displayed: {info_msg}")
+        self.notifier_service.notify_info(info_msg)
+
+    def set_loading_msg(self, loading_msg: str, *args, **kwargs):
         self.loading_msg = loading_msg
         self.update_displays()
 
@@ -179,7 +185,8 @@ class AnnotationController:
 
         self.llm_post_process_path = self.annotation_service.initialise_llm_processor(self.llm_examples_path,
                                                                                       self.llm_definitions_path,
-                                                                                      self.llm_zero_prompt_path)
+                                                                                      self.llm_zero_prompt_path,
+                                                                                      self.set_loading_msg)
         self.cost_time_estimates = self.annotation_service.calculate_llm_cost_time_estimates(self.llm_cost_path)
 
     def llm_process_sequences(self):

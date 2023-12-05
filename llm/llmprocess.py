@@ -160,7 +160,8 @@ class LLMProcess():
                  filename_zero_prompt="../schemas/instruction_multiprompt.txt",
                  outpath="../results_llm/",
                  modelname_llm="gpt-3.5-turbo-1106",
-                 nseq_per_prompt = 8):
+                 nseq_per_prompt = 8,
+                 progress_update_fn=print):
         """
         Initialize LLMProcess class.
 
@@ -174,6 +175,7 @@ class LLMProcess():
         - outpath (str): The path to the output folder.
         - modelname_llm (str): The name of the LLM model to use.
         - nseq_per_prompt (int): The number of sequences per prompt.
+        - progress_update_fn (Callable): The function to pass the process progress message to. Defaults to print
 
         """
         # Check if filename_examples is excel file
@@ -198,6 +200,7 @@ class LLMProcess():
         self.outpath = outpath
         self.modelname_llm = modelname_llm
         self.nseq_per_prompt = nseq_per_prompt
+        self.progress_update_fn = progress_update_fn
 
         # check if outpath includes a folder that starts with string 'results'
         # if so, add 1 to the number of the folder
@@ -440,7 +443,10 @@ class LLMProcess():
         list_index_multi = [list_index[i:i + self.nseq_per_prompt] for i in range(0, len(list_index), self.nseq_per_prompt)]
         list_window_start_multi = [list_window_start[i:i + self.nseq_per_prompt] for i in range(0, len(list_window_start), self.nseq_per_prompt)]
         list_window_end_multi = [list_window_end[i:i + self.nseq_per_prompt] for i in range(0, len(list_window_end), self.nseq_per_prompt)]
-        
+
+        # counts total number of sequences processed
+        processed_seq_count: int = 0
+        total_seq_count: int = self.df_sequences.shape[0]
         for index_multi, text_content_multi, text_chunk1_multi, text_chunk2_multi, window_start_multi, window_end_multi in zip(list_index_multi, 
                                                                                          list_text_content_multi, 
                                                                                          list_text_chunk1_multi, 
@@ -464,6 +470,9 @@ class LLMProcess():
 
             # tokens_used
             self.token_count += tokens_used
+
+            # add number of sequences processed for progress tracking
+            processed_seq_count += self.nseq_per_prompt
 
             # save prompt to file
             filename_prompt = f'prompt_{chat_id}.txt'
@@ -529,7 +538,7 @@ class LLMProcess():
             nclasses_found = len([class_pred for class_pred in list_class_pred if class_pred not in ['NONE', 'NA']])
 
             # print process message
-            print(f"\rProcessed samples {index_multi[0]} to {index_multi[-1]}. Number of sequencing classes found: {nclasses_found}", end="")
+            self.progress_update_fn(f"\r{processed_seq_count} of {total_seq_count} sequences complete", end="")
 
             # wait 3 seconds to avoid API call limit
             time.sleep(3)

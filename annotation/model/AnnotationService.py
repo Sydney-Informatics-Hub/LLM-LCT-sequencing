@@ -1,6 +1,6 @@
 from io import BytesIO
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable
 
 from pandas import DataFrame, read_csv
 
@@ -35,13 +35,15 @@ class AnnotationService:
 
     def initialise_llm_processor(self, llm_examples_path: Path,
                                  llm_definitions_path: Path,
-                                 llm_zero_prompt_path: Path):
+                                 llm_zero_prompt_path: Path,
+                                 progress_update_fn: Callable):
         self.llm_processor = LLMProcess(filename_pairs=str(pre_llm_sequence_path.resolve()),
                                         filename_text=str(ref_text_ds_path.resolve()),
                                         filename_examples=str(llm_examples_path.resolve()),
                                         filename_definitions=str(llm_definitions_path.resolve()),
                                         filename_zero_prompt=str(llm_zero_prompt_path.resolve()),
-                                        outpath=str(llm_data_store_dir.resolve()))
+                                        outpath=str(llm_data_store_dir.resolve()),
+                                        progress_update_fn=progress_update_fn)
 
     def calculate_llm_cost_time_estimates(self, llm_cost_path: Path) -> tuple[float, float]:
         if self.llm_processor is None:
