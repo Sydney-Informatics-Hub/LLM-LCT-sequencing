@@ -108,6 +108,7 @@ class UnprocessedModeLoader:
     def set_cost_time_estimate(self):
         estimates: Optional[tuple[float, float]] = self.controller.get_cost_time_estimates()
         if estimates is None:
+            self.cost_time_estimate.object = "..."
             return
 
         formatted_cost: str = f"${estimates[0]:.2f}"
@@ -116,7 +117,7 @@ class UnprocessedModeLoader:
         formatted_estimate = f"**Estimated Cost:** {formatted_cost}. **Estimated processing time:** {formatted_time}"
         self.cost_time_estimate.object = formatted_estimate
 
-    def load_files(self, *args):
+    def load_files(self, *_):
         source_file_content: Optional[BytesIO] = self.source_file_loader.get_file_content()
         if source_file_content is None:
             self.controller.display_error("No source file loaded")
@@ -127,11 +128,11 @@ class UnprocessedModeLoader:
         llm_examples_content: Optional[BytesIO] = self.llm_examples_loader.get_file_content()
         llm_prompt_content: Optional[BytesIO] = self.llm_prompt_loader.get_file_content()
 
+        self.set_cost_time_estimate()
         self.controller.load_source_file(source_file_content, source_filetype)
         self.controller.prepare_llm_processor(llm_definitions_content, llm_examples_content, llm_prompt_content)
         self.set_cost_time_estimate()
         self.controller.llm_process_sequences()
-        self.set_cost_time_estimate()
 
         preprocessed_file_path: Optional[str] = self.controller.get_postprocess_file_path()
         self.download_preprocessed_modal.objects = [
@@ -161,7 +162,7 @@ class PreprocessedModeLoader:
     def set_visible(self, visible: bool):
         self.component.visible = visible
 
-    def load_files(self, *args):
+    def load_files(self, *_):
         source_file_content: Optional[BytesIO] = self.source_file_loader.get_file_content()
         if source_file_content is None:
             self.controller.display_error("No source file loaded")
@@ -200,7 +201,7 @@ class SourceLoader:
     def get_component(self):
         return self.component
 
-    def toggle_unprocessed_mode(self, *args):
+    def toggle_unprocessed_mode(self, *_):
         self.preprocessed_mode_button.button_style = "outline"
 
         if self.unprocessed_mode_loader.get_visible():
@@ -211,7 +212,7 @@ class SourceLoader:
             self.unprocessed_mode_loader.set_visible(True)
         self.preprocessed_mode_loader.set_visible(False)
 
-    def toggle_preprocessed_mode(self, *args):
+    def toggle_preprocessed_mode(self, *_):
         self.unprocessed_mode_button.button_style = "outline"
 
         if self.preprocessed_mode_loader.get_visible():

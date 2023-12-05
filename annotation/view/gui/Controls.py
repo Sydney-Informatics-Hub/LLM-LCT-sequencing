@@ -146,7 +146,7 @@ class ClauseSequenceControls:
     def prev_sequence(self, event):
         self.controller.prev_sequence()
 
-    def toggle_show_manage_sequence_pane(self, event):
+    def toggle_show_manage_sequence_pane(self, *_):
         manage_button_style = self.manage_sequence_button.button_style
         if manage_button_style == "outline":
             self.manage_sequence_button.button_style = "solid"
@@ -161,7 +161,7 @@ class ClauseSequenceControls:
         self.delete_sequence_button.visible = False
         self.add_sequence_button.visible = False
 
-    def show_add_sequence_pane(self, event):
+    def show_add_sequence_pane(self, *_):
         self.add_sequence_controls_fn()
 
     def delete_sequence(self, event):
@@ -207,7 +207,7 @@ class AddSequenceControls:
     def toggle_visibility(self):
         self.component.visible = not self.component.visible
 
-    def save_sequence(self, event):
+    def save_sequence(self, *_):
         selections: list[int] = self.clause_selector.value
         if len(selections) != 2:
             self.controller.display_error('A clause sequence must contain exactly 2 clauses. '
@@ -221,7 +221,7 @@ class AddSequenceControls:
         else:
             self.exit_pane()
 
-    def exit_pane(self, event=None):
+    def exit_pane(self, *_):
         self.clause_selector.value = []
         self.clause_selector.options = []
         self.reset_visibility_fn()
@@ -279,7 +279,7 @@ class SequenceClassificationControls:
         self.classification_selector.value = curr_correct_classes
         self.llm_reasoning_display.object = self.controller.get_reasoning()
 
-    def revert_to_prediction(self, *args):
+    def revert_to_prediction(self, *_):
         self.classification_selector.value = self.controller.get_predicted_classifications()
         self.revert_to_llm_button.disabled = True
         self.revert_to_llm_button.button_style = "outline"
@@ -335,10 +335,10 @@ class ExportControls:
     def toggle_visibility(self):
         self.component.visible = not self.component.visible
 
-    def export(self, filetype: str, *args):
+    def export(self, filetype: str, *_):
         return self.controller.export(filetype)
 
-    def toggle_options_visibility(self, *args):
+    def toggle_options_visibility(self, *_):
         self.export_buttons.visible = not self.export_buttons.visible
         if self.export_buttons.visible:
             self.show_options_button.name = "Hide export options"
