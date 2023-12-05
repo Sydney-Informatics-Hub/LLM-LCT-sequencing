@@ -447,6 +447,7 @@ class LLMProcess():
         # counts total number of sequences processed
         processed_seq_count: int = 0
         total_seq_count: int = self.df_sequences.shape[0]
+        self.progress_update_fn(f"\r{processed_seq_count} of {total_seq_count} sequences complete", end="")
         for index_multi, text_content_multi, text_chunk1_multi, text_chunk2_multi, window_start_multi, window_end_multi in zip(list_index_multi, 
                                                                                          list_text_content_multi, 
                                                                                          list_text_chunk1_multi, 
@@ -473,6 +474,8 @@ class LLMProcess():
 
             # add number of sequences processed for progress tracking
             processed_seq_count += self.nseq_per_prompt
+            # account for fewer than self.nseq_per_prompt sequences
+            processed_seq_count = min(processed_seq_count, total_seq_count)
 
             # save prompt to file
             filename_prompt = f'prompt_{chat_id}.txt'
