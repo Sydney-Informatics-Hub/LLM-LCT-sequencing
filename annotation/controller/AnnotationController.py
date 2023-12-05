@@ -183,10 +183,8 @@ class AnnotationController:
             with open(self.llm_zero_prompt_path, 'wb') as f:
                 f.write(llm_zero_prompt.read())
 
-        self.llm_post_process_path = self.annotation_service.initialise_llm_processor(self.llm_examples_path,
-                                                                                      self.llm_definitions_path,
-                                                                                      self.llm_zero_prompt_path,
-                                                                                      self.set_loading_msg)
+        self.annotation_service.initialise_llm_processor(self.llm_examples_path, self.llm_definitions_path,
+                                                         self.llm_zero_prompt_path, self.set_loading_msg)
         self.cost_time_estimates = self.annotation_service.calculate_llm_cost_time_estimates(self.llm_cost_path)
 
     def llm_process_sequences(self):
@@ -194,12 +192,12 @@ class AnnotationController:
             self.set_loading_msg("Performing LLM sequence classification")
             llm_process_duration_start = time.time()
 
-            llm_processed_file_path: str = self.annotation_service.perform_llm_processing()
+            self.llm_post_process_path = self.annotation_service.perform_llm_processing()
 
             llm_process_duration_total = time.time() - llm_process_duration_start
             logging.info(f"LLM process time: {llm_process_duration_total} s")
 
-            self.annotation_service.build_datastore(llm_processed_file_path)
+            self.annotation_service.build_datastore(self.llm_post_process_path)
 
             self.display_success("LLM classification complete")
         except Exception as e:
