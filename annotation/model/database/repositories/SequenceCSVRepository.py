@@ -1,6 +1,7 @@
 import os
 from csv import DictReader
 from pathlib import Path
+from typing import Optional
 
 from numpy import ndarray
 from pandas import DataFrame, read_csv
@@ -140,9 +141,13 @@ class SequenceCSVRepository(SequenceRepository):
 
         return new_id
 
-    def update(self, sequence_id: int, correct_classes: str) -> bool:
+    def update(self, sequence_id: int, linkage_words: Optional[str] = None, predicted_classes: Optional[str] = None,
+               corrected_classes: Optional[str] = None, reasoning: Optional[str] = None) -> bool:
         id_field = SequenceCSVRepository.SEQUENCE_ID_FIELD
+        linkage_field = SequenceCSVRepository.LINKAGE_FIELD
+        predicted_field = SequenceCSVRepository.PREDICTED_CLASSES
         corrected_field = SequenceCSVRepository.CORRECTED_CLASSES
+        reasoning_field = SequenceCSVRepository.REASONING_FIELD
 
         self._read_database_into_cache()
 
@@ -151,7 +156,14 @@ class SequenceCSVRepository(SequenceRepository):
         if len(matches) == 0:
             return False
         elif len(matches) == 1:
-            self._database_cache.loc[(self._database_cache[id_field] == sequence_id), [corrected_field]] = correct_classes
+            if linkage_words is not None:
+                self._database_cache.loc[(self._database_cache[id_field] == sequence_id), [linkage_field]] = linkage_words
+            if predicted_classes is not None:
+                self._database_cache.loc[(self._database_cache[id_field] == sequence_id), [predicted_field]] = predicted_classes
+            if corrected_classes is not None:
+                self._database_cache.loc[(self._database_cache[id_field] == sequence_id), [corrected_field]] = corrected_classes
+            if reasoning is not None:
+                self._database_cache.loc[(self._database_cache[id_field] == sequence_id), [reasoning_field]] = reasoning
 
             self._write_cache_to_database()
             return True

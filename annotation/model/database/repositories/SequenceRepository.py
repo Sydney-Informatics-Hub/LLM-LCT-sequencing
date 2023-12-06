@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from numpy import ndarray
 
@@ -85,14 +86,18 @@ class SequenceRepository(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def update(self, sequence_id: int, correct_classes: str) -> bool:
+    def update(self, sequence_id: int, linkage_words: Optional[str] = None, predicted_classes: Optional[str] = None,
+               corrected_classes: Optional[str] = None, reasoning: Optional[str] = None) -> bool:
         """
-        Updates the corrected class for the sequence in the database with the given sequence id.
+        Updates the attributes for the sequence in the database with the given sequence id.
         Returns True if the operation succeeds, False if the operation fails or the sequence is not found.
         Parameters
         ----------
         sequence_id: int - integer id of the sequence
-        correct_classes: str - the corrected classes as a str structured as delimited digits, e.g. '1,2,3'
+        linkage_words: str - the linkage words for the sequence, as a list of words separated by a delimiter
+        predicted_classes: str - the predicted classes for the sequence, as a list of digits separated by a delimiter
+        corrected_classes: str - the corrected classes as a str structured as delimited digits, e.g. '1,2,3'
+        reasoning: str - the LLM reasoning for the classification as a str
 
         Returns
         -------

@@ -68,7 +68,7 @@ class AnnotationService:
                                                  usecols=DatastoreHandler.REQUIRED_FIELDS,
                                                  dtype=DatastoreHandler.FIELD_DTYPES)
 
-        self.datastore_handler.build_clause_datastores(master_sequence_df)
+        self.datastore_handler.update_sequence_datastores(master_sequence_df)
 
     def get_dataframe_for_export(self) -> DataFrame:
         return self.datastore_handler.build_export_dataframe()

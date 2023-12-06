@@ -119,9 +119,14 @@ class AnnotationDAO:
 
         return list(sequence_map.values())
 
+    def update_sequence(self, sequence_id: int, linkage_words: str, predicted_classes: str,
+                        corrected_classes: str, reasoning: str) -> bool:
+        return self.sequence_repository.update(sequence_id, linkage_words, predicted_classes,
+                                               corrected_classes, reasoning)
+
     def update_sequence_classifications(self, sequence_id: int, correct_classes: list[int]):
         correct_classes_str: str = AnnotationDAO._join_str_from_int_list(correct_classes)
-        self.sequence_repository.update(sequence_id, correct_classes_str)
+        self.sequence_repository.update(sequence_id, corrected_classes=correct_classes_str)
 
     def create_sequence(self, clause_a_id: int, clause_b_id: int, linkage_words: str = "",
                         predicted_classes: str = "0", correct_classes: str = "", reasoning: str = "") -> int:

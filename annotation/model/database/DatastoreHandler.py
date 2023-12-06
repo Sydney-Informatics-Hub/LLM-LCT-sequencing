@@ -31,7 +31,7 @@ class DatastoreHandler:
     def __init__(self, annotation_dao: AnnotationDAO):
         self.annotation_dao: AnnotationDAO = annotation_dao
 
-    def _write_database_row(self, row: Series):
+    def _write_database_rows(self, row: Series):
         c1_start: int = row[DatastoreHandler.C1_START_FIELD]
         c1_end: int = row[DatastoreHandler.C1_END_FIELD]
         c2_start: int = row[DatastoreHandler.C2_START_FIELD]
@@ -53,11 +53,26 @@ class DatastoreHandler:
         except KeyError:
             self.annotation_dao.create_sequence(c1_id, c2_id)
 
+    def _update_sequence_row(self, row: Series):
+        sequence_id: int = row[DatastoreHandler.SEQ_ID_FIELD]
+        linkage_words: str | float = row[DatastoreHandler.LINKAGE_FIELD]
+        if type(linkage_words) is float:
+            linkage_words = ""
+        predicted_classes: str = row[DatastoreHandler.PREDICTED_FIELD]
+        corrected_classes: str = row[DatastoreHandler.CORRECTED_FIELD]
+        reasoning: str = row[DatastoreHandler.REASONING_FIELD]
+
+        self.annotation_dao.update_sequence(sequence_id, linkage_words,
+                                            predicted_classes, corrected_classes, reasoning)
+
     def build_text_datastore(self, text_file_content: str):
         self.annotation_dao.write_text_file(text_file_content)
 
     def build_clause_datastores(self, master_sequence_df: DataFrame):
-        master_sequence_df.apply(self._write_database_row, axis=1)
+        master_sequence_df.apply(self._write_database_rows, axis=1)
+
+    def update_sequence_datastores(self, master_sequence_df: DataFrame):
+        master_sequence_df.apply(self._update_sequence_row, axis=1)
 
     def build_export_dataframe(self) -> DataFrame:
         export_columns = [DatastoreHandler.SEQ_ID_FIELD, DatastoreHandler.C1_NAME_FIELD,
