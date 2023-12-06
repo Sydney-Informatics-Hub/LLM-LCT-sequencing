@@ -9,12 +9,13 @@ from annotation.controller import AnnotationController
 class LoadingIndicator:
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
-        self.loading_indicator: LoadingSpinner = LoadingSpinner(size=50, value=True, color="success", bgcolor="dark")
+        self.loading_indicator: LoadingSpinner = LoadingSpinner(visible=False, size=50, value=True,
+                                                                color="success", bgcolor="dark")
 
         self.component = Row(self.loading_indicator,
-                             visible=False,
-                             sizing_mode="stretch_width",
-                             align="end")
+                             sizing_mode="fixed",
+                             width=250,
+                             align="start")
 
         self.controller.add_update_text_display_callable(self.update_display)
 
@@ -24,7 +25,7 @@ class LoadingIndicator:
     def update_display(self):
         loading_msg: Optional[str] = self.controller.get_loading_msg()
         if loading_msg is None:
-            self.component.visible = False
+            self.loading_indicator.visible = False
         else:
             self.loading_indicator.name = loading_msg
-            self.component.visible = True
+            self.loading_indicator.visible = True

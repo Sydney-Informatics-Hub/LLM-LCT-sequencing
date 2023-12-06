@@ -2,6 +2,7 @@ from io import BytesIO
 from typing import Optional
 
 from panel import Row, Column
+from panel.layout import Divider
 from panel.pane import Markdown
 from panel.widgets import Button, FileInput, FileDownload, PasswordInput
 from param import bind
@@ -11,13 +12,12 @@ from annotation.controller import AnnotationController
 
 class FileUploadWidget:
     def __init__(self, file_description: str, filetypes: str):
-        self.description = Markdown(f"**Choose {file_description} ({filetypes})**")
-        self.file_input = FileInput(accept=filetypes, multiple=False)
+        self.description = f"**Select {file_description}\n({filetypes})**"
+        self.file_input = FileInput(name=self.description, accept=filetypes, multiple=False)
 
-        self.component = Row(self.description,
-                             self.file_input,
-                             sizing_mode="stretch_width",
-                             align="start")
+        self.component = Column(self.description,
+                                self.file_input,
+                                align="start")
 
     def get_component(self):
         return self.component
@@ -44,7 +44,7 @@ class UnprocessedModeLoader:
         api_status = bind(self.write_api_key, api_key_input.param.value, watch=False)
         self.api_key_input = Row(api_key_input, Markdown(api_status))
 
-        self.source_file_loader = FileUploadWidget("source file", ".docx,.txt")
+        self.source_file_loader = FileUploadWidget("source file [_Required_]", ".docx,.txt")
         self.llm_definitions_loader = FileUploadWidget("LLM definitions [_Optional_]", ".xlsx")
         self.llm_examples_loader = FileUploadWidget("LLM examples [_Optional_]", ".xlsx")
         self.llm_prompt_loader = FileUploadWidget("LLM prompt [_Optional_]", ".txt")
@@ -52,18 +52,22 @@ class UnprocessedModeLoader:
         self.load_files_button.on_click(self.load_files)
         self.llm_process_button = Button(name="Process with LLM", button_type="success", button_style="solid", disabled=True)
         self.llm_process_button.on_click(self.llm_process_sequences)
-        self.cost_time_estimate = Markdown("", height_policy="fit")
+        self.cost_time_estimate = Markdown("")
 
         self.download_preprocessed_modal = Row()
 
         self.component = Column(self.api_key_input,
-                                self.source_file_loader.get_component(),
-                                self.llm_definitions_loader.get_component(),
-                                self.llm_examples_loader.get_component(),
-                                self.llm_prompt_loader.get_component(),
+                                Row(self.source_file_loader.get_component(),
+                                    self.llm_definitions_loader.get_component(),
+                                    self.llm_examples_loader.get_component(),
+                                    self.llm_prompt_loader.get_component()
+                                ),
+                                Divider(),
                                 Row(self.load_files_button,
-                                    self.cost_time_estimate,
-                                    self.llm_process_button
+                                    Column(self.llm_process_button,
+                                           self.cost_time_estimate
+                                    ),
+                                    align="start"
                                 ),
                                 self.download_preprocessed_modal)
 
@@ -109,6 +113,7 @@ class UnprocessedModeLoader:
         return formatted
 
     def set_cost_time_estimate(self):
+        sequence_count: int = self.controller.get_sequence_count()
         estimates: Optional[tuple[float, float]] = self.controller.get_cost_time_estimates()
         if estimates is None:
             self.cost_time_estimate.object = "..."
@@ -116,9 +121,12 @@ class UnprocessedModeLoader:
 
         formatted_cost: str = f"${estimates[0]:.2f}"
         formatted_time: str = self._format_time_from_seconds(estimates[1])
+        formatted_count: str = str(sequence_count)
+        markdown_text: str = (f"**Sequence count:** {formatted_count}"
+                              f"\n**Estimated cost:** {formatted_cost}"
+                              f"\n**Estimated time:** {formatted_time}")
 
-        formatted_estimate = f"**Estimated Cost:** {formatted_cost}. **Estimated time:** {formatted_time}"
-        self.cost_time_estimate.object = formatted_estimate
+        self.cost_time_estimate.object = markdown_text
 
     def load_files(self, *_):
         source_file_content: Optional[BytesIO] = self.source_file_loader.get_file_content()
@@ -142,8 +150,9 @@ class UnprocessedModeLoader:
         self.controller.llm_process_sequences()
 
         preprocessed_file_path: Optional[str] = self.controller.get_postprocess_file_path()
-        self.download_preprocessed_modal.objects = [
-            FileDownload(file=preprocessed_file_path, filename="llm_preprocessed.csv")]
+        if preprocessed_file_path is not None:
+            self.download_preprocessed_modal.objects = [
+                FileDownload(file=preprocessed_file_path, filename="llm_preprocessed.csv")]
 
 
 class PreprocessedModeLoader:
@@ -156,8 +165,9 @@ class PreprocessedModeLoader:
                                         button_type="success", button_style="outline")
         self.load_files_button.on_click(self.load_files)
 
-        self.component = Column(self.source_file_loader.get_component(),
-                                self.preprocessed_loader.get_component(),
+        self.component = Column(Row(self.source_file_loader.get_component(),
+                                self.preprocessed_loader.get_component()
+                                ),
                                 self.load_files_button)
 
     def get_component(self):

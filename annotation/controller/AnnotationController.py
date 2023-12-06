@@ -147,6 +147,13 @@ class AnnotationController:
             logging.error(str(e) + '\n' + traceback.format_exc())
             return ""
 
+    def get_sequence_count(self) -> int:
+        try:
+            return self.annotation_service.get_sequence_count()
+        except Exception as e:
+            logging.error(str(e) + '\n' + traceback.format_exc())
+            return -1
+
     def get_postprocess_file_path(self) -> Optional[str]:
         return self.llm_post_process_path
 
