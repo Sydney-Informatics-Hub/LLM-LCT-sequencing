@@ -40,15 +40,18 @@ class DatastoreHandler:
         c1_id: int = self.annotation_dao.create_clause(c1_start, c1_end)
         c2_id: int = self.annotation_dao.create_clause(c2_start, c2_end)
 
-        linkage_words: str | float = row[DatastoreHandler.LINKAGE_FIELD]
-        if type(linkage_words) is float:
-            linkage_words = ""
-        predicted_classes: str = row[DatastoreHandler.PREDICTED_FIELD]
-        correct_classes: str = row[DatastoreHandler.CORRECTED_FIELD]
-        reasoning: str = row[DatastoreHandler.REASONING_FIELD]
+        try:
+            linkage_words: str | float = row[DatastoreHandler.LINKAGE_FIELD]
+            if type(linkage_words) is float:
+                linkage_words = ""
+            predicted_classes: str = row[DatastoreHandler.PREDICTED_FIELD]
+            correct_classes: str = row[DatastoreHandler.CORRECTED_FIELD]
+            reasoning: str = row[DatastoreHandler.REASONING_FIELD]
 
-        self.annotation_dao.create_sequence(c1_id, c2_id, linkage_words, predicted_classes,
-                                            correct_classes, reasoning)
+            self.annotation_dao.create_sequence(c1_id, c2_id, linkage_words, predicted_classes,
+                                                correct_classes, reasoning)
+        except KeyError:
+            self.annotation_dao.create_sequence(c1_id, c2_id)
 
     def build_text_datastore(self, text_file_content: str):
         self.annotation_dao.write_text_file(text_file_content)

@@ -32,6 +32,7 @@ class AnnotationService:
         sequence_generator = SequencingTool(clause_df)
         sequence_df = sequence_generator.generate_sequence_df()
         sequence_df.to_csv(pre_llm_sequence_path, index=False, na_rep='')
+        self.datastore_handler.build_clause_datastores(sequence_df)
 
     def initialise_llm_processor(self, llm_examples_path: Path,
                                  llm_definitions_path: Path,
