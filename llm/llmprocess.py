@@ -58,6 +58,8 @@ def save_text(text, filename):
     """
     Save text to a file.
     """
+    if not isinstance(text, str):
+        text = str(text)
     with open(filename, 'w') as f:
         f.write(text)
 
