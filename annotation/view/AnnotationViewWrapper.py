@@ -1,12 +1,9 @@
-import panel as pn
 from panel import Row, Column
 
 from annotation.controller import AnnotationController
 from annotation.view.global_notifiers import LoadingIndicator
 from annotation.view.gui import Controls, TextDisplay, SourceLoader
 from annotation.view.gui.styles import main_column_style, top_bar_style
-
-pn.extension(notifications=True)
 
 
 class AnnotationViewWrapper:

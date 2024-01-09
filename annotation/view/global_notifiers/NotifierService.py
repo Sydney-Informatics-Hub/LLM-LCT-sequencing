@@ -2,6 +2,9 @@ import panel
 
 
 class NotifierService:
+    def __init__(self):
+        panel.extension(notifications=True)
+
     def notify_error(self, error_msg: str, duration: int = 0):
         panel.state.notifications.error(error_msg, duration)
 
