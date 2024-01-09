@@ -9,6 +9,7 @@ from .styles import text_display_style, clause_stylesheet
 
 
 class TextRender:
+    CONTEXT_CHAR_COUNT: int = 200
     """
     Defines text and up to two clauses to be highlighted with custom colours.
     clause_a_range and clause_b_range can be set using the setters. The ranges specified are inclusive
@@ -51,14 +52,14 @@ class TextRender:
             text_ls[linkage_word_range[0]] = "<span class=\"linkage_word\">" + text_ls[linkage_word_range[0]]
             text_ls[linkage_word_range[1]-1] = text_ls[linkage_word_range[1]-1] + "</span>"
 
-        clauses_overlap: bool = self.do_clauses_overlap()
-        if clauses_overlap:
-            overlap_range = [self.clause_b_range[0], self.clause_a_range[1]]
-
+        if self.do_clauses_overlap():
             text_ls[self.clause_a_range[0]] = "<span class=\"first_clause\">" + text_ls[self.clause_a_range[0]]
-            text_ls[overlap_range[0]] = "</span><span class=\"clause_overlap\">" + text_ls[overlap_range[0]]
-            text_ls[overlap_range[1]] = "</span><span class=\"second_clause\">" + text_ls[overlap_range[1]]
-            text_ls[self.clause_b_range[1]] = "</span>" + text_ls[self.clause_b_range[1]]
+            text_ls[self.clause_b_range[0]] = "</span><span class=\"clause_overlap\">" + text_ls[self.clause_b_range[0]]
+            if self.clause_b_range[1] > self.clause_a_range[1]:
+                text_ls[self.clause_a_range[1]] = "</span><span class=\"second_clause\">" + text_ls[self.clause_a_range[1]]
+                text_ls[self.clause_b_range[1]] = "</span>" + text_ls[self.clause_b_range[1]]
+            else:
+                text_ls[self.clause_a_range[1]] = "</span>" + text_ls[self.clause_a_range[1]]
         else:
             if self.clause_a_range is not None:
                 text_ls[self.clause_a_range[0]] = "<span class=\"first_clause\">" + text_ls[self.clause_a_range[0]]
@@ -70,10 +71,14 @@ class TextRender:
 
         window_start: int = 0
         window_end: int = -1
-        if self.clause_a_range is not None:
-            window_start = self.clause_a_range[0]
-        if self.clause_b_range is not None:
-            window_end = self.clause_b_range[1]
+        # if self.clause_a_range is not None:
+        #     window_start = self.clause_a_range[0]# - TextRender.CONTEXT_CHAR_COUNT
+        #     # if window_start < 0:
+        #     #     window_start = 0
+        # if self.clause_b_range is not None:
+        #     window_end = self.clause_b_range[1]# + TextRender.CONTEXT_CHAR_COUNT
+        #     # if window_end > len(text_ls) - 1:
+        #     #     window_end = len(text_ls) - 1
 
         html_text: str = "".join(text_ls[window_start:window_end])
 

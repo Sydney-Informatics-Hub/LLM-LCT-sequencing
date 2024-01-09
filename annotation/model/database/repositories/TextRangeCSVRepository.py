@@ -5,11 +5,10 @@ from pathlib import Path
 from numpy import ndarray
 from pandas import DataFrame, read_csv
 
-from annotation.model.database.repositories import TextRangeRepository
 from annotation.model.database.DatabaseExceptions import DatabaseFieldError, DatabaseEntryError
 
 
-class TextRangeCSVRepository(TextRangeRepository):
+class TextRangeCSVRepository:
     RANGE_ID_FIELD: str = "range_id"
     RANGE_START_FIELD: str = "start"
     RANGE_END_FIELD: str = "end"
