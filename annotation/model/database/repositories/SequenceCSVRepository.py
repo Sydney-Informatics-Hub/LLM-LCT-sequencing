@@ -87,7 +87,7 @@ class SequenceCSVRepository:
          - the LLM reasoning for the classification as a str
         Returns
         -------
-        all_sequences: ndarray[tuple[int]] - all sequences found in the database
+        ndarray[tuple[int]] - all sequences found in the database
         """
         self._read_database_into_cache()
 
@@ -109,7 +109,7 @@ class SequenceCSVRepository:
 
         Returns
         -------
-        sequence: tuple - the sequence to write as a tuple with the following values
+        tuple - the corresponding sequence as a tuple
         """
         id_field = SequenceCSVRepository.SEQUENCE_ID_FIELD
 
@@ -169,7 +169,7 @@ class SequenceCSVRepository:
 
         Returns
         -------
-        sequence_id: int - The integer id of the new sequence
+        int - The integer id of the new sequence
         """
         if ((type(clause_a_id) is not int) or (type(clause_b_id) is not int) or
                 (type(linkage_words) is not str) or (type(predicted_classes) is not str)):
@@ -206,7 +206,7 @@ class SequenceCSVRepository:
     def update(self, sequence_id: int, linkage_words: Optional[str] = None, predicted_classes: Optional[str] = None,
                corrected_classes: Optional[str] = None, reasoning: Optional[str] = None) -> bool:
         """
-        Updates the attributes for the sequence in the database with the given sequence id.
+        Updates the attributes for the sequence in the database with the given sequence_id.
         Returns True if the operation succeeds, False if the operation fails or the sequence is not found.
         Parameters
         ----------
@@ -218,7 +218,7 @@ class SequenceCSVRepository:
 
         Returns
         -------
-        success: bool - True if the operation succeeds, False if the operation fails or the sequence is not found.
+        bool - True if the operation succeeds, False if the operation fails or the sequence is not found.
         """
         id_field = SequenceCSVRepository.SEQUENCE_ID_FIELD
         linkage_field = SequenceCSVRepository.LINKAGE_FIELD

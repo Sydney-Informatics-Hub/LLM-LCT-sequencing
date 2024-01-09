@@ -62,11 +62,35 @@ class TextRangeCSVRepository:
         self._cache_updated = True
 
     def read_all(self) -> ndarray:
+        """
+        Reads all text ranges from the database and returns an array of tuples.
+        Each tuple contains:
+         - integer id of the range
+         - integer index of the start of the text range (inclusive)
+         - integer index of the end of the text range (inclusive)
+        Returns
+        -------
+        ndarray[tuple[int]] - all text ranges found in the database
+        """
         self._read_database_into_cache()
 
         return self._database_cache.values
 
     def read_by_id(self, range_id: int) -> tuple:
+        """
+        Reads the text range from the database corresponding to the given range_id and returns a tuple.
+        The tuple contains:
+         - integer id of the range
+         - integer index of the start of the text range (inclusive)
+         - integer index of the end of the text range (inclusive)
+        Parameters
+        ----------
+        range_id: int - integer id of the sequence
+
+        Returns
+        -------
+        tuple - the corresponding text range as a tuple
+        """
         id_field = TextRangeCSVRepository.RANGE_ID_FIELD
 
         self._read_database_into_cache()
@@ -81,6 +105,18 @@ class TextRangeCSVRepository:
             raise DatabaseEntryError(f"More than one entry found for range_id: {range_id}")
 
     def create(self, start: int, end: int) -> int:
+        """
+        Creates a new text range in the database with the provided start and end ranges.
+        Returns the integer id of the new text range. IDs automatically increment by 1 from the max ID
+        Parameters
+        ----------
+        start: int - the integer index of the start of the text range (inclusive)
+        end: int - the integer index of the end of the text range (inclusive)
+
+        Returns
+        -------
+        int - The integer id of the new text range
+        """
         id_field = TextRangeCSVRepository.RANGE_ID_FIELD
         start_field = TextRangeCSVRepository.RANGE_START_FIELD
         end_field = TextRangeCSVRepository.RANGE_END_FIELD
@@ -113,6 +149,19 @@ class TextRangeCSVRepository:
         return new_id
 
     def update(self, range_id: int, start: int, end: int) -> bool:
+        """
+        Updates the attributes for the text range in the database with the given range_id.
+        Returns True if the operation succeeds, False if the operation fails or the text range is not found.
+        Parameters
+        ----------
+        range_id: int - integer id of the text range
+        start: int - the integer index of the start of the text range (inclusive)
+        end: int - the integer index of the end of the text range (inclusive)
+
+        Returns
+        -------
+        bool - True if the operation succeeds, False if the operation fails or the text range is not found.
+        """
         id_field = TextRangeCSVRepository.RANGE_ID_FIELD
         start_field = TextRangeCSVRepository.RANGE_START_FIELD
         end_field = TextRangeCSVRepository.RANGE_END_FIELD
@@ -131,9 +180,9 @@ class TextRangeCSVRepository:
         else:
             raise DatabaseEntryError(f"More than one entry found for range_id: {range_id}")
 
-    def delete(self) -> bool:
-        raise NotImplementedError()
-
     def clear_database(self):
+        """
+        Deletes all contents from the database, except for column headers
+        """
         self._database_cache = self._database_cache.iloc[0:0]
         self._write_cache_to_database()
