@@ -54,8 +54,6 @@ class UnprocessedModeLoader:
         self.llm_process_button.on_click(self.llm_process_sequences)
         self.cost_time_estimate = Markdown("")
 
-        self.controller.add_update_text_display_callable(self.set_cost_time_estimate)
-
         self.download_preprocessed_modal = Row()
 
         self.component = Column(self.api_key_input,
@@ -72,6 +70,8 @@ class UnprocessedModeLoader:
                                     ),
                                 self.download_preprocessed_modal)
 
+        self.controller.add_update_text_display_callable(self.update_display)
+
     def get_component(self):
         return self.component
 
@@ -80,6 +80,9 @@ class UnprocessedModeLoader:
 
     def set_visible(self, visible: bool):
         self.component.visible = visible
+
+    def update_display(self):
+        self.set_cost_time_estimate()
 
     def write_api_key(self, key: str) -> str:
         if len(key) == 0:
