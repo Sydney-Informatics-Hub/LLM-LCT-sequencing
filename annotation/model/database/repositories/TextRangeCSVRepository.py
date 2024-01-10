@@ -124,7 +124,7 @@ class TextRangeCSVRepository:
         self._read_database_into_cache()
 
         matches: ndarray = self._database_cache.loc[
-            ((self._database_cache[start_field] == start) |
+            ((self._database_cache[start_field] == start) &
              (self._database_cache[end_field] == end)), [id_field]].values
 
         if len(matches) == 1:
@@ -156,7 +156,7 @@ class TextRangeCSVRepository:
         ----------
         range_id: int - integer id of the text range
         start: int - the integer index of the start of the text range (inclusive)
-        end: int - the integer index of the end of the text range (inclusive)
+        end: int - the integer index of the end of the text range (exclusive)
 
         Returns
         -------
