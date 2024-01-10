@@ -111,10 +111,11 @@ class ClauseSequenceControls:
         a_start, a_end = clause_a_range
         b_start, b_end = clause_b_range
 
-        if (a_start <= b_start) and (b_start < a_end):
-            return b_start, a_end
-        if (b_start <= a_start) and (a_start < b_end):
-            return a_start, b_end
+        overlap_start = max(a_start, b_start)
+        overlap_end = min(a_end, b_end)
+
+        if overlap_start < overlap_end:
+            return overlap_start, overlap_end
 
     def get_component(self):
         return self.component
