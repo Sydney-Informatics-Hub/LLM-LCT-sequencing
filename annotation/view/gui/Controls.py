@@ -236,7 +236,7 @@ class SequenceClassificationControls:
         self.revert_to_llm_button = Button(name="Revert to prediction", disabled=True,
                                            button_type="primary", button_style="outline")
         self.revert_to_llm_button.on_click(self.revert_to_prediction)
-        self.llm_reasoning_display = Markdown("", sizing_mode="stretch_width", height_policy="fit")
+        self.llm_reasoning_display = Markdown("**LLM Reasoning:**", sizing_mode="stretch_width", height_policy="fit", visible=False)
         classification_options = self.controller.get_all_classifications()
         # The first option is 'NA', which does not need to be displayed
         self.no_classification_text = classification_options[0]
@@ -256,8 +256,7 @@ class SequenceClassificationControls:
                 align="center"),
             Row(self.classification_selector,
                 align="center"),
-            Row(Markdown("**LLM Reasoning:**"),
-                self.llm_reasoning_display,
+            Row(self.llm_reasoning_display,
                 align="center"),
             Row(selector_bound_fn, visible=False),
             styles=sequence_classification_style,
@@ -278,7 +277,13 @@ class SequenceClassificationControls:
         if len(curr_correct_classes) == 0:
             curr_correct_classes = self.controller.get_predicted_classifications()
         self.classification_selector.value = curr_correct_classes
-        self.llm_reasoning_display.object = self.controller.get_reasoning()
+        reasoning: str = self.controller.get_reasoning()
+        if reasoning == '':
+            self.llm_reasoning_display.object = '**LLM Reasoning:**'
+            self.llm_reasoning_display.visible = False
+        else:
+            self.llm_reasoning_display.object = '**LLM Reasoning:** ' + reasoning
+            self.llm_reasoning_display.visible = True
 
     def revert_to_prediction(self, *_):
         self.classification_selector.value = self.controller.get_predicted_classifications()

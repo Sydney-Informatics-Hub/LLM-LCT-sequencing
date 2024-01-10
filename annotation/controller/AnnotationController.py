@@ -17,6 +17,7 @@ from annotation.view.global_notifiers import NotifierService
 
 class AnnotationController:
     MIN_SEQUENCE_ID: int = 1
+    OPENAI_API_KEY_ENVIRON: str = 'OPENAI_API_KEY'
 
     def __init__(self, annotation_service: AnnotationService,
                  notifier_service: NotifierService,
@@ -34,6 +35,8 @@ class AnnotationController:
         self.llm_zero_prompt_path: Path = llm_zero_prompt_path
         self.llm_cost_path: Path = llm_cost_path
         self.llm_post_process_path: Optional[str] = None
+
+        self.llm_prepared: bool = False
 
         self.annotation_service: AnnotationService = annotation_service
         self.notifier_service: NotifierService = notifier_service
@@ -177,9 +180,9 @@ class AnnotationController:
         self.stop_loading_indicator()
         self.update_displays()
 
-    def prepare_llm_processor(self, llm_definitions: Optional[BytesIO],
-                              llm_examples: Optional[BytesIO],
-                              llm_zero_prompt: Optional[BytesIO]):
+    def prepare_llm_processor(self, llm_definitions: Optional[BytesIO] = None,
+                              llm_examples: Optional[BytesIO] = None,
+                              llm_zero_prompt: Optional[BytesIO] = None):
         if llm_definitions is not None:
             with open(self.llm_definitions_path, 'wb') as f:
                 f.write(llm_definitions.read())
@@ -194,7 +197,13 @@ class AnnotationController:
                                                          self.llm_zero_prompt_path, self.set_loading_msg)
         self.cost_time_estimates = self.annotation_service.calculate_llm_cost_time_estimates(self.llm_cost_path)
 
+        self.llm_prepared = True
+
     def llm_process_sequences(self):
+        if os.environ.get(AnnotationController.OPENAI_API_KEY_ENVIRON) is None:
+            self.display_error("No valid OpenAI API key found. Please enter your OpenAI API key.")
+            return
+
         try:
             self.set_loading_msg("Performing LLM sequence classification")
             llm_process_duration_start = time.time()
@@ -250,7 +259,7 @@ class AnnotationController:
             self.display_error("Something went wrong when validating API Key. Please try again.")
             return False
 
-        os.environ['OPENAI_API_KEY'] = key
+        os.environ[AnnotationController.OPENAI_API_KEY_ENVIRON] = key
         return True
 
     def next_sequence(self):
@@ -285,6 +294,12 @@ class AnnotationController:
             logging.error(str(e) + '\n' + traceback.format_exc())
             new_id = -1
 
+        if self.llm_prepared:
+            # If the LLM has already been prepared, a change to the sequences will require preparing the LLM again
+            self.prepare_llm_processor()
+
+        self.update_displays()
+
         return new_id
 
     def delete_curr_sequence(self):
@@ -300,6 +315,10 @@ class AnnotationController:
         # The sequence index must be decreased if the deleted sequence was not the first sequence
         if self.curr_sequence_id > AnnotationController.MIN_SEQUENCE_ID:
             self.curr_sequence_id -= 1
+
+        if self.llm_prepared:
+            # If the LLM has already been prepared, a change to the sequences will require preparing the LLM again
+            self.prepare_llm_processor()
 
         # The display must be updated to reflect the deletion
         self.update_displays()

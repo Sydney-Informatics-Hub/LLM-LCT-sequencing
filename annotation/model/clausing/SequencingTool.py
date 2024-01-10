@@ -17,7 +17,7 @@ class SequencingTool:
     def __init__(self, clause_df: DataFrame):
         self.clause_df: DataFrame = clause_df
 
-    def generate_sequence_df(self) -> DataFrame:
+    def generate_initial_sequence_df(self) -> DataFrame:
         sequences: list[dict] = []
         seq_id: int = 1
         for idx, clause_a in self.clause_df.iterrows():

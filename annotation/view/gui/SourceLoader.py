@@ -54,6 +54,8 @@ class UnprocessedModeLoader:
         self.llm_process_button.on_click(self.llm_process_sequences)
         self.cost_time_estimate = Markdown("")
 
+        self.controller.add_update_text_display_callable(self.set_cost_time_estimate)
+
         self.download_preprocessed_modal = Row()
 
         self.component = Column(self.api_key_input,
@@ -61,14 +63,13 @@ class UnprocessedModeLoader:
                                     self.llm_definitions_loader.get_component(),
                                     self.llm_examples_loader.get_component(),
                                     self.llm_prompt_loader.get_component()
-                                ),
-                                Divider(),
+                                    ),
                                 Row(self.load_files_button,
                                     Column(self.llm_process_button,
                                            self.cost_time_estimate
-                                    ),
+                                           ),
                                     align="start"
-                                ),
+                                    ),
                                 self.download_preprocessed_modal)
 
     def get_component(self):
@@ -116,7 +117,7 @@ class UnprocessedModeLoader:
         sequence_count: int = self.controller.get_sequence_count()
         estimates: Optional[tuple[float, float]] = self.controller.get_cost_time_estimates()
         if estimates is None:
-            self.cost_time_estimate.object = "..."
+            self.cost_time_estimate.object = " "
             return
 
         formatted_cost: str = f"${estimates[0]:.2f}"
