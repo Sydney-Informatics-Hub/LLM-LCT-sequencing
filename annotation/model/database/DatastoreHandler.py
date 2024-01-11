@@ -72,7 +72,8 @@ class DatastoreHandler:
         master_sequence_df.apply(self._write_database_rows, axis=1)
 
     def update_sequence_datastores(self, master_sequence_df: DataFrame):
-        master_sequence_df.apply(self._update_sequence_row, axis=1)
+        type_df = master_sequence_df.astype(DatastoreHandler.FIELD_DTYPES)
+        type_df.apply(self._update_sequence_row, axis=1)
 
     def update_pre_llm_sequence_file(self, pre_llm_sequence_path: str):
         pre_llm_columns = [DatastoreHandler.SEQ_ID_FIELD,
@@ -150,4 +151,5 @@ class DatastoreHandler:
             sequence_dict: dict = {col: data for col, data in zip(export_columns, sequence_data)}
             export_data.append(sequence_dict)
 
-        return DataFrame(export_data, columns=export_columns)
+        df = DataFrame(export_data, columns=export_columns)
+        return df.astype(DatastoreHandler.FIELD_DTYPES)
