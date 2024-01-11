@@ -48,7 +48,7 @@ class AnnotationDAO:
 
         clause_str_dict: dict[int, str] = {}
         for clause in clauses:
-            clause_text = text[clause.start: clause.end + 1]
+            clause_text = text[clause.get_start():clause.get_end()]
             clause_str_dict[clause.range_id] = clause_text
 
         return clause_str_dict
