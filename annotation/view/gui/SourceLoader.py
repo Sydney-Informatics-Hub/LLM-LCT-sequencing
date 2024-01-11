@@ -22,7 +22,7 @@ class ExportControls:
             filename=f"{ExportControls.FILENAME}.{ftype}",
             callback=bind(self.export, filetype=ftype),
             button_type="primary",
-            button_style="outline") for ftype in self.controller.get_export_file_formats()]
+            button_style="outline") for ftype in self.controller.get_import_export_file_formats()]
         self.export_buttons = Row(
             *file_download_buttons,
             visible=False
@@ -56,7 +56,8 @@ class ExportControls:
 
 
 class FileUploadWidget:
-    def __init__(self, file_description: str, filetypes: str):
+    def __init__(self, file_description: str, filetypes_ls: list[str]):
+        filetypes: str = ', '.join(filetypes_ls)
         self.description = f"**Select {file_description}\n({filetypes})**"
         self.file_input = FileInput(name=self.description, accept=filetypes, multiple=False)
 
@@ -91,10 +92,10 @@ class UnprocessedModeLoader:
         api_status = bind(self.write_api_key, api_key_input.param.value, watch=False)
         self.api_key_input = Row(api_key_input, Markdown(api_status))
 
-        self.source_file_loader = FileUploadWidget("source file [_Required_]", ".docx,.txt")
-        self.llm_definitions_loader = FileUploadWidget("LLM definitions [_Optional_]", ".xlsx")
-        self.llm_examples_loader = FileUploadWidget("LLM examples [_Optional_]", ".xlsx")
-        self.llm_prompt_loader = FileUploadWidget("LLM prompt [_Optional_]", ".txt")
+        self.source_file_loader = FileUploadWidget("source file [_Required_]", ["docx", "txt"])
+        self.llm_definitions_loader = FileUploadWidget("LLM definitions [_Optional_]", ["xlsx"])
+        self.llm_examples_loader = FileUploadWidget("LLM examples [_Optional_]", ["xlsx"])
+        self.llm_prompt_loader = FileUploadWidget("LLM prompt [_Optional_]", ["txt"])
         self.load_files_button = Button(name="Load files", button_type="success", button_style="outline")
         self.load_files_button.on_click(self.load_files)
         self.llm_process_button = Button(name="Process with LLM", button_type="success", button_style="solid", disabled=True)
@@ -211,8 +212,9 @@ class PreprocessedModeLoader:
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
 
-        self.source_file_loader = FileUploadWidget("source file", ".docx,.txt")
-        self.preprocessed_loader = FileUploadWidget("preprocessed sequences", ".csv")
+        self.source_file_loader = FileUploadWidget("source file", ["docx", "txt"])
+        valid_filetypes: list[str] = self.controller.get_import_export_file_formats()
+        self.preprocessed_loader = FileUploadWidget("preprocessed sequences", valid_filetypes)
         self.load_files_button = Button(name="Load",
                                         button_type="success", button_style="outline")
         self.load_files_button.on_click(self.load_files)

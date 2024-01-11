@@ -339,5 +339,5 @@ class AnnotationController:
             self.display_error(str(e))
             return
 
-    def get_export_file_formats(self) -> list[str]:
+    def get_import_export_file_formats(self) -> list[str]:
         return self.import_export_service.get_filetypes()
