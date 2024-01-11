@@ -2,7 +2,7 @@ from typing import Optional, Callable
 
 from panel import Row, Column, bind
 from panel.layout import Divider
-from panel.widgets import Button, CrossSelector, CheckButtonGroup, FileDownload
+from panel.widgets import Button, CheckButtonGroup, FileDownload, MultiSelect
 from panel.pane import Str, HTML, Markdown
 
 from annotation.controller.AnnotationController import AnnotationController
@@ -27,8 +27,8 @@ class ClauseSequenceControls:
                                            button_style="outline")
         self.manage_sequence_button = Button(name="Manage sequence", button_type="primary", button_style="outline",
                                              styles=manage_sequence_button_style)
-        self.delete_sequence_button = Button(name="Delete", button_type="danger", styles=delete_sequence_button_style)
-        self.add_sequence_button = Button(name="Add", button_type="success", styles=add_sequence_button_style)
+        self.delete_sequence_button = Button(name="Delete sequence", button_type="danger", styles=delete_sequence_button_style)
+        self.add_sequence_button = Button(name="Add sequence", button_type="success", styles=add_sequence_button_style)
 
         self.prev_sequence_button.on_click(self.prev_sequence)
         self.next_sequence_button.on_click(self.next_sequence)
@@ -174,8 +174,8 @@ class AddSequenceControls:
         self.controller: AnnotationController = controller
         self.reset_visibility_fn = reset_visibility_fn
 
+        self.clause_selector = MultiSelect(name="Clauses", size=10, width=600)
         self.back_button = Button(name="Back", button_type="danger", button_style="outline")
-        self.clause_selector = CrossSelector(name="Clauses", definition_order=False)
         self.save_sequence_button = Button(name="Save", button_type="success", button_style="outline")
 
         self.back_button.on_click(self.exit_pane)
@@ -183,8 +183,9 @@ class AddSequenceControls:
 
         self.component = Column(
             self.clause_selector,
-            self.back_button,
-            self.save_sequence_button,
+            Row(self.back_button,
+                self.save_sequence_button
+                ),
             align="center"
         )
 
