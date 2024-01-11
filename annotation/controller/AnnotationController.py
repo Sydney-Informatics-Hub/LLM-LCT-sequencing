@@ -223,7 +223,8 @@ class AnnotationController:
         self.stop_loading_indicator()
         self.update_displays()
 
-    def load_preprocessed_sequences(self, preprocessed_content: Optional[BytesIO], preprocessed_filetype: Optional[str]):
+    def load_preprocessed_sequences(self, preprocessed_content: Optional[BytesIO],
+                                    preprocessed_filetype: Optional[str]):
         if preprocessed_content is None:
             self.display_error("No preprocessed file provided")
             return
