@@ -2,7 +2,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Optional, Callable
 
-from pandas import DataFrame, read_csv
+from pandas import DataFrame
 
 from annotation.model.clausing.SequencingTool import SequencingTool
 from annotation.model.data_structures import ClauseSequence, Classification, SequenceTuple
@@ -63,11 +63,7 @@ class AnnotationService:
 
         return self.llm_processor.run()
 
-    def build_datastore(self, preprocessd_file: BytesIO | str):
-        master_sequence_df: DataFrame = read_csv(filepath_or_buffer=preprocessd_file,
-                                                 usecols=DatastoreHandler.REQUIRED_FIELDS,
-                                                 dtype=DatastoreHandler.FIELD_DTYPES)
-
+    def build_datastore(self, master_sequence_df: DataFrame):
         self.datastore_handler.update_sequence_datastores(master_sequence_df)
 
     def get_dataframe_for_export(self) -> DataFrame:

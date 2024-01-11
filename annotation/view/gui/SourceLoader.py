@@ -30,9 +30,11 @@ class FileUploadWidget:
             return file_content
 
     def get_filetype(self) -> Optional[str]:
-        if self.file_input.value is not None:
-            filetype: str = self.file_input.filename.split('.')[-1]
-            return filetype
+        if self.file_input.value is None:
+            return
+        filename_components: list[str] = self.file_input.filename.split('.')
+        if len(filename_components) > 0:
+            return filename_components[-1]
 
 
 class UnprocessedModeLoader:
@@ -54,8 +56,6 @@ class UnprocessedModeLoader:
         self.llm_process_button.on_click(self.llm_process_sequences)
         self.cost_time_estimate = Markdown("")
 
-        self.download_preprocessed_modal = Row()
-
         self.component = Column(self.api_key_input,
                                 Row(self.source_file_loader.get_component(),
                                     self.llm_definitions_loader.get_component(),
@@ -67,8 +67,8 @@ class UnprocessedModeLoader:
                                            self.cost_time_estimate
                                            ),
                                     align="start"
-                                    ),
-                                self.download_preprocessed_modal)
+                                    )
+                                )
 
         self.controller.add_update_text_display_callable(self.update_display)
 
@@ -153,11 +153,6 @@ class UnprocessedModeLoader:
     def llm_process_sequences(self, *_):
         self.controller.llm_process_sequences()
 
-        preprocessed_file_path: Optional[str] = self.controller.get_postprocess_file_path()
-        if preprocessed_file_path is not None:
-            self.download_preprocessed_modal.objects = [
-                FileDownload(file=preprocessed_file_path, filename="llm_preprocessed.csv")]
-
 
 class PreprocessedModeLoader:
     def __init__(self, controller: AnnotationController):
@@ -171,7 +166,7 @@ class PreprocessedModeLoader:
 
         self.component = Column(Row(self.source_file_loader.get_component(),
                                 self.preprocessed_loader.get_component()
-                                ),
+                                    ),
                                 self.load_files_button)
 
     def get_component(self):
@@ -190,9 +185,10 @@ class PreprocessedModeLoader:
             return
         source_filetype: Optional[str] = self.source_file_loader.get_filetype()
         preprocessed_content: Optional[BytesIO] = self.preprocessed_loader.get_file_content()
+        preprocessed_filetype: Optional[str] = self.preprocessed_loader.get_filetype()
 
         self.controller.load_source_file(source_file_content, source_filetype)
-        self.controller.load_preprocessed_sequences(preprocessed_content)
+        self.controller.load_preprocessed_sequences(preprocessed_content, preprocessed_filetype)
 
 
 class SourceLoader:

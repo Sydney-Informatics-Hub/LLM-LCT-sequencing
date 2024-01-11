@@ -8,6 +8,7 @@ from typing import Callable, Optional
 
 import openai
 from openai.error import AuthenticationError, APIConnectionError
+from pandas import DataFrame
 
 from annotation.model import AnnotationService
 from annotation.model.data_structures import SequenceTuple
@@ -63,7 +64,7 @@ class AnnotationController:
             log_level = logging.WARN
 
         logging.basicConfig(
-            filename=log_file_path,
+            filename=str(log_file_path.resolve()),
             filemode='w',
             level=log_level,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -157,9 +158,6 @@ class AnnotationController:
             logging.error(str(e) + '\n' + traceback.format_exc())
             return -1
 
-    def get_postprocess_file_path(self) -> Optional[str]:
-        return self.llm_post_process_path
-
     def get_cost_time_estimates(self) -> Optional[tuple[float, float]]:
         return self.cost_time_estimates
 
@@ -213,7 +211,8 @@ class AnnotationController:
             llm_process_duration_total = time.time() - llm_process_duration_start
             logging.info(f"LLM process time: {llm_process_duration_total} s")
 
-            self.annotation_service.build_datastore(self.llm_post_process_path)
+            sequence_df: DataFrame = self.import_export_service.import_file(self.llm_post_process_path, "csv")
+            self.annotation_service.build_datastore(sequence_df)
 
             self.display_success("LLM classification complete")
         except Exception as e:
@@ -224,12 +223,20 @@ class AnnotationController:
         self.stop_loading_indicator()
         self.update_displays()
 
-    def load_preprocessed_sequences(self, preprocessed_content: BytesIO):
+    def load_preprocessed_sequences(self, preprocessed_content: Optional[BytesIO], preprocessed_filetype: Optional[str]):
+        if preprocessed_content is None:
+            self.display_error("No preprocessed file provided")
+            return
+        if preprocessed_filetype is None:
+            self.display_error("Invalid filetype for preprocessed file")
+            return
+
         try:
             self.set_loading_msg("Loading preprocessed file")
             preprocessed_load_duration_start = time.time()
 
-            self.annotation_service.build_datastore(preprocessed_content)
+            preprocessed_df: DataFrame = self.import_export_service.import_file(preprocessed_content, preprocessed_filetype)
+            self.annotation_service.build_datastore(preprocessed_df)
 
             preprocessed_load__duration_total = time.time() - preprocessed_load_duration_start
             logging.info(f"Preprocessed file load time: {preprocessed_load__duration_total} s")
@@ -325,8 +332,8 @@ class AnnotationController:
 
     def export(self, filetype: str) -> Optional[BytesIO]:
         try:
-            return self.import_export_service.export(filetype, self.annotation_service.get_dataframe_for_export())
-        except ValueError as e:
+            return self.import_export_service.export(self.annotation_service.get_dataframe_for_export(), filetype)
+        except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
             self.display_error(str(e))
             return
