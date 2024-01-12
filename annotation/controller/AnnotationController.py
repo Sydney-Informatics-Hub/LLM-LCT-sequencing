@@ -44,7 +44,7 @@ class AnnotationController:
         self.import_export_service: ImportExportService = import_export_service
 
         self._update_display_callables: list[Callable] = []
-        self.curr_sequence_id: int = 1
+        self.curr_sequence_id: int = AnnotationController.MIN_SEQUENCE_ID
 
         # Stores the cost and time estimates of the LLM processing currently being done.
         self.cost_time_estimates: Optional[dict[str, float]] = None
@@ -112,6 +112,28 @@ class AnnotationController:
 
     def get_all_clause_text(self) -> dict[int, str]:
         return self.annotation_service.get_all_clause_text()
+
+    def get_min_sequence_id(self) -> int:
+        return AnnotationController.MIN_SEQUENCE_ID
+
+    def get_max_sequence_id(self) -> int:
+        return self.get_sequence_count() - 1 + self.get_min_sequence_id()
+
+    def get_current_sequence_id(self) -> int:
+        return self.curr_sequence_id
+
+    def set_current_sequence_id(self, new_sequence_id: int):
+        logging.debug(f"set_current_sequence_id called. Args: new_sequence_id: {new_sequence_id}")
+
+        min_sequence_id: int = self.get_min_sequence_id()
+        max_sequence_id: int = self.get_max_sequence_id()
+        if new_sequence_id > max_sequence_id:
+            new_sequence_id = max_sequence_id
+        if new_sequence_id < min_sequence_id:
+            new_sequence_id = min_sequence_id
+
+        self.curr_sequence_id = new_sequence_id
+        self.update_displays()
 
     def get_curr_sequence_ranges(self) -> Optional[SequenceTuple]:
         try:

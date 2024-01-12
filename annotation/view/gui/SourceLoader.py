@@ -1,8 +1,7 @@
 from io import BytesIO
 from typing import Optional
 
-from panel import Row, Column, HSpacer, Spacer
-from panel.layout import Divider
+from panel import Row, Column
 from panel.pane import Markdown
 from panel.widgets import Button, FileInput, FileDownload, PasswordInput
 from param import bind

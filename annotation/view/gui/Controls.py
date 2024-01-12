@@ -1,8 +1,7 @@
 from typing import Optional, Callable
 
 from panel import Row, Column, bind
-from panel.layout import Divider
-from panel.widgets import Button, CheckButtonGroup, FileDownload, MultiSelect
+from panel.widgets import Button, CheckButtonGroup, MultiSelect, IntInput
 from panel.pane import Str, HTML, Markdown
 
 from annotation.controller.AnnotationController import AnnotationController
@@ -16,7 +15,9 @@ class ClauseSequenceControls:
         self.controller: AnnotationController = controller
         self.add_sequence_controls_fn = add_sequence_controls_fn
 
-        self.title = Str("Clause Pair Sequence", styles=sequence_heading_style)
+        self.title = Str("Clause Pair Sequence", styles=sequence_heading_style, align="center")
+        self.sequence_id_control = IntInput(width=100)
+        sequence_id_bound_fn = bind(self.set_sequence_id, sequence_id=self.sequence_id_control)
         self.clause_a_info = HTML(ClauseSequenceControls.format_first_clause_str(), stylesheets=[clause_stylesheet])
         self.clause_b_info = HTML(ClauseSequenceControls.format_second_clause_str(), stylesheets=[clause_stylesheet])
         self.clause_overlap_info = HTML(ClauseSequenceControls.format_overlap_str(), stylesheets=[clause_stylesheet])
@@ -38,6 +39,8 @@ class ClauseSequenceControls:
 
         self.component = Column(
             Row(self.title,
+                self.sequence_id_control,
+                sequence_id_bound_fn,
                 align="center"),
             Row(
                 self.prev_sequence_button,
@@ -139,6 +142,10 @@ class ClauseSequenceControls:
         linkage_words: Optional[list[str]] = self.controller.get_curr_sequence_linkage_words()
         self.linkage_word_info.object = ClauseSequenceControls.format_linkage_str(linkage_words)
 
+        self.sequence_id_control.value = self.controller.get_current_sequence_id()
+        self.sequence_id_control.start = self.controller.get_min_sequence_id()
+        self.sequence_id_control.end = self.controller.get_max_sequence_id()
+
         self.reset_manage_sequence_pane()
 
     def next_sequence(self, event):
@@ -167,6 +174,10 @@ class ClauseSequenceControls:
 
     def delete_sequence(self, event):
         self.controller.delete_curr_sequence()
+
+    def set_sequence_id(self, sequence_id: int):
+        self.controller.set_current_sequence_id(sequence_id)
+        self.update_display()
 
 
 class AddSequenceControls:
