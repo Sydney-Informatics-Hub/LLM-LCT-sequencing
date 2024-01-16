@@ -100,10 +100,10 @@ pip install -r requirements.txt
 Serve the application locally using the following command:
 
 ```shell
-panel serve annotation-tool.ipynb
+panel serve annotation-tool.ipynb --show
 ```
 
-The application will be usable in a browser at the link provided (http://localhost:5006/annotation-tool)
+The application will launch in a browser at the link provided (http://localhost:5006/annotation-tool)
 
 
 ## References
