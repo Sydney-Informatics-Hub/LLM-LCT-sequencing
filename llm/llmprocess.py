@@ -555,6 +555,71 @@ class LLMProcess():
         logging.debug('Experiment finished! Results saved to folder', self.outpath)
 
         return self.fname_results
+    
+    def run_single(self, 
+                   c1_start, 
+                   c1_end, 
+                   c2_start, 
+                   c2_end, 
+                   filename_prompt_single="../schemas/instruction_singleprompt.txt"):
+        # Generate prompt for single pair
+        window_start = c1_start
+        window_end = c2_end
+        text_chunk_1, text_chunk_2, text_content = self.get_text_chunks(self.filename_text, 
+                                                                        c1_start, 
+                                                                        c1_end,
+                                                                        c2_start,
+                                                                        c2_end,
+                                                                        window_start,
+                                                                        window_end)
+        single_prompt = load_text(filename_prompt_single).format(text_content=text_content,
+                                                                text_chunk_1=text_chunk_1,
+                                                                text_chunk_2=text_chunk_2)
+
+        # Call OpenAI API with the prompt
+        completion_text, tokens_used, chat_id, _ = self.llm.request_chatcompletion(single_prompt, max_tokens=300)
+
+        # Process the response
+        if completion_text.startswith('\n'):
+            completion_text = completion_text[1:]
+
+        # Initialize the result dictionary
+        result = {
+            'predicted_class': None,
+            'predicted_class_name': None,
+            'linkage_words': None,
+            'window_start': window_start,
+            'window_end': window_end,
+            'filename_prompt': None,
+            'filename_response': None,
+            'tokens': tokens_used,
+            'reasoning': None
+        }
+
+        try:
+            # Parse JSON response
+            completion_json = json.loads(completion_text)
+            result['predicted_class'] = completion_json.get('classification')
+            result['predicted_class_name'] = lct_string_to_int(result['predicted_class'])
+            result['linkage_words'] = completion_json.get('linkage word')
+            result['reasoning'] = completion_json.get('reason')
+
+            # Save the prompt and response
+            filename_prompt = f'prompt_{chat_id}.txt'
+            filename_response = f'response_{chat_id}.json'
+            save_text(single_prompt, os.path.join(self.outpath, filename_prompt))
+            with open(os.path.join(self.outpath, filename_response), 'w') as f:
+                json.dump(completion_json, f, indent=2)
+
+            result['filename_prompt'] = filename_prompt
+            result['filename_response'] = filename_response
+
+        except json.JSONDecodeError:
+            # In case the response is not in JSON format
+            result['reasoning'] = 'Response format error'
+
+        return result
+
 
 
 def test_llmprocess(debug = False):
