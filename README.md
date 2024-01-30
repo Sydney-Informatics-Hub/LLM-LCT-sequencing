@@ -78,7 +78,7 @@ Click the `launch binder` link below to use a web version of the tool hosted on 
 
 **Note**: CILogon authentication is required. You can use your institutional, Google or Microsoft account to log in. If you have trouble authenticating, please refer to the [CILogon troubleshooting guide](docs/cilogon-troubleshooting.pdf).
 
-[![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Sydney-Informatics-Hub/LLM-LCT-sequencing/v1.2.1?labpath=annotation-tool.ipynb)
+[![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Sydney-Informatics-Hub/LLM-LCT-sequencing/v1.2.2?labpath=annotation-tool.ipynb)
 
 ### Self-host
 
