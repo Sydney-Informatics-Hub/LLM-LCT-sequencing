@@ -8,6 +8,7 @@ from typing import Callable, Optional
 
 import openai
 from openai.error import AuthenticationError, APIConnectionError
+from pandas import DataFrame
 
 from annotation.model import AnnotationService
 from annotation.model.data_structures import SequenceTuple
@@ -17,6 +18,7 @@ from annotation.view.global_notifiers import NotifierService
 
 class AnnotationController:
     MIN_SEQUENCE_ID: int = 1
+    OPENAI_API_KEY_ENVIRON: str = 'OPENAI_API_KEY'
 
     def __init__(self, annotation_service: AnnotationService,
                  notifier_service: NotifierService,
@@ -35,12 +37,14 @@ class AnnotationController:
         self.llm_cost_path: Path = llm_cost_path
         self.llm_post_process_path: Optional[str] = None
 
+        self.llm_prepared: bool = False
+
         self.annotation_service: AnnotationService = annotation_service
         self.notifier_service: NotifierService = notifier_service
         self.import_export_service: ImportExportService = import_export_service
 
         self._update_display_callables: list[Callable] = []
-        self.curr_sequence_id: int = 1
+        self.curr_sequence_id: int = AnnotationController.MIN_SEQUENCE_ID
 
         # Stores the cost and time estimates of the LLM processing currently being done.
         self.cost_time_estimates: Optional[dict[str, float]] = None
@@ -60,7 +64,7 @@ class AnnotationController:
             log_level = logging.WARN
 
         logging.basicConfig(
-            filename=log_file_path,
+            filename=str(log_file_path.resolve()),
             filemode='w',
             level=log_level,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -109,6 +113,28 @@ class AnnotationController:
     def get_all_clause_text(self) -> dict[int, str]:
         return self.annotation_service.get_all_clause_text()
 
+    def get_min_sequence_id(self) -> int:
+        return AnnotationController.MIN_SEQUENCE_ID
+
+    def get_max_sequence_id(self) -> int:
+        return self.get_sequence_count() - 1 + self.get_min_sequence_id()
+
+    def get_current_sequence_id(self) -> int:
+        return self.curr_sequence_id
+
+    def set_current_sequence_id(self, new_sequence_id: int):
+        logging.debug(f"set_current_sequence_id called. Args: new_sequence_id: {new_sequence_id}")
+
+        min_sequence_id: int = self.get_min_sequence_id()
+        max_sequence_id: int = self.get_max_sequence_id()
+        if new_sequence_id > max_sequence_id:
+            new_sequence_id = max_sequence_id
+        if new_sequence_id < min_sequence_id:
+            new_sequence_id = min_sequence_id
+
+        self.curr_sequence_id = new_sequence_id
+        self.update_displays()
+
     def get_curr_sequence_ranges(self) -> Optional[SequenceTuple]:
         try:
             return self.annotation_service.get_sequence_clause_ranges(self.curr_sequence_id)
@@ -154,9 +180,6 @@ class AnnotationController:
             logging.error(str(e) + '\n' + traceback.format_exc())
             return -1
 
-    def get_postprocess_file_path(self) -> Optional[str]:
-        return self.llm_post_process_path
-
     def get_cost_time_estimates(self) -> Optional[tuple[float, float]]:
         return self.cost_time_estimates
 
@@ -177,9 +200,9 @@ class AnnotationController:
         self.stop_loading_indicator()
         self.update_displays()
 
-    def prepare_llm_processor(self, llm_definitions: Optional[BytesIO],
-                              llm_examples: Optional[BytesIO],
-                              llm_zero_prompt: Optional[BytesIO]):
+    def prepare_llm_processor(self, llm_definitions: Optional[BytesIO] = None,
+                              llm_examples: Optional[BytesIO] = None,
+                              llm_zero_prompt: Optional[BytesIO] = None):
         if llm_definitions is not None:
             with open(self.llm_definitions_path, 'wb') as f:
                 f.write(llm_definitions.read())
@@ -194,7 +217,13 @@ class AnnotationController:
                                                          self.llm_zero_prompt_path, self.set_loading_msg)
         self.cost_time_estimates = self.annotation_service.calculate_llm_cost_time_estimates(self.llm_cost_path)
 
+        self.llm_prepared = True
+
     def llm_process_sequences(self):
+        if os.environ.get(AnnotationController.OPENAI_API_KEY_ENVIRON) is None:
+            self.display_error("No valid OpenAI API key found. Please enter your OpenAI API key.")
+            return
+
         try:
             self.set_loading_msg("Performing LLM sequence classification")
             llm_process_duration_start = time.time()
@@ -204,7 +233,8 @@ class AnnotationController:
             llm_process_duration_total = time.time() - llm_process_duration_start
             logging.info(f"LLM process time: {llm_process_duration_total} s")
 
-            self.annotation_service.build_datastore(self.llm_post_process_path)
+            sequence_df: DataFrame = self.import_export_service.import_file(self.llm_post_process_path, "csv")
+            self.annotation_service.build_datastore(sequence_df)
 
             self.display_success("LLM classification complete")
         except Exception as e:
@@ -215,12 +245,21 @@ class AnnotationController:
         self.stop_loading_indicator()
         self.update_displays()
 
-    def load_preprocessed_sequences(self, preprocessed_content: BytesIO):
+    def load_preprocessed_sequences(self, preprocessed_content: Optional[BytesIO],
+                                    preprocessed_filetype: Optional[str]):
+        if preprocessed_content is None:
+            self.display_error("No preprocessed file provided")
+            return
+        if preprocessed_filetype is None:
+            self.display_error("Invalid filetype for preprocessed file")
+            return
+
         try:
             self.set_loading_msg("Loading preprocessed file")
             preprocessed_load_duration_start = time.time()
 
-            self.annotation_service.build_datastore(preprocessed_content)
+            preprocessed_df: DataFrame = self.import_export_service.import_file(preprocessed_content, preprocessed_filetype)
+            self.annotation_service.build_datastore(preprocessed_df)
 
             preprocessed_load__duration_total = time.time() - preprocessed_load_duration_start
             logging.info(f"Preprocessed file load time: {preprocessed_load__duration_total} s")
@@ -250,7 +289,7 @@ class AnnotationController:
             self.display_error("Something went wrong when validating API Key. Please try again.")
             return False
 
-        os.environ['OPENAI_API_KEY'] = key
+        os.environ[AnnotationController.OPENAI_API_KEY_ENVIRON] = key
         return True
 
     def next_sequence(self):
@@ -285,6 +324,12 @@ class AnnotationController:
             logging.error(str(e) + '\n' + traceback.format_exc())
             new_id = -1
 
+        if self.llm_prepared:
+            # If the LLM has already been prepared, a change to the sequences will require preparing the LLM again
+            self.prepare_llm_processor()
+
+        self.update_displays()
+
         return new_id
 
     def delete_curr_sequence(self):
@@ -301,16 +346,20 @@ class AnnotationController:
         if self.curr_sequence_id > AnnotationController.MIN_SEQUENCE_ID:
             self.curr_sequence_id -= 1
 
+        if self.llm_prepared:
+            # If the LLM has already been prepared, a change to the sequences will require preparing the LLM again
+            self.prepare_llm_processor()
+
         # The display must be updated to reflect the deletion
         self.update_displays()
 
     def export(self, filetype: str) -> Optional[BytesIO]:
         try:
-            return self.import_export_service.export(filetype, self.annotation_service.get_dataframe_for_export())
-        except ValueError as e:
+            return self.import_export_service.export(self.annotation_service.get_dataframe_for_export(), filetype)
+        except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
             self.display_error(str(e))
             return
 
-    def get_export_file_formats(self) -> list[str]:
+    def get_import_export_file_formats(self) -> list[str]:
         return self.import_export_service.get_filetypes()

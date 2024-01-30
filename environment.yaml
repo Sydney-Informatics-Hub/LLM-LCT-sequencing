@@ -298,7 +298,7 @@ dependencies:
       - opencv-python==4.8.1.78
       - opt-einsum==3.3.0
       - panel==1.2.2
-      - param==1.13.0
+      - param==2.0.1
       - pinecone-client==2.2.4
       - protobuf==4.24.3
       - py-cpuinfo==9.0.0
