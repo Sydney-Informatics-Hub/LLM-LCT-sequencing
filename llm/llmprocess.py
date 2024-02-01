@@ -575,6 +575,7 @@ class LLMProcess():
         single_prompt = load_text(filename_prompt_single).format(text_content=text_content,
                                                                 text_chunk_1=text_chunk_1,
                                                                 text_chunk_2=text_chunk_2)
+        #single_prompt = self.gen_singleprompt(text_content, text_chunk_1, text_chunk_2)
 
         # Call OpenAI API with the prompt
         completion_text, tokens_used, chat_id, _ = self.llm.request_chatcompletion(single_prompt, max_tokens=300)
