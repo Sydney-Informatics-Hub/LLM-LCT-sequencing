@@ -5,15 +5,14 @@ from numpy import ndarray
 
 from annotation.model.data_structures import TextRange, ClauseSequence
 from annotation.model.data_structures.Classification import Classification
-from annotation.model.database.repositories import TextRepository, TextTXTRepository, TextRangeRepository, \
-    TextRangeCSVRepository, SequenceRepository, SequenceCSVRepository
+from annotation.model.database.repositories import TextTXTRepository, TextRangeCSVRepository, SequenceCSVRepository
 
 
 class AnnotationDAO:
     def __init__(self, text_database_fn: Path, clause_database_fn: Path, sequence_database_fn: Path):
-        self.text_repository: TextRepository = TextTXTRepository(text_database_fn)
-        self.clause_repository: TextRangeRepository = TextRangeCSVRepository(clause_database_fn)
-        self.sequence_repository: SequenceRepository = SequenceCSVRepository(sequence_database_fn)
+        self.text_repository: TextTXTRepository = TextTXTRepository(text_database_fn)
+        self.clause_repository: TextRangeCSVRepository = TextRangeCSVRepository(clause_database_fn)
+        self.sequence_repository: SequenceCSVRepository = SequenceCSVRepository(sequence_database_fn)
 
     @staticmethod
     def _split_to_int_list(delimited_str: str) -> list[int]:
@@ -49,7 +48,7 @@ class AnnotationDAO:
 
         clause_str_dict: dict[int, str] = {}
         for clause in clauses:
-            clause_text = text[clause.start: clause.end + 1]
+            clause_text = text[clause.get_start():clause.get_end()]
             clause_str_dict[clause.range_id] = clause_text
 
         return clause_str_dict

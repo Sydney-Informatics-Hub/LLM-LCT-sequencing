@@ -9,6 +9,7 @@ from .styles import text_display_style, clause_stylesheet
 
 
 class TextRender:
+    CONTEXT_CHAR_COUNT: int = 200
     """
     Defines text and up to two clauses to be highlighted with custom colours.
     clause_a_range and clause_b_range can be set using the setters. The ranges specified are inclusive
@@ -25,17 +26,18 @@ class TextRender:
             raise TypeError(f"text must be str, but got {type(text)}")
         self.raw_text = text
 
-    def do_clauses_overlap(self) -> bool:
-        """
-        Returns True if both clauses are not None and have overlapping ranges, False otherwise
-        """
+    def get_clause_overlap(self) -> Optional[tuple[int, int]]:
         if (self.clause_a_range is None) or (self.clause_b_range is None):
-            return False
+            return
 
         a_start, a_end = self.clause_a_range
         b_start, b_end = self.clause_b_range
 
-        return ((a_start <= b_start) and (b_start < a_end)) or ((b_start <= a_start) and (a_start < b_end))
+        overlap_start = max(a_start, b_start)
+        overlap_end = min(a_end, b_end)
+
+        if overlap_start < overlap_end:
+            return overlap_start, overlap_end
 
     def _repr_html_(self) -> str:
         text_ls: list[str] = list(self.raw_text)
@@ -51,13 +53,13 @@ class TextRender:
             text_ls[linkage_word_range[0]] = "<span class=\"linkage_word\">" + text_ls[linkage_word_range[0]]
             text_ls[linkage_word_range[1]-1] = text_ls[linkage_word_range[1]-1] + "</span>"
 
-        clauses_overlap: bool = self.do_clauses_overlap()
-        if clauses_overlap:
-            overlap_range = [self.clause_b_range[0], self.clause_a_range[1]]
-
+        clause_overlap: Optional[tuple[int, int]] = self.get_clause_overlap()
+        if clause_overlap is not None:
+            text_ls[clause_overlap[0]] = "<span class=\"clause_overlap\">" + text_ls[clause_overlap[0]]
+            text_ls[clause_overlap[1]] = "</span>" + text_ls[clause_overlap[1]]
             text_ls[self.clause_a_range[0]] = "<span class=\"first_clause\">" + text_ls[self.clause_a_range[0]]
-            text_ls[overlap_range[0]] = "</span><span class=\"clause_overlap\">" + text_ls[overlap_range[0]]
-            text_ls[overlap_range[1]] = "</span><span class=\"second_clause\">" + text_ls[overlap_range[1]]
+            text_ls[self.clause_a_range[1]] = "</span>" + text_ls[self.clause_a_range[1]]
+            text_ls[self.clause_b_range[0]] = "<span class=\"second_clause\">" + text_ls[self.clause_b_range[0]]
             text_ls[self.clause_b_range[1]] = "</span>" + text_ls[self.clause_b_range[1]]
         else:
             if self.clause_a_range is not None:
@@ -71,9 +73,18 @@ class TextRender:
         window_start: int = 0
         window_end: int = -1
         if self.clause_a_range is not None:
-            window_start = self.clause_a_range[0]
+            window_start = min(self.clause_a_range) - TextRender.CONTEXT_CHAR_COUNT
+            window_end = max(self.clause_a_range) + TextRender.CONTEXT_CHAR_COUNT
         if self.clause_b_range is not None:
-            window_end = self.clause_b_range[1]
+            min_range = min(self.clause_b_range) - TextRender.CONTEXT_CHAR_COUNT
+            max_range = max(self.clause_b_range) + TextRender.CONTEXT_CHAR_COUNT
+            window_start = min(window_start, min_range)
+            window_end = max(window_end, max_range)
+
+        if window_start < 0:
+            window_start = 0
+        if window_end >= len(text_ls):
+            window_end = len(text_ls) - 1
 
         html_text: str = "".join(text_ls[window_start:window_end])
 
@@ -141,10 +152,9 @@ class TextRender:
             self.linkage_word_ranges = []
             return
 
-        linkage_word_ranges: list[tuple[int, int]] = []
+        linkage_word_ranges: list[tuple] = []
 
         for linkage_word in linkage_words:
-            # pattern = r'\b' + re.escape(linkage_word) + r'\b'
             pattern = re.escape(linkage_word)
 
             for clause_range in [self.clause_a_range, self.clause_b_range]:

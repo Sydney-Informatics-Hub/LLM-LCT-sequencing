@@ -1,8 +1,7 @@
 from typing import Optional, Callable
 
 from panel import Row, Column, bind
-from panel.layout import Divider
-from panel.widgets import Button, CrossSelector, CheckButtonGroup, FileDownload
+from panel.widgets import Button, CheckButtonGroup, MultiSelect, IntInput
 from panel.pane import Str, HTML, Markdown
 
 from annotation.controller.AnnotationController import AnnotationController
@@ -16,7 +15,9 @@ class ClauseSequenceControls:
         self.controller: AnnotationController = controller
         self.add_sequence_controls_fn = add_sequence_controls_fn
 
-        self.title = Str("Clause Pair Sequence", styles=sequence_heading_style)
+        self.title = Str("Clause Pair Sequence", styles=sequence_heading_style, align="center")
+        self.sequence_id_control = IntInput(width=100)
+        sequence_id_bound_fn = bind(self.set_sequence_id, sequence_id=self.sequence_id_control)
         self.clause_a_info = HTML(ClauseSequenceControls.format_first_clause_str(), stylesheets=[clause_stylesheet])
         self.clause_b_info = HTML(ClauseSequenceControls.format_second_clause_str(), stylesheets=[clause_stylesheet])
         self.clause_overlap_info = HTML(ClauseSequenceControls.format_overlap_str(), stylesheets=[clause_stylesheet])
@@ -27,8 +28,8 @@ class ClauseSequenceControls:
                                            button_style="outline")
         self.manage_sequence_button = Button(name="Manage sequence", button_type="primary", button_style="outline",
                                              styles=manage_sequence_button_style)
-        self.delete_sequence_button = Button(name="Delete", button_type="danger", styles=delete_sequence_button_style)
-        self.add_sequence_button = Button(name="Add", button_type="success", styles=add_sequence_button_style)
+        self.delete_sequence_button = Button(name="Delete sequence", button_type="danger", styles=delete_sequence_button_style)
+        self.add_sequence_button = Button(name="Add sequence", button_type="success", styles=add_sequence_button_style)
 
         self.prev_sequence_button.on_click(self.prev_sequence)
         self.next_sequence_button.on_click(self.next_sequence)
@@ -38,6 +39,8 @@ class ClauseSequenceControls:
 
         self.component = Column(
             Row(self.title,
+                self.sequence_id_control,
+                sequence_id_bound_fn,
                 align="center"),
             Row(
                 self.prev_sequence_button,
@@ -111,10 +114,11 @@ class ClauseSequenceControls:
         a_start, a_end = clause_a_range
         b_start, b_end = clause_b_range
 
-        if (a_start <= b_start) and (b_start < a_end):
-            return b_start, a_end
-        if (b_start <= a_start) and (a_start < b_end):
-            return a_start, b_end
+        overlap_start = max(a_start, b_start)
+        overlap_end = min(a_end, b_end)
+
+        if overlap_start < overlap_end:
+            return overlap_start, overlap_end
 
     def get_component(self):
         return self.component
@@ -137,6 +141,10 @@ class ClauseSequenceControls:
         self.clause_overlap_info.object = ClauseSequenceControls.format_overlap_str(overlap_range)
         linkage_words: Optional[list[str]] = self.controller.get_curr_sequence_linkage_words()
         self.linkage_word_info.object = ClauseSequenceControls.format_linkage_str(linkage_words)
+
+        self.sequence_id_control.value = self.controller.get_current_sequence_id()
+        self.sequence_id_control.start = self.controller.get_min_sequence_id()
+        self.sequence_id_control.end = self.controller.get_max_sequence_id()
 
         self.reset_manage_sequence_pane()
 
@@ -167,14 +175,18 @@ class ClauseSequenceControls:
     def delete_sequence(self, event):
         self.controller.delete_curr_sequence()
 
+    def set_sequence_id(self, sequence_id: int):
+        self.controller.set_current_sequence_id(sequence_id)
+        self.update_display()
+
 
 class AddSequenceControls:
     def __init__(self, controller: AnnotationController, reset_visibility_fn: Callable):
         self.controller: AnnotationController = controller
         self.reset_visibility_fn = reset_visibility_fn
 
+        self.clause_selector = MultiSelect(name="Clauses", size=10, width=600)
         self.back_button = Button(name="Back", button_type="danger", button_style="outline")
-        self.clause_selector = CrossSelector(name="Clauses", definition_order=False)
         self.save_sequence_button = Button(name="Save", button_type="success", button_style="outline")
 
         self.back_button.on_click(self.exit_pane)
@@ -182,8 +194,9 @@ class AddSequenceControls:
 
         self.component = Column(
             self.clause_selector,
-            self.back_button,
-            self.save_sequence_button,
+            Row(self.back_button,
+                self.save_sequence_button
+                ),
             align="center"
         )
 
@@ -235,7 +248,7 @@ class SequenceClassificationControls:
         self.revert_to_llm_button = Button(name="Revert to prediction", disabled=True,
                                            button_type="primary", button_style="outline")
         self.revert_to_llm_button.on_click(self.revert_to_prediction)
-        self.llm_reasoning_display = Markdown("", sizing_mode="stretch_width", height_policy="fit")
+        self.llm_reasoning_display = Markdown("**LLM Reasoning:**", sizing_mode="stretch_width", height_policy="fit", visible=False)
         classification_options = self.controller.get_all_classifications()
         # The first option is 'NA', which does not need to be displayed
         self.no_classification_text = classification_options[0]
@@ -255,8 +268,7 @@ class SequenceClassificationControls:
                 align="center"),
             Row(self.classification_selector,
                 align="center"),
-            Row(Markdown("**LLM Reasoning:**"),
-                self.llm_reasoning_display,
+            Row(self.llm_reasoning_display,
                 align="center"),
             Row(selector_bound_fn, visible=False),
             styles=sequence_classification_style,
@@ -277,7 +289,13 @@ class SequenceClassificationControls:
         if len(curr_correct_classes) == 0:
             curr_correct_classes = self.controller.get_predicted_classifications()
         self.classification_selector.value = curr_correct_classes
-        self.llm_reasoning_display.object = self.controller.get_reasoning()
+        reasoning: str = self.controller.get_reasoning()
+        if reasoning == '':
+            self.llm_reasoning_display.object = '**LLM Reasoning:**'
+            self.llm_reasoning_display.visible = False
+        else:
+            self.llm_reasoning_display.object = '**LLM Reasoning:** ' + reasoning
+            self.llm_reasoning_display.visible = True
 
     def revert_to_prediction(self, *_):
         self.classification_selector.value = self.controller.get_predicted_classifications()
@@ -299,69 +317,17 @@ class SequenceClassificationControls:
             self.controller.set_correct_classifications(self.classification_selector.value)
 
 
-class ExportControls:
-    FILENAME: str = "sequence_annotation"
-
-    def __init__(self, controller: AnnotationController, reset_visibility_fn: Callable):
-        self.controller: AnnotationController = controller
-        self.reset_visibility_fn = reset_visibility_fn
-
-        self.show_options_button = Button(name="Show export options", button_type="success", button_style="outline")
-        file_download_buttons = [FileDownload(
-            label=f"Export to {ftype}",
-            filename=f"{ExportControls.FILENAME}.{ftype}",
-            callback=bind(self.export, filetype=ftype),
-            button_type="primary",
-            button_style="outline") for ftype in self.controller.get_export_file_formats()]
-        self.export_buttons = Row(
-            *file_download_buttons,
-            visible=False
-        )
-
-        self.show_options_button.on_click(self.toggle_options_visibility)
-
-        self.component = Column(
-            self.show_options_button,
-            self.export_buttons,
-            align="start"
-        )
-
-    def get_component(self):
-        return self.component
-
-    def set_visibility(self, is_visible: bool):
-        self.component.visible = is_visible
-
-    def toggle_visibility(self):
-        self.component.visible = not self.component.visible
-
-    def export(self, filetype: str, *_):
-        return self.controller.export(filetype)
-
-    def toggle_options_visibility(self, *_):
-        self.export_buttons.visible = not self.export_buttons.visible
-        if self.export_buttons.visible:
-            self.show_options_button.name = "Hide export options"
-            self.show_options_button.button_style = "solid"
-        else:
-            self.show_options_button.name = "Show export options"
-            self.show_options_button.button_style = "outline"
-
-
 class Controls:
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
         self.clause_sequence_controls = ClauseSequenceControls(self.controller, self.add_sequence_controls)
         self.sequence_classification_controls = SequenceClassificationControls(self.controller)
         self.add_sequence_controls = AddSequenceControls(self.controller, self.reset_visibility)
-        self.export_controls = ExportControls(self.controller, self.reset_visibility)
 
         self.component = Column(
             self.clause_sequence_controls.get_component(),
             self.sequence_classification_controls.get_component(),
             self.add_sequence_controls.get_component(),
-            Divider(),
-            self.export_controls.get_component(),
             styles=controls_style,
             sizing_mode="stretch_width"
         )
@@ -389,6 +355,5 @@ class Controls:
         self.add_sequence_controls.set_visibility(False)
         self.clause_sequence_controls.set_visibility(True)
         self.sequence_classification_controls.set_visibility(True)
-        self.export_controls.set_visibility(True)
 
         self.update_display()

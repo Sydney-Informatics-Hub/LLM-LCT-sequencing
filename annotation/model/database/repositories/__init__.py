@@ -1,7 +1,3 @@
-from .SequenceRepository import SequenceRepository
-from .TextRepository import TextRepository
-from .TextRangeRepository import TextRangeRepository
-
 from .SequenceCSVRepository import SequenceCSVRepository
 from .TextTXTRepository import TextTXTRepository
 from .TextRangeCSVRepository import TextRangeCSVRepository

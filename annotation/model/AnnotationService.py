@@ -2,7 +2,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Optional, Callable
 
-from pandas import DataFrame, read_csv
+from pandas import DataFrame
 
 from annotation.model.clausing.SequencingTool import SequencingTool
 from annotation.model.data_structures import ClauseSequence, Classification, SequenceTuple
@@ -30,14 +30,14 @@ class AnnotationService:
 
         clause_df: DataFrame = source_loader.generate_clause_dataframe()
         sequence_generator = SequencingTool(clause_df)
-        sequence_df = sequence_generator.generate_sequence_df()
-        sequence_df.to_csv(pre_llm_sequence_path, index=False, na_rep='')
+        sequence_df = sequence_generator.generate_initial_sequence_df()
         self.datastore_handler.build_clause_datastores(sequence_df)
 
     def initialise_llm_processor(self, llm_examples_path: Path,
                                  llm_definitions_path: Path,
                                  llm_zero_prompt_path: Path,
                                  progress_update_fn: Callable):
+        self.datastore_handler.update_pre_llm_sequence_file(str(pre_llm_sequence_path.resolve()))
         self.llm_processor = LLMProcess(filename_pairs=str(pre_llm_sequence_path.resolve()),
                                         filename_text=str(ref_text_ds_path.resolve()),
                                         filename_examples=str(llm_examples_path.resolve()),
@@ -63,11 +63,7 @@ class AnnotationService:
 
         return self.llm_processor.run()
 
-    def build_datastore(self, preprocessd_file: BytesIO | str):
-        master_sequence_df: DataFrame = read_csv(filepath_or_buffer=preprocessd_file,
-                                                 usecols=DatastoreHandler.REQUIRED_FIELDS,
-                                                 dtype=DatastoreHandler.FIELD_DTYPES)
-
+    def build_datastore(self, master_sequence_df: DataFrame):
         self.datastore_handler.update_sequence_datastores(master_sequence_df)
 
     def get_dataframe_for_export(self) -> DataFrame:

@@ -1,17 +1,61 @@
 from io import BytesIO
 from typing import Optional
 
-from panel import Row, Column
-from panel.layout import Divider
+from panel import Row, Column, bind
 from panel.pane import Markdown
 from panel.widgets import Button, FileInput, FileDownload, PasswordInput
-from param import bind
 
 from annotation.controller import AnnotationController
 
 
+class ExportControls:
+    FILENAME: str = "sequence_annotation"
+
+    def __init__(self, controller: AnnotationController):
+        self.controller: AnnotationController = controller
+
+        self.show_options_button = Button(name="Show export options", button_type="success", button_style="outline")
+        file_download_buttons = [FileDownload(
+            label=f"Export to {ftype}",
+            filename=f"{ExportControls.FILENAME}.{ftype}",
+            callback=bind(self.export, filetype=ftype),
+            button_type="primary",
+            button_style="outline") for ftype in self.controller.get_import_export_file_formats()]
+        self.export_buttons = Row(
+            *file_download_buttons,
+            visible=False
+        )
+
+        self.show_options_button.on_click(self.toggle_options_visibility)
+
+        self.component = Column(
+            self.show_options_button,
+            self.export_buttons,
+            align="start"
+        )
+
+    def get_component(self):
+        return self.component
+
+    def set_button_disabled(self, is_disabled: bool):
+        self.show_options_button.disabled = is_disabled
+
+    def export(self, filetype: str, *_):
+        return self.controller.export(filetype)
+
+    def toggle_options_visibility(self, *_):
+        self.export_buttons.visible = not self.export_buttons.visible
+        if self.export_buttons.visible:
+            self.show_options_button.name = "Hide export options"
+            self.show_options_button.button_style = "solid"
+        else:
+            self.show_options_button.name = "Show export options"
+            self.show_options_button.button_style = "outline"
+
+
 class FileUploadWidget:
-    def __init__(self, file_description: str, filetypes: str):
+    def __init__(self, file_description: str, filetypes_ls: list[str]):
+        filetypes: str = ', '.join(filetypes_ls)
         self.description = f"**Select {file_description}\n({filetypes})**"
         self.file_input = FileInput(name=self.description, accept=filetypes, multiple=False)
 
@@ -30,9 +74,11 @@ class FileUploadWidget:
             return file_content
 
     def get_filetype(self) -> Optional[str]:
-        if self.file_input.value is not None:
-            filetype: str = self.file_input.filename.split('.')[-1]
-            return filetype
+        if self.file_input.value is None:
+            return
+        filename_components: list[str] = self.file_input.filename.split('.')
+        if len(filename_components) > 0:
+            return filename_components[-1]
 
 
 class UnprocessedModeLoader:
@@ -44,32 +90,38 @@ class UnprocessedModeLoader:
         api_status = bind(self.write_api_key, api_key_input.param.value, watch=False)
         self.api_key_input = Row(api_key_input, Markdown(api_status))
 
-        self.source_file_loader = FileUploadWidget("source file [_Required_]", ".docx,.txt")
-        self.llm_definitions_loader = FileUploadWidget("LLM definitions [_Optional_]", ".xlsx")
-        self.llm_examples_loader = FileUploadWidget("LLM examples [_Optional_]", ".xlsx")
-        self.llm_prompt_loader = FileUploadWidget("LLM prompt [_Optional_]", ".txt")
+        self.source_file_loader = FileUploadWidget("source file [_Required_]", ["docx", "txt"])
+        self.llm_definitions_loader = FileUploadWidget("LLM definitions [_Optional_]", ["xlsx"])
+        self.llm_examples_loader = FileUploadWidget("LLM examples [_Optional_]", ["xlsx"])
+        self.llm_prompt_loader = FileUploadWidget("LLM prompt [_Optional_]", ["txt"])
         self.load_files_button = Button(name="Load files", button_type="success", button_style="outline")
         self.load_files_button.on_click(self.load_files)
         self.llm_process_button = Button(name="Process with LLM", button_type="success", button_style="solid", disabled=True)
         self.llm_process_button.on_click(self.llm_process_sequences)
         self.cost_time_estimate = Markdown("")
-
-        self.download_preprocessed_modal = Row()
+        self.export_controls = ExportControls(self.controller)
+        self.export_controls.set_button_disabled(True)
 
         self.component = Column(self.api_key_input,
                                 Row(self.source_file_loader.get_component(),
                                     self.llm_definitions_loader.get_component(),
                                     self.llm_examples_loader.get_component(),
                                     self.llm_prompt_loader.get_component()
-                                ),
-                                Divider(),
+                                    ),
                                 Row(self.load_files_button,
                                     Column(self.llm_process_button,
-                                           self.cost_time_estimate
+                                           self.cost_time_estimate,
+                                           sizing_mode='stretch_width'
+                                           ),
+                                    Column(
+                                        self.export_controls.get_component(),
+                                        sizing_mode='stretch_width'
                                     ),
                                     align="start"
-                                ),
-                                self.download_preprocessed_modal)
+                                    )
+                                )
+
+        self.controller.add_update_text_display_callable(self.update_display)
 
     def get_component(self):
         return self.component
@@ -79,6 +131,9 @@ class UnprocessedModeLoader:
 
     def set_visible(self, visible: bool):
         self.component.visible = visible
+
+    def update_display(self):
+        self.set_cost_time_estimate()
 
     def write_api_key(self, key: str) -> str:
         if len(key) == 0:
@@ -116,7 +171,7 @@ class UnprocessedModeLoader:
         sequence_count: int = self.controller.get_sequence_count()
         estimates: Optional[tuple[float, float]] = self.controller.get_cost_time_estimates()
         if estimates is None:
-            self.cost_time_estimate.object = "..."
+            self.cost_time_estimate.object = " "
             return
 
         formatted_cost: str = f"${estimates[0]:.2f}"
@@ -145,30 +200,39 @@ class UnprocessedModeLoader:
         self.set_cost_time_estimate()
 
         self.llm_process_button.disabled = False
+        self.export_controls.set_button_disabled(False)
 
     def llm_process_sequences(self, *_):
         self.controller.llm_process_sequences()
-
-        preprocessed_file_path: Optional[str] = self.controller.get_postprocess_file_path()
-        if preprocessed_file_path is not None:
-            self.download_preprocessed_modal.objects = [
-                FileDownload(file=preprocessed_file_path, filename="llm_preprocessed.csv")]
 
 
 class PreprocessedModeLoader:
     def __init__(self, controller: AnnotationController):
         self.controller: AnnotationController = controller
 
-        self.source_file_loader = FileUploadWidget("source file", ".docx,.txt")
-        self.preprocessed_loader = FileUploadWidget("preprocessed sequences", ".csv")
+        self.source_file_loader = FileUploadWidget("source file", ["docx", "txt"])
+        valid_filetypes: list[str] = self.controller.get_import_export_file_formats()
+        self.preprocessed_loader = FileUploadWidget("preprocessed sequences", valid_filetypes)
         self.load_files_button = Button(name="Load",
                                         button_type="success", button_style="outline")
         self.load_files_button.on_click(self.load_files)
+        self.export_controls = ExportControls(self.controller)
+        self.export_controls.set_button_disabled(True)
 
         self.component = Column(Row(self.source_file_loader.get_component(),
                                 self.preprocessed_loader.get_component()
-                                ),
-                                self.load_files_button)
+                                    ),
+                                Row(Column(
+                                        self.load_files_button,
+                                        sizing_mode='stretch_width'
+                                    ),
+                                    Column(
+                                        self.export_controls.get_component(),
+                                        sizing_mode='stretch_width'
+                                    ),
+                                    align="start"
+                                    )
+                                )
 
     def get_component(self):
         return self.component
@@ -186,9 +250,11 @@ class PreprocessedModeLoader:
             return
         source_filetype: Optional[str] = self.source_file_loader.get_filetype()
         preprocessed_content: Optional[BytesIO] = self.preprocessed_loader.get_file_content()
+        preprocessed_filetype: Optional[str] = self.preprocessed_loader.get_filetype()
 
         self.controller.load_source_file(source_file_content, source_filetype)
-        self.controller.load_preprocessed_sequences(preprocessed_content)
+        self.controller.load_preprocessed_sequences(preprocessed_content, preprocessed_filetype)
+        self.export_controls.set_button_disabled(False)
 
 
 class SourceLoader:

@@ -8,10 +8,10 @@ from annotation.model.database import AnnotationDAO
 
 class DatastoreHandler:
     SEQ_ID_FIELD: str = "sequence_id"
-    C1_NAME_FIELD: str = "c1"
+    C1_TEXT_FIELD: str = "c1"
     C1_START_FIELD: str = "c1_start"
     C1_END_FIELD: str = "c1_end"
-    C2_NAME_FIELD: str = "c2"
+    C2_TEXT_FIELD: str = "c2"
     C2_START_FIELD: str = "c2_start"
     C2_END_FIELD: str = "c2_end"
     LINKAGE_FIELD: str = "linkage_words"
@@ -72,12 +72,31 @@ class DatastoreHandler:
         master_sequence_df.apply(self._write_database_rows, axis=1)
 
     def update_sequence_datastores(self, master_sequence_df: DataFrame):
-        master_sequence_df.apply(self._update_sequence_row, axis=1)
+        type_df = master_sequence_df.astype(DatastoreHandler.FIELD_DTYPES)
+        type_df.apply(self._update_sequence_row, axis=1)
+
+    def update_pre_llm_sequence_file(self, pre_llm_sequence_path: str):
+        pre_llm_columns = [DatastoreHandler.SEQ_ID_FIELD,
+                           DatastoreHandler.C1_START_FIELD, DatastoreHandler.C1_END_FIELD,
+                           DatastoreHandler.C2_START_FIELD, DatastoreHandler.C2_END_FIELD]
+        pre_llm_data: list[dict] = []
+
+        sequences: list[ClauseSequence] = self.annotation_dao.get_all_sequences()
+        for sequence in sequences:
+            sequence_data: list = [sequence.get_id()]
+            sequence_data.extend(sequence.get_first_clause().get_range())
+            sequence_data.extend(sequence.get_second_clause().get_range())
+
+            sequence_dict: dict = {col: data for col, data in zip(pre_llm_columns, sequence_data)}
+            pre_llm_data.append(sequence_dict)
+
+        pre_llm_df = DataFrame(pre_llm_data, columns=pre_llm_columns)
+        pre_llm_df.to_csv(pre_llm_sequence_path, index=False, na_rep='')
 
     def build_export_dataframe(self) -> DataFrame:
-        export_columns = [DatastoreHandler.SEQ_ID_FIELD, DatastoreHandler.C1_NAME_FIELD,
+        export_columns = [DatastoreHandler.SEQ_ID_FIELD, DatastoreHandler.C1_TEXT_FIELD,
                           DatastoreHandler.C1_START_FIELD, DatastoreHandler.C1_END_FIELD,
-                          DatastoreHandler.C2_NAME_FIELD, DatastoreHandler.C2_START_FIELD,
+                          DatastoreHandler.C2_TEXT_FIELD, DatastoreHandler.C2_START_FIELD,
                           DatastoreHandler.C2_END_FIELD, DatastoreHandler.LINKAGE_FIELD,
                           DatastoreHandler.PREDICTED_FIELD, DatastoreHandler.PREDICTED_NAME_FIELD,
                           DatastoreHandler.CORRECTED_FIELD, DatastoreHandler.CORRECTED_NAME_FIELD,
@@ -132,4 +151,5 @@ class DatastoreHandler:
             sequence_dict: dict = {col: data for col, data in zip(export_columns, sequence_data)}
             export_data.append(sequence_dict)
 
-        return DataFrame(export_data, columns=export_columns)
+        df = DataFrame(export_data, columns=export_columns)
+        return df.astype(DatastoreHandler.FIELD_DTYPES)

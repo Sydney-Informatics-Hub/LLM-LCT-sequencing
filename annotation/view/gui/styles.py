@@ -50,11 +50,11 @@ manage_sequence_button_style = {
 }
 
 delete_sequence_button_style = {
-    "width": "65px"
+    "width": "130px"
 }
 
 add_sequence_button_style = {
-    "width": "65px"
+    "width": "130px"
 }
 
 sequence_classification_style = {
