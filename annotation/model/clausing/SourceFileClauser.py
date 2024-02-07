@@ -4,6 +4,7 @@ from pandas import DataFrame
 
 import spacy
 from spacy.tokens.doc import Doc
+from spacy.tokens.token import Token
 from docx import Document
 from docx.table import Table
 
@@ -23,6 +24,7 @@ class SourceFileClauser:
             self.source_text = SourceFileClauser.read_txt(source_file)
         else:
             raise ValueError(f"File type {filetype} is not a valid source file type")
+        self.doc = None
 
     def get_text(self) -> str:
         return self.source_text
@@ -95,14 +97,35 @@ class SourceFileClauser:
         for start_idx, end_idx, subtree_toks in SourceFileClauser._get_clause_subtrees(doc):
             item = {START_FIELD: start_idx, END_FIELD: end_idx,
                     CLAUSE_FIELD: ''.join(tok.text_with_ws
-                                      for tok in subtree_toks
-                                      if not tok.is_space)}
+                                          for tok in subtree_toks
+                                          if not tok.is_space)}
+            items.append(item)
+
+        return items
+
+    @staticmethod
+    def _get_sentence_items(doc: Doc):
+        items: list[dict] = []
+        for sent in doc.sents:
+            start_idx: int = sent[0].idx
+            end_tok: Token = sent[-1]
+            end_idx: int = end_tok.idx + len(end_tok.text)
+            item = {START_FIELD: start_idx, END_FIELD: end_idx,
+                    CLAUSE_FIELD: sent.text_with_ws}
             items.append(item)
 
         return items
 
     def generate_clause_dataframe(self) -> DataFrame:
-        doc = SourceFileClauser.NLP(self.source_text)
-        clauses: list[dict] = SourceFileClauser._get_clause_items(doc)
+        if self.doc is None:
+            self.doc = SourceFileClauser.NLP(self.source_text)
+        clauses: list[dict] = SourceFileClauser._get_clause_items(self.doc)
 
-        return DataFrame(clauses, columns=["clause", "start_idx", "end_idx"])
+        return DataFrame(clauses, columns=[CLAUSE_FIELD, START_FIELD, END_FIELD])
+
+    def generate_sentence_dataframe(self) -> DataFrame:
+        if self.doc is None:
+            self.doc = SourceFileClauser.NLP(self.source_text)
+        sentences: list[dict] = SourceFileClauser._get_sentence_items(self.doc)
+
+        return DataFrame(sentences, columns=[CLAUSE_FIELD, START_FIELD, END_FIELD])

@@ -4,39 +4,48 @@ CLAUSE_FIELD: str = "clause"
 START_FIELD: str = "start_idx"
 END_FIELD: str = "end_idx"
 
+SEQUENCE_ID_FIELD: str = "sequence_id"
+C1_START_FIELD: str = "c1_start"
+C1_END_FIELD: str = "c1_end"
+C2_START_FIELD: str = "c2_start"
+C2_END_FIELD: str = "c2_end"
+
+CLAUSE_PAIR_RANGE: int = 1
+SENTENCE_PAIR_RANGE: int = 1
+
 
 class SequencingTool:
-    SEQUENCE_ID_FIELD: str = "sequence_id"
-    C1_START_FIELD: str = "c1_start"
-    C1_END_FIELD: str = "c1_end"
-    C2_START_FIELD: str = "c2_start"
-    C2_END_FIELD: str = "c2_end"
-
-    CLAUSE_PAIR_RANGE: int = 1
-
-    def __init__(self, clause_df: DataFrame):
+    def __init__(self, clause_df: DataFrame, sentence_df: DataFrame):
         self.clause_df: DataFrame = clause_df
+        self.sentence_df: DataFrame = sentence_df
 
-    def generate_initial_sequence_df(self) -> DataFrame:
-        sequences: list[dict] = []
-        seq_id: int = 1
-        for idx, clause_a in self.clause_df.iterrows():
+    def _generate_groupings(self, item_df: DataFrame, item_range: int) -> list[dict]:
+        groupings: list[dict] = []
+        for idx, item_a in item_df.iterrows():
+            idx: int
             curr_seq_idx: int = int(idx)
-            for i in range(curr_seq_idx+1, curr_seq_idx+SequencingTool.CLAUSE_PAIR_RANGE+1):
+            for i in range(curr_seq_idx + 1, curr_seq_idx + item_range + 1):
                 try:
-                    clause_b = self.clause_df.iloc[i]
+                    item_b = item_df.iloc[i]
                 except IndexError:
                     continue
 
-                sequence: dict = {
-                    SequencingTool.SEQUENCE_ID_FIELD: seq_id,
-                    SequencingTool.C1_START_FIELD: int(clause_a[START_FIELD]),
-                    SequencingTool.C1_END_FIELD: int(clause_a[END_FIELD]),
-                    SequencingTool.C2_START_FIELD: int(clause_b[START_FIELD]),
-                    SequencingTool.C2_END_FIELD: int(clause_b[END_FIELD]),
+                grouping: dict = {
+                    C1_START_FIELD: int(item_a[START_FIELD]),
+                    C1_END_FIELD: int(item_a[END_FIELD]),
+                    C2_START_FIELD: int(item_b[START_FIELD]),
+                    C2_END_FIELD: int(item_b[END_FIELD]),
                 }
-                seq_id += 1
+                groupings.append(grouping)
 
-                sequences.append(sequence)
+        return groupings
+
+    def generate_initial_sequence_df(self) -> DataFrame:
+        sequences: list[dict] = self._generate_groupings(self.clause_df, CLAUSE_PAIR_RANGE)
+        sequences.extend(self._generate_groupings(self.sentence_df, SENTENCE_PAIR_RANGE))
+        sequences.sort(key=lambda s: (s[C1_START_FIELD], s[C1_END_FIELD], s[C2_START_FIELD], s[C2_END_FIELD]))
+
+        for seq_idx, seq in enumerate(sequences):
+            seq[SEQUENCE_ID_FIELD] = seq_idx + 1
 
         return DataFrame(sequences, dtype=int)
