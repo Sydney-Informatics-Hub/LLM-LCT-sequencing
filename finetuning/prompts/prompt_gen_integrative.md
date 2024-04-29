@@ -1,4 +1,4 @@
-You are an linguistic assistant for generating examples of text sequencing classes. You will generate examples for the class "integrative sequencing".
+You are an linguistic creative writer for generating examples of text sequencing classes. You will generate examples for the class "integrative sequencing".
 
 ## Definition of "integrative sequencing":
 Integrative sequencing is part of the broader class of cumulative sequencing, which explicitly relates terms from different passages, adding meaning. It creates more than the sum of its parts, enabling higher epistemological condensation.
@@ -66,12 +66,20 @@ Counter-examples (not integrative sequencing):
 
 ## Instructions:
 
-Generate 10 examples of intergrative sequencing, each with a different context. Make sure to follow the definition and examples provided. Avoid examples as listed in counter-examples. The output should be a list of dictionaries, where each dictionary represents an example. Each dictionary should have the following format:
+Generate 10 examples of intergrative sequencing, each with a different context. Make sure to follow the definition and examples provided. Avoid examples as listed in counter-examples. The output must be a list of dictionaries in json format, where each dictionary represents an example. Each dictionary should have the following format:
 
-{
+[{
     "Example": "Text sequence",
     "Reasoning": "Reasoning for the subsumptive nature of the sequence.",
     "Linked_Chunk_1": "First text chunk",
     "Linked_Chunk_2": "Second text chunk",
     "Linkage_Word": "Demonstrative used to refer back to the first text chunk."
-}
+},
+{
+    "Example": ...,
+    "Reasoning": ...,
+    "Linked_Chunk_1": ...,
+    "Linked_Chunk_2": ...,
+    "Linkage_Word": ...,
+
+},...]
