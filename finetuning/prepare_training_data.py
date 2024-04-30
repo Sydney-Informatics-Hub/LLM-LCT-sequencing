@@ -104,22 +104,43 @@ prompt_temp = (
     "Text passage: {text_content}"
 )
 
+### Dict for abbreviation of sequence classes
+sequence_classes = {
+    'integrative': 'INT',
+    'subsumptive': 'SUB',
+    'consequential': 'CON',
+    'sequential': 'SEQ',
+    'incoherent': 'INC',
+    'coherent': 'COH',
+    'repetitive': 'REP',
+    'reiterative': 'REI'
+}
 
-def create_finetuning_examples(systems, queries, responses):
+# generate list of queries and responses from train and val data
+train_queries = []
+train_responses = []
+for index, row in train_data.iterrows():
+    query = prompt_temp.format(clause1=row['Linked Chunk 1'], clause2=row['Linked Chunk 2'], text_content=row['Sequence'])
+    train_queries.append(query)
+    sequence_abr = sequence_classes[row['Types']]
+    train_responses.append(sequence_abr)
+
+
+def create_finetuning_examples(system, queries, responses):
     """
     Create finetuning examples for OpenAI API from the training data.
 
-    :param systems: list, list of system prompts
+    :param system: str, system prompt
     :param queries: list, list of user queries
     :param responses: list, list of assistant responses
 
     :return: list, list of finetuning examples
     """
-    if len(systems) != len(queries) or len(queries) != len(responses):
+    if len(queries) != len(responses):
         raise ValueError("All input lists must be of the same length")
 
     examples = []
-    for system, query, response in zip(systems, queries, responses):
+    for query, response in zip(queries, responses):
         example = {
             "messages": [
                 {"role": "system", "content": system},
@@ -130,6 +151,10 @@ def create_finetuning_examples(systems, queries, responses):
         examples.append(example)
 
     return examples
+
+
+
+
 
 
 ### Upload Data to OpenAI
