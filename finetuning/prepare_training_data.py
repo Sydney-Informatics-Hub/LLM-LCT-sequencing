@@ -105,7 +105,31 @@ prompt_temp = (
 )
 
 
+def create_finetuning_examples(systems, queries, responses):
+    """
+    Create finetuning examples for OpenAI API from the training data.
 
+    :param systems: list, list of system prompts
+    :param queries: list, list of user queries
+    :param responses: list, list of assistant responses
+
+    :return: list, list of finetuning examples
+    """
+    if len(systems) != len(queries) or len(queries) != len(responses):
+        raise ValueError("All input lists must be of the same length")
+
+    examples = []
+    for system, query, response in zip(systems, queries, responses):
+        example = {
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": query},
+                {"role": "assistant", "content": response}
+            ]
+        }
+        examples.append(example)
+
+    return examples
 
 
 ### Upload Data to OpenAI
