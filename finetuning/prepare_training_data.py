@@ -1,6 +1,7 @@
 # prepare training data
 
 import pandas as pd
+import json
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
@@ -125,14 +126,24 @@ for index, row in train_data.iterrows():
     sequence_abr = sequence_classes[row['Types']]
     train_responses.append(sequence_abr)
 
+val_queries = []
+val_responses = []
+for index, row in val_data.iterrows():
+    query = prompt_temp.format(clause1=row['Linked Chunk 1'], clause2=row['Linked Chunk 2'], text_content=row['Sequence'])
+    val_queries.append(query)
+    sequence_abr = sequence_classes[row['Types']]
+    val_responses.append(sequence_abr)
 
-def create_finetuning_examples(system, queries, responses):
+
+def create_finetuning_examples(system, queries, responses, outpath):
     """
     Create finetuning examples for OpenAI API from the training data.
+    Save the examples to a jsonl file.
 
     :param system: str, system prompt
     :param queries: list, list of user queries
     :param responses: list, list of assistant responses
+    :param outpath: str, path and filename to save the finetuning examples
 
     :return: list, list of finetuning examples
     """
@@ -150,21 +161,17 @@ def create_finetuning_examples(system, queries, responses):
         }
         examples.append(example)
 
+    with open(outpath, 'w') as file:
+        for example in examples:
+            file.write(json.dumps(example) + '\n')
+
     return examples
 
 
+examples_train = create_finetuning_examples(prompt_system, train_queries, train_responses, outpath='../../data/data_openai_train.json')
+examples_val = create_finetuning_examples(prompt_system, val_queries, val_responses, outpath='../../data/data_openai_val.json')
 
 
-
-
-### Upload Data to OpenAI
-from openai import OpenAI
-client = OpenAI()
-
-client.files.create(
-  file=open("mydata.jsonl", "rb"),
-  purpose="fine-tune"
-)
 
 
 
