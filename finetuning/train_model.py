@@ -17,6 +17,7 @@ import pandas as pd
 from openai import OpenAI
 import requests
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Paths to training and validation data in OpenAI format
 fname_train_openai = '../../data/data_openai_train.jsonl'
@@ -196,6 +197,7 @@ def query_gptmodel(clause1,
     Returns:
     ----------
     - str: The predicted type.
+    - float: Log probability of the prediction.
     """
     query = prompt_template.format(clause1=clause1, clause2=clause2, text_content=text_content)
     response = client.chat.completions.create(
@@ -205,8 +207,10 @@ def query_gptmodel(clause1,
       {"role": "user", "content": query},
     ],
     temperature=0.0,
-    max_tokens=2)
-    return response.choices[0].message.content
+    max_tokens=2,
+    logprobs = True)
+    return response.choices[0].message.content, response.choices[0].logprobs.content[0].logprob
+
 
 # read fname_prompt_system and fname_prompt_query
 with open(fname_prompt_system, 'r') as f:
@@ -215,7 +219,7 @@ with open(fname_prompt_query, 'r') as f:
     prompt_query = f.read()
 
 ### Evaluation of the model
-# system prompt = 407 tokens, reponse = 1 token
+# system prompt = ~415 tokens, reponse = 1 token
 # read fname_val_df
 df_val = pd.read_excel(fname_val_df)
 # generate result dataframe
@@ -224,16 +228,18 @@ df_results.rename(columns={'Types': 'True Type'}, inplace=True)
 df_results['Predicted Type'] = None
 df_results['Correct'] = None
 df_results['True Type']= df_results['True Type'].apply(lambda x: sequence_classes[x])
+df_results['Confidence'] = None
 # iterate over the validation dataset and evaluate the model
 for idx, row in df_results.iterrows():
     clause1 = row['Linked Chunk 1']
     clause2 = row['Linked Chunk 2']
     text_content = row['Sequence']
     type_true = row['True Type']
-    type_pred = query_gptmodel(clause1, clause2, text_content, prompt_query, prompt_system, model_name)
+    type_pred, conf = query_gptmodel(clause1, clause2, text_content, prompt_query, prompt_system, model_name)
     print(f"True type: {type_true}, Predicted type: {type_pred}  Correct: {type_true == type_pred}")
     df_results.loc[idx, 'Predicted Type'] = type_pred
     df_results.loc[idx, 'Correct'] = type_true == type_pred
+    df_results.loc[idx, 'Confidence'] = round(np.exp(conf),6)
 
 # save the results to a file
 fname_results = os.path.join(outpath_model, 'results_eval.xlsx')
@@ -242,6 +248,8 @@ df_results.to_excel(fname_results, index=False)
 # Calculate the accuracy and precision
 accuracy = df_results['Correct'].mean()
 print(f"Accuracy: {accuracy:.2f}")
+
+
 
 
 
