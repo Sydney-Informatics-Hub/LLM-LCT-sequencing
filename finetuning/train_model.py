@@ -3,11 +3,11 @@ Script for finetuning OpenAI model with custom dataset and evaluation of model.
 
 All results are saved in the directory: outpath_model (set paths and filenames below)
 
-Prerequisites: formatted trainig and validation dataset in jsonl format.
+Prerequisites: formatted training and validation dataset in jsonl format.
 (see for dataset preparation: prepare_training_data.py)
 
 Note that the finetuning requires the latest version of the openai library, which is not available in the current LCT environment.
-For finetuning create a new environment with the required libraries: see requirements_finetuning.txt
+For finetuning create a new environment with the required libraries: see env_lct_finetuning.yaml
 
 or change to conda env "lct_finetuning" if installed
 """
@@ -115,6 +115,23 @@ print("job ID:", job_id)
 
 
 # Check status. Note: you will also receive email notification when the job is done
+# Check status every 5 minutes
+import time
+while True:
+    status = client.fine_tuning.jobs.retrieve(job_id)
+    print("status:", status.status)
+    if status.status == "succeeded":
+        break
+    elif status.status == "failed":
+        print("Model training failed")
+        break
+    elif status.status == "running":
+        print("Model is still training...")
+    else:
+        print("status:", status.status)
+        break
+    time.sleep(300)
+    
 status = client.fine_tuning.jobs.retrieve(job_id)
 if status.status == "succeeded":
     print("Model is ready for use!")
@@ -303,15 +320,9 @@ print(f"Mean Accuracy: {accuracy:.2f}")
 
 
 """
-### To do: plot the confusion matrix
-calculate other metrics
+To do: 
 
 - for finetuning check for output token size is 1
 - check finetuning parameters for longer training given that performance did not stabilize
-- check confusion metrics and metrics where to add more data --> REI low
-- create env file for lct_finetuning
 - add batch processing for predictions
-
 """
-
-
