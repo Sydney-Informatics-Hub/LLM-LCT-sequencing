@@ -182,6 +182,20 @@ def query_gptmodel(clause1,
                    prompt_system, 
                    model_name):
     """
+    Query the GPT model with the given clauses and text content.
+
+    Parameters:
+    ----------
+    - clause1 (str): The first clause.
+    - clause2 (str): The second clause.
+    - text_content (str): The text content.
+    - prompt_template (str): The template for the query.
+    - prompt_system (str): The system prompt.
+    - model_name (str): The name of the finetuned model.
+
+    Returns:
+    ----------
+    - str: The predicted type.
     """
     query = prompt_template.format(clause1=clause1, clause2=clause2, text_content=text_content)
     response = client.chat.completions.create(
@@ -191,7 +205,7 @@ def query_gptmodel(clause1,
       {"role": "user", "content": query},
     ],
     temperature=0.0,
-    max_tokens=1)
+    max_tokens=2)
     return response.choices[0].message.content
 
 # read fname_prompt_system and fname_prompt_query
@@ -201,16 +215,33 @@ with open(fname_prompt_query, 'r') as f:
     prompt_query = f.read()
 
 ### Evaluation of the model
+# system prompt = 407 tokens, reponse = 1 token
 # read fname_val_df
 df_val = pd.read_excel(fname_val_df)
-test = df_val.sample(1)
-clause1 = test['Linked Chunk 1'].values[0]
-clause2 = test['Linked Chunk 2'].values[0]
-text_content = test['Sequence'].values[0]
-type_true = test['Types'].values[0]
-type_true = sequence_classes[type_true]
-#CompletionUsage(completion_tokens=1, prompt_tokens=407, total_tokens=408)
+# generate result dataframe
+df_results = df_val[['Linked Chunk 1', 'Linked Chunk 2', 'Sequence', 'Types']].copy()
+df_results.rename(columns={'Types': 'True Type'}, inplace=True)
+df_results['Predicted Type'] = None
+df_results['Correct'] = None
+df_results['True Type']= df_results['True Type'].apply(lambda x: sequence_classes[x])
+# iterate over the validation dataset and evaluate the model
+for idx, row in df_results.iterrows():
+    clause1 = row['Linked Chunk 1']
+    clause2 = row['Linked Chunk 2']
+    text_content = row['Sequence']
+    type_true = row['True Type']
+    type_pred = query_gptmodel(clause1, clause2, text_content, prompt_query, prompt_system, model_name)
+    print(f"True type: {type_true}, Predicted type: {type_pred}  Correct: {type_true == type_pred}")
+    df_results.loc[idx, 'Predicted Type'] = type_pred
+    df_results.loc[idx, 'Correct'] = type_true == type_pred
 
+# save the results to a file
+fname_results = os.path.join(outpath_model, 'results_eval.xlsx')
+df_results.to_excel(fname_results, index=False)
+
+# Calculate the accuracy and precision
+accuracy = df_results['Correct'].mean()
+print(f"Accuracy: {accuracy:.2f}")
 
 
 
