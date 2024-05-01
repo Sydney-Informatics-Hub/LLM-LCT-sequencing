@@ -1,5 +1,7 @@
 """
-Finetune OpenAI model with custom dataset.
+Script for finetuning OpenAI model with custom dataset and evaluation of model.
+
+All results are saved in the directory: outpath_model (set paths and filenames below)
 
 Prerequisites: formatted trainig and validation dataset in jsonl format.
 (see for dataset preparation: prepare_training_data.py)
@@ -18,6 +20,10 @@ from openai import OpenAI
 import requests
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
+from sklearn.metrics import classification_report
+
+### Settings 
 
 # Paths to training and validation data in OpenAI format
 fname_train_openai = '../../data/data_openai_train.jsonl'
@@ -42,14 +48,13 @@ sequence_classes = {
     'subsumptive': 'SUB',
     'consequential': 'CON',
     'sequential': 'SEQ',
-    'incoherent': 'INC',
-    'coherent': 'COH',
+    'reiterative': 'REI',
     'repetitive': 'REP',
-    'reiterative': 'REI'
+    'coherent': 'COH',
+    'incoherent': 'INC',
 }
 
 # add incremental version vx to path_model, add 1 to the last version
-# get the last version
 versions = [int(f.split('v')[-1]) for f in os.listdir(outpath_model) if f.startswith('v')]
 if versions:
     version = max(versions) + 1
@@ -134,7 +139,6 @@ else:
 
 model_name = status.fine_tuned_model
 # 'ft:gpt-3.5-turbo-0125:personal::9JcKFSbA'
-# Your fine-tuning job ftjob-PVko8HAPBBCjHVvRMoqlH3Sg has successfully completed, and a new model ft:gpt-3.5-turbo-0125:personal::9JcKFSbA has been created for your use. 
 
 result_file_content = client.files.retrieve(model_result_files[0])
 
@@ -143,7 +147,6 @@ print(result_file_content)
 result_filename = result_file_content.filename
 
 # download file
-# from: https://api.openai.com/v1/files/{file_id}/content
 url = f"https://api.openai.com/v1/files/{result_file_content.id}/content"
 r = requests.get(url, headers={"Authorization": f"Bearer {openai.api_key}"})
 if r.status_code == 200:
@@ -174,7 +177,7 @@ plt.savefig(os.path.join(outpath_model,'loss_vs_step.png'))
 plt.show()
 
 
-### Evaluation of the model
+### Prediction and Evaluation of the Model
 
 def query_gptmodel(clause1, 
                    clause2, 
@@ -245,12 +248,70 @@ for idx, row in df_results.iterrows():
 fname_results = os.path.join(outpath_model, 'results_eval.xlsx')
 df_results.to_excel(fname_results, index=False)
 
+
+def gen_confusion_matrix(classes_test, classes_pred, class_labels, outfname_plot, plot_show = True):
+    """
+    generate confusion matrix and plots it.
+
+    Parameters
+    ----------
+    classes_test: list of true classes
+    classes_pred: list of predicted classes
+    class_labels: list of all class labels
+    outfname_plot: path + filename for output plot
+    plot_show: if True show plot
+
+    Return
+    ----------
+    array: 2D confusion matrix
+    """
+
+    matrix = pd.crosstab(pd.Series(classes_test, name='Actual'),
+                         pd.Series(classes_pred, name='Predicted'),
+                         dropna=False)
+    
+    # Reindex the matrix to ensure all classes are present
+    #matrix = matrix.reindex(index=class_labels + [np.nan], columns=class_labels + [np.nan], fill_value=0)
+    matrix = matrix.reindex(index=class_labels, columns=class_labels, fill_value=0)
+
+    # plot matrix
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(matrix, annot=True, cmap='Blues', fmt='g')
+    plt.savefig(outfname_plot, dpi=300)
+    if plot_show:
+        plt.show()
+    return matrix
+
+
+
+seq_classes = list(sequence_classes.keys())
+class_labels = [sequence_classes[seq_class] for seq_class in seq_classes]
+classes_test = df_results['True Type'].values
+classes_pred = df_results['Predicted Type'].values
+outfname_plot = os.path.join(outpath_model, 'confusion_matrix.png')
+confusion_matrix = gen_confusion_matrix(classes_test, classes_pred, class_labels, outfname_plot)
+
+
+class_report = classification_report(classes_test, classes_pred, target_names=class_labels, output_dict=True)
+# print classification report with pandas
+df_class_report = pd.DataFrame(class_report).transpose()
+print(df_class_report)
+df_class_report.to_excel(os.path.join(outpath_model, 'classification_report.xlsx'), index=True)
 # Calculate the accuracy and precision
 accuracy = df_results['Correct'].mean()
-print(f"Accuracy: {accuracy:.2f}")
+print(f"Mean Accuracy: {accuracy:.2f}")
 
 
+"""
+### To do: plot the confusion matrix
+calculate other metrics
 
+- for finetuning check for output token size is 1
+- check finetuning parameters for longer training given that performance did not stabilize
+- check confusion metrics and metrics where to add more data --> REI low
+- create env file for lct_finetuning
+- add batch processing for predictions
 
+"""
 
 
