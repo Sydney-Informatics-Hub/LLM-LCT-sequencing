@@ -16,6 +16,7 @@ import openai
 import pandas as pd
 from openai import OpenAI
 import requests
+import matplotlib.pyplot as plt
 
 # Paths to training and validation data in OpenAI format
 fname_train_openai = '../../data/data_openai_train.jsonl'
@@ -154,4 +155,27 @@ model_dict = status.dict()
 fname_model_info = os.path.join(outpath_model,'model_info.json')
 with open(os.path.join(fname_model_info), 'w') as f:
     json.dump(model_dict, f, indent=4)
+
+
+# Analyse finetuning job performance
+df_metrics = pd.read_csv(result_filename)
+df_metrics.dropna(inplace=True)
+# plot 'train_loss' and 'valid_loss' vs 'step' as line plot
+plt.figure(figsize=(10, 6))
+plt.plot(df_metrics['step'], df_metrics['train_loss'], label='train_loss', color='skyblue')
+plt.plot(df_metrics['step'], df_metrics['valid_loss'], label='valid_loss', color='salmon')
+plt.xlabel('step')
+plt.ylabel('loss')
+plt.legend()
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.savefig(os.path.join(outpath_model,'loss_vs_step.png'))
+plt.show()
+
+
+### Evaluation of the model
+def predict(prompt_system, prompt_query, model_name, model_id):
+    """
+    """
+    pass
 
