@@ -174,8 +174,44 @@ plt.show()
 
 
 ### Evaluation of the model
-def predict(prompt_system, prompt_query, model_name, model_id):
+
+def query_gptmodel(clause1, 
+                   clause2, 
+                   text_content, 
+                   prompt_template, 
+                   prompt_system, 
+                   model_name):
     """
     """
-    pass
+    query = prompt_template.format(clause1=clause1, clause2=clause2, text_content=text_content)
+    response = client.chat.completions.create(
+    model=model_name,
+    messages=[
+      {"role": "system", "content": prompt_system},
+      {"role": "user", "content": query},
+    ],
+    temperature=0.0,
+    max_tokens=1)
+    return response.choices[0].message.content
+
+# read fname_prompt_system and fname_prompt_query
+with open(fname_prompt_system, 'r') as f:
+    prompt_system = f.read()
+with open(fname_prompt_query, 'r') as f:
+    prompt_query = f.read()
+
+### Evaluation of the model
+# read fname_val_df
+df_val = pd.read_excel(fname_val_df)
+test = df_val.sample(1)
+clause1 = test['Linked Chunk 1'].values[0]
+clause2 = test['Linked Chunk 2'].values[0]
+text_content = test['Sequence'].values[0]
+type_true = test['Types'].values[0]
+type_true = sequence_classes[type_true]
+#CompletionUsage(completion_tokens=1, prompt_tokens=407, total_tokens=408)
+
+
+
+
 
