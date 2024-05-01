@@ -1,4 +1,11 @@
-# prepare training data
+""" Script for preparing the training data for OpenAI finetuning
+
+The script loads the training data, cleans it, splits it into train and validation sets, 
+and converts it into the format required for OpenAI finetuning.
+
+The system prompt and query template are defined in step 3. The system prompt is the same for all examples,
+Note that the system prompt has to be the same as the one used for applying the finetuned model in the application later.
+"""
 
 import pandas as pd
 import numpy as np
@@ -38,11 +45,9 @@ data.dropna(subset=['Types'], inplace=True)
 data.drop(columns='Unnamed: 0', inplace=True)
 data.drop(columns='Notes', inplace=True)
 
-
 # count of each type
 type_counts = data['Types'].value_counts()
 print(type_counts)
-
 
 
 ### 2. Split Data into Train and Test Set
@@ -88,7 +93,6 @@ val_data.to_excel('../../data/trainingdata_valset.xlsx')
 ### 3. Convert Train and Test data for OpenAI Finetuning
 
 # Define system prompt
-
 prompt_system = (
     "You are analysing the relationships between text clauses and classifying them into one of eight sequencing categories:\n"
     "**Integrative (INT)** - Refers back to a stretch of text without nominalizing verbs or adjectives, utilizing demonstratives and third-person non-gendered pronouns.\n"
@@ -111,6 +115,12 @@ prompt_temp = (
     "Clause 2: {clause2}\n"
     "Text passage: {text_content}"
 )
+
+# save system prompt and query template to a file
+with open('../../data/prompt_system.txt', 'w') as file:
+    file.write(prompt_system)
+with open('../../data/prompt_template.txt', 'w') as file:
+    file.write(prompt_temp)
 
 ### Dict for abbreviation of sequence classes
 sequence_classes = {
