@@ -22,6 +22,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from sklearn.metrics import classification_report
+import time
+from io import StringIO
+import csv
 
 ### Settings 
 
@@ -54,6 +57,75 @@ sequence_classes = {
     'incoherent': 'INC',
 }
 
+
+def query_gptmodel(clause1, 
+                   clause2, 
+                   text_content, 
+                   prompt_template, 
+                   prompt_system, 
+                   model_name):
+    """
+    Query the GPT model with the given clauses and text content.
+
+    Parameters:
+    ----------
+    - clause1 (str): The first clause.
+    - clause2 (str): The second clause.
+    - text_content (str): The text content.
+    - prompt_template (str): The template for the query.
+    - prompt_system (str): The system prompt.
+    - model_name (str): The name of the finetuned model.
+
+    Returns:
+    ----------
+    - str: The predicted type.
+    - float: Log probability of the prediction.
+    """
+    query = prompt_template.format(clause1=clause1, clause2=clause2, text_content=text_content)
+    response = client.chat.completions.create(
+    model=model_name,
+    messages=[
+      {"role": "system", "content": prompt_system},
+      {"role": "user", "content": query},
+    ],
+    temperature=0.0,
+    max_tokens=2,
+    logprobs = True)
+    return response.choices[0].message.content, response.choices[0].logprobs.content[0].logprob
+
+def gen_confusion_matrix(classes_test, classes_pred, class_labels, outfname_plot, plot_show = True):
+    """
+    generate confusion matrix and plots it.
+
+    Parameters
+    ----------
+    classes_test: list of true classes
+    classes_pred: list of predicted classes
+    class_labels: list of all class labels
+    outfname_plot: path + filename for output plot
+    plot_show: if True show plot
+
+    Return
+    ----------
+    array: 2D confusion matrix
+    """
+
+    matrix = pd.crosstab(pd.Series(classes_test, name='Actual'),
+                         pd.Series(classes_pred, name='Predicted'),
+                         dropna=False)
+    
+    # Reindex the matrix to ensure all classes are present
+    #matrix = matrix.reindex(index=class_labels + [np.nan], columns=class_labels + [np.nan], fill_value=0)
+    matrix = matrix.reindex(index=class_labels, columns=class_labels, fill_value=0)
+
+    # plot matrix
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(matrix, annot=True, cmap='Blues', fmt='g')
+    plt.savefig(outfname_plot, dpi=300)
+    if plot_show:
+        plt.show()
+    return matrix
+
 # add incremental version vx to path_model, add 1 to the last version
 versions = [int(f.split('v')[-1]) for f in os.listdir(outpath_model) if f.startswith('v')]
 if versions:
@@ -73,13 +145,17 @@ if not os.path.isfile(os.path.join(outpath_model, os.path.basename(fname_train_d
     os.system(f'cp {fname_train_df} {outpath_model}')
 if not os.path.isfile(os.path.join(outpath_model, os.path.basename(fname_val_df))):
     os.system(f'cp {fname_val_df} {outpath_model}')
+# copy prompt and system prompt
+if not os.path.isfile(os.path.join(outpath_model, os.path.basename(fname_prompt_system))):
+    os.system(f'cp {fname_prompt_system} {outpath_model}')
+if not os.path.isfile(os.path.join(outpath_model, os.path.basename(fname_prompt_query))):
+    os.system(f'cp {fname_prompt_query} {outpath_model}')
 
 
 # initiate OpenAI client
 with open(fname_openai_key) as f:
     openai.api_key = f.read().strip()
 client = OpenAI(api_key = openai.api_key)
-
 
 # Upload training and validation data to OpenAI
 response_train = client.files.create(
@@ -99,12 +175,15 @@ print("train ID:", train_id)
 print("val ID:", val_id)
 # val ID: file-z0uHUloR2pvyr8OemMhu0wgj
 
+suffix = f'lct_v{version:02d}'
+
 # Create a fine-tuned mode
 job = client.fine_tuning.jobs.create(
   training_file=train_id, 
   validation_file=val_id,
   model="gpt-3.5-turbo",
-  hyperparameters={"n_epochs": 3}
+  hyperparameters={"n_epochs": 3, "learning_rate_multiplier": 2.0, "batch_size": 1},
+  suffix = suffix
 )
 job_id = job.id
 print("job ID:", job_id)
@@ -116,7 +195,7 @@ print("job ID:", job_id)
 
 # Check status. Note: you will also receive email notification when the job is done
 # Check status every 5 minutes
-import time
+
 while True:
     status = client.fine_tuning.jobs.retrieve(job_id)
     print("status:", status.status)
@@ -163,13 +242,20 @@ result_file_content = client.files.retrieve(model_result_files[0])
 print(result_file_content)
 result_filename = result_file_content.filename
 
+#content = client.files.content(result_file_content.id)
+#with open(os.path.join(outpath_model,result_filename), "wb") as f:
+#    f.write(content.text.encode("utf-8"))
+
 # download file
 url = f"https://api.openai.com/v1/files/{result_file_content.id}/content"
 r = requests.get(url, headers={"Authorization": f"Bearer {openai.api_key}"})
 if r.status_code == 200:
     with open(os.path.join(outpath_model,result_filename), "wb") as f:
+        # convert response content from binary 
+        #decoded_content = r.content.decode('utf-8')
         f.write(r.content)
     print(f"Downloaded result file to {result_filename}")
+
 
 # Save model information to a json file
 model_dict = status.dict()
@@ -178,59 +264,26 @@ with open(os.path.join(fname_model_info), 'w') as f:
     json.dump(model_dict, f, indent=4)
 
 
-# Analyse finetuning job performance
-df_metrics = pd.read_csv(result_filename)
-df_metrics.dropna(inplace=True)
-# plot 'train_loss' and 'valid_loss' vs 'step' as line plot
-plt.figure(figsize=(10, 6))
-plt.plot(df_metrics['step'], df_metrics['train_loss'], label='train_loss', color='skyblue')
-plt.plot(df_metrics['step'], df_metrics['valid_loss'], label='valid_loss', color='salmon')
-plt.xlabel('step')
-plt.ylabel('loss')
-plt.legend()
-plt.grid(axis='y', linestyle='--', alpha=0.7)
-plt.tight_layout()
-plt.savefig(os.path.join(outpath_model,'loss_vs_step.png'))
-plt.show()
+try:
+    # Analyse finetuning job performance
+    df_metrics = pd.read_csv(os.path.join(outpath_model,result_filename))
+    df_metrics.dropna(inplace=True)
+    # plot 'train_loss' and 'valid_loss' vs 'step' as line plot
+    plt.figure(figsize=(10, 6))
+    plt.plot(df_metrics['step'], df_metrics['train_loss'], label='train_loss', color='skyblue')
+    plt.plot(df_metrics['step'], df_metrics['valid_loss'], label='valid_loss', color='salmon')
+    plt.xlabel('step')
+    plt.ylabel('loss')
+    plt.legend()
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.savefig(os.path.join(outpath_model,'loss_vs_step.png'))
+    plt.show()
+except Exception as e:
+    print(f"Error: {e}")
 
 
-### Prediction and Evaluation of the Model
-
-def query_gptmodel(clause1, 
-                   clause2, 
-                   text_content, 
-                   prompt_template, 
-                   prompt_system, 
-                   model_name):
-    """
-    Query the GPT model with the given clauses and text content.
-
-    Parameters:
-    ----------
-    - clause1 (str): The first clause.
-    - clause2 (str): The second clause.
-    - text_content (str): The text content.
-    - prompt_template (str): The template for the query.
-    - prompt_system (str): The system prompt.
-    - model_name (str): The name of the finetuned model.
-
-    Returns:
-    ----------
-    - str: The predicted type.
-    - float: Log probability of the prediction.
-    """
-    query = prompt_template.format(clause1=clause1, clause2=clause2, text_content=text_content)
-    response = client.chat.completions.create(
-    model=model_name,
-    messages=[
-      {"role": "system", "content": prompt_system},
-      {"role": "user", "content": query},
-    ],
-    temperature=0.0,
-    max_tokens=2,
-    logprobs = True)
-    return response.choices[0].message.content, response.choices[0].logprobs.content[0].logprob
-
+### Evaluation of the Model
 
 # read fname_prompt_system and fname_prompt_query
 with open(fname_prompt_system, 'r') as f:
@@ -238,7 +291,6 @@ with open(fname_prompt_system, 'r') as f:
 with open(fname_prompt_query, 'r') as f:
     prompt_query = f.read()
 
-### Evaluation of the model
 # system prompt = ~415 tokens, reponse = 1 token
 # read fname_val_df
 df_val = pd.read_excel(fname_val_df)
@@ -265,42 +317,7 @@ for idx, row in df_results.iterrows():
 fname_results = os.path.join(outpath_model, 'results_eval.xlsx')
 df_results.to_excel(fname_results, index=False)
 
-
-def gen_confusion_matrix(classes_test, classes_pred, class_labels, outfname_plot, plot_show = True):
-    """
-    generate confusion matrix and plots it.
-
-    Parameters
-    ----------
-    classes_test: list of true classes
-    classes_pred: list of predicted classes
-    class_labels: list of all class labels
-    outfname_plot: path + filename for output plot
-    plot_show: if True show plot
-
-    Return
-    ----------
-    array: 2D confusion matrix
-    """
-
-    matrix = pd.crosstab(pd.Series(classes_test, name='Actual'),
-                         pd.Series(classes_pred, name='Predicted'),
-                         dropna=False)
-    
-    # Reindex the matrix to ensure all classes are present
-    #matrix = matrix.reindex(index=class_labels + [np.nan], columns=class_labels + [np.nan], fill_value=0)
-    matrix = matrix.reindex(index=class_labels, columns=class_labels, fill_value=0)
-
-    # plot matrix
-    plt.figure(figsize=(10, 7))
-    sns.heatmap(matrix, annot=True, cmap='Blues', fmt='g')
-    plt.savefig(outfname_plot, dpi=300)
-    if plot_show:
-        plt.show()
-    return matrix
-
-
-
+# generate confusion matrix
 seq_classes = list(sequence_classes.keys())
 class_labels = [sequence_classes[seq_class] for seq_class in seq_classes]
 classes_test = df_results['True Type'].values
@@ -308,7 +325,7 @@ classes_pred = df_results['Predicted Type'].values
 outfname_plot = os.path.join(outpath_model, 'confusion_matrix.png')
 confusion_matrix = gen_confusion_matrix(classes_test, classes_pred, class_labels, outfname_plot)
 
-
+# generate classification report
 class_report = classification_report(classes_test, classes_pred, target_names=class_labels, output_dict=True)
 # print classification report with pandas
 df_class_report = pd.DataFrame(class_report).transpose()
@@ -318,11 +335,3 @@ df_class_report.to_excel(os.path.join(outpath_model, 'classification_report.xlsx
 accuracy = df_results['Correct'].mean()
 print(f"Mean Accuracy: {accuracy:.2f}")
 
-
-"""
-To do: 
-
-- for finetuning check for output token size is 1
-- check finetuning parameters for longer training given that performance did not stabilize
-- add batch processing for predictions
-"""
