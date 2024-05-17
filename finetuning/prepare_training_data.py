@@ -89,24 +89,59 @@ plt.show()
 train_data.to_excel('../../data/trainingdata_trainset.xlsx')
 val_data.to_excel('../../data/trainingdata_valset.xlsx')
 
+##  or load from saved files
+train_data = pd.read_excel('../../data/trainingdata_trainset.xlsx')
+val_data = pd.read_excel('../../data/trainingdata_valset.xlsx')
+
 
 ### 3. Convert Train and Test data for OpenAI Finetuning
 
 # Define system prompt
+
+prompt_system = (
+    "You are analysing the relationships between text clauses and classifying them into one of eight sequencing categories:\n"
+    "**Integrative Sequencing (INT)** - Uses demonstratives and third-person pronouns to refer back to large text segments without nominalizing any part of that text, often incorporating definite determiners with semiotic entities.\n"  
+    "**Subsumptive Sequencing (SUB)** - Refers back to text by transforming a verb or adjective into a noun that directly denotes the action or quality from the prior text, using demonstratives for reference.\n"  
+    "**Consequential Sequencing (CON)** - Links passages by causal, conditional, or purpose-driven connectors, distinctly marked at the beginning, between, or both sections of the passages, indicating logical relationships.\n"  
+    "**Sequential Sequencing (SEQ)** - Orders passages temporally or logically using specific linkers placed between clauses or at the start of sequences, focusing on the sequence of events or arguments.\n"  
+    "**Incoherent Sequencing (INC)** - Connects unrelated passages typically initiated by informal continuatives indicating a shift or interruption, without logical continuity.\n"  
+    "**Coherent Sequencing (COH)** - Maintains logical flow between passages using simple connectors like 'and' or 'whilst,' ensuring smooth continuity without complex references.\n"  
+    "**Repetitive Sequencing (REP)** - Repeats passages or clauses verbatim, emphasizing exact duplication of content without additional meaning or variation.\n"  
+    "**Reiterative Sequencing (REI)** - Restates similar content with minor variations to add or clarify meaning, often using paraphrasing connectors like 'that is' or 'in other words.'\n"
+    "Instructions:\n Given a text passage and two text clauses, classify the relationship between the two clauses into one of the eight categories above.\n"
+    "You must only output the 3 character abbreviation of the class name ('INT', 'SUB', 'CON', 'SEQ', 'INC', 'COH', 'REP', 'REI').\n"
+)
+
+"""
 prompt_system = (
     "You are analysing the relationships between text clauses and classifying them into one of eight sequencing categories:\n"
     "**Integrative (INT)** - Refers back to a stretch of text without nominalizing verbs or adjectives, utilizing demonstratives and third-person non-gendered pronouns.\n"
     "**Subsumptive (SUB)** - Involves referring back to text via the nominalization of a verb or adjective from the previous sentence, focusing on the action or quality itself.\n"
-    "**Consequential (CON)** - Links passages through causal, conditional, or purposive connectors, indicating logical relationships..\n"
+    "**Consequential (CON)** - Links clauses through causal, conditional, or purposive connectors, indicating logical relationships..\n"
     "**Sequential (SEQ)** - Arranges meanings in a temporal or logical order using specific linking adverbs or conjunctions.\n"
-    "**Incoherent (INC)** -  Connects unrelated passages, often starting with informal continuatives like 'ok' or 'now.'\n"
-    "**Coherent (COH)** - Links passages smoothly using simple connectors like 'and' or 'while,' ensuring continuity.\n"
-    "**Repetitive (REP)** - Repeats passages or clauses that are identically, without additional meaning.\n"
-    "**Reiterative (REI)** - Repeats similar passages with slight variations to add meaning, often using phrases like 'that is' or 'in other words' to clarify or rephrase content.\n\n"     
+    "**Incoherent (INC)** -  Refers to unrelated clauses.\n"
+    "**Coherent (COH)** - Links clauses smoothly using simple connectors like 'and' or 'while,' ensuring continuity.\n"
+    "**Repetitive (REP)** - Repeats clauses or clauses that are identically, without additional meaning.\n"
+    "**Reiterative (REI)** - Repeats similar clauses with slight variations to add meaning, often using phrases like 'that is' or 'in other words' to clarify or rephrase content.\n\n"     
     "Instructions:\n Given a text passage and two text clauses, classify the relationship between the two clauses into one of the eight categories above.\n"
     "You must only output the 3 character abbreviation of the class name ('INT', 'SUB', 'CON', 'SEQ', 'INC', 'COH', 'REP', 'REI').\n"
-    "If the relationship between the two clauses is unclear, output 'NA' to indicate this.\n"
 )
+
+prompt_system = (
+    "You are analysing the relationships between text clauses and classifying them into one of eight sequencing categories:\n"
+    "- Integrative (INT)\n"
+    "- Subsumptive (SUB)\n"
+    "- Consequential (CON)\n"
+    "- Sequential (SEQ)\n"
+    "- Incoherent (INC)\n"
+    "- Coherent (COH)\n"
+    "- Repetitive (REP)\n"
+    "- Reiterative (REI)\n\n"     
+    "Instructions:\n Given a text passage and two text clauses, classify the relationship between the two clauses into one of the eight categories above.\n"
+    "You must only output the 3 character abbreviation of the class name ('INT', 'SUB', 'CON', 'SEQ', 'INC', 'COH', 'REP', 'REI').\n"
+)
+
+"""
 
 # Define prompt template          
 prompt_temp = (
@@ -201,7 +236,7 @@ if 'dataset_train' not in locals():
 if 'dataset_val' not in locals():
     with open(outpath_val, 'r', encoding='utf-8') as f:
         lines = f.readlines()
-    dataset_val = [json.loads(line) for line in lines]\\\\
+    dataset_val = [json.loads(line) for line in lines]
 
 def validate_dataset(dataset):
     format_errors = defaultdict(int)
