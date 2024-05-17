@@ -172,8 +172,12 @@ val_id = response_val.id
 
 print("train ID:", train_id)
 # train ID: file-46PiKIkk29q5eiDFLNAPTjhH
+# train ID: file-IP7sRCUGmOciCy3Q2kc6V5HD
+# train ID: file-2y6i6O1qIF9Q4KxEwqVhUmNW
 print("val ID:", val_id)
 # val ID: file-z0uHUloR2pvyr8OemMhu0wgj
+# val ID: file-IbkLFROLHcf7y9ZiTRkQ2okY
+# val ID: file-S8QE2M8uFU4n1WzkjBAvGdoJ
 
 suffix = f'lct_v{version:02d}'
 
@@ -198,14 +202,16 @@ print("job ID:", job_id)
 
 while True:
     status = client.fine_tuning.jobs.retrieve(job_id)
-    print("status:", status.status)
     if status.status == "succeeded":
+        print('Succeeded')
         break
     elif status.status == "failed":
         print("Model training failed")
         break
     elif status.status == "running":
         print("Model is still training...")
+    elif status.status == "validating_files":
+        print("Validating files...")
     else:
         print("status:", status.status)
         break
@@ -316,6 +322,7 @@ for idx, row in df_results.iterrows():
 # save the results to a file
 fname_results = os.path.join(outpath_model, 'results_eval.xlsx')
 df_results.to_excel(fname_results, index=False)
+
 
 # generate confusion matrix
 seq_classes = list(sequence_classes.keys())
