@@ -1,7 +1,9 @@
 from io import BytesIO
 from typing import Callable
 
-from pandas import DataFrame, ExcelWriter, read_excel, read_csv
+from pandas import DataFrame, read_excel, read_csv
+
+from annotation.model.import_export.ReportGenerator import ReportGenerator
 
 
 class ImportExportService:
@@ -9,8 +11,35 @@ class ImportExportService:
     A converter between DataFrame objects and table-like file types.
     Supported filetypes include xlsx and csv.
     """
+    @staticmethod
+    def export_to_excel(df: DataFrame) -> BytesIO:
+        excel_object = BytesIO()
+        df.to_excel(excel_object, index=False)
+
+        return excel_object
+
+    @staticmethod
+    def export_to_csv(df: DataFrame) -> BytesIO:
+        csv_object = BytesIO()
+        df.to_csv(csv_object, index=False)
+
+        return csv_object
+
+    @staticmethod
+    def export_pdf_report(df: DataFrame) -> BytesIO:
+        return ReportGenerator.generate_pdf_report(df)
+
+    @staticmethod
+    def import_from_excel(file_path_or_object: BytesIO | str) -> DataFrame:
+        return read_excel(file_path_or_object, na_filter=False)
+
+    @staticmethod
+    def import_from_csv(file_path_or_object: BytesIO | str) -> DataFrame:
+        return read_csv(file_path_or_object, na_filter=False)
+
     def __init__(self):
         self.export_type_mapping: dict[str, Callable] = {
+            "pdf": self.export_pdf_report,
             "xlsx": self.export_to_excel,
             "csv": self.export_to_csv
         }
@@ -30,18 +59,6 @@ class ImportExportService:
 
         return file_object
 
-    def export_to_excel(self, df: DataFrame) -> BytesIO:
-        excel_object = BytesIO()
-        df.to_excel(excel_object, index=False)
-
-        return excel_object
-
-    def export_to_csv(self, df: DataFrame) -> BytesIO:
-        csv_object = BytesIO()
-        df.to_csv(csv_object, index=False)
-
-        return csv_object
-
     def import_file(self, file_path_or_object: BytesIO | str, filetype: str) -> DataFrame:
         if filetype not in self.export_type_mapping:
             raise ValueError(f"{filetype} is not a valid import format")
@@ -50,9 +67,3 @@ class ImportExportService:
 
         df: DataFrame = self.import_type_mapping[filetype](file_path_or_object)
         return df
-
-    def import_from_excel(self, file_path_or_object: BytesIO | str) -> DataFrame:
-        return read_excel(file_path_or_object, na_filter=False)
-
-    def import_from_csv(self, file_path_or_object: BytesIO | str) -> DataFrame:
-        return read_csv(file_path_or_object, na_filter=False)

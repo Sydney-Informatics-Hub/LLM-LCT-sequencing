@@ -124,7 +124,7 @@ class DatastoreHandler:
 
             predicted_classes: Optional[list[Classification]] = sequence.get_predicted_classes()
             predicted_class_values: str = ''
-            predicted_class_names: str = ''
+            predicted_class_names: str = '-'
             if predicted_classes is not None:
                 predicted_class_values = ','.join([str(c.value) for c in predicted_classes])
                 predicted_class_names = ','.join([c.name for c in predicted_classes])
@@ -133,7 +133,7 @@ class DatastoreHandler:
 
             correct_classes: Optional[list[Classification]] = sequence.get_correct_classes()
             corrected_class_values: str = ''
-            corrected_class_names: str = ''
+            corrected_class_names: str = '-'
             if correct_classes is not None:
                 corrected_class_values = ','.join([str(c.value) for c in correct_classes])
                 corrected_class_names = ','.join([c.name for c in correct_classes])
