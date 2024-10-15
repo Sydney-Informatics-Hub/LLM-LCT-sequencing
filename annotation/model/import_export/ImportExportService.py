@@ -26,10 +26,6 @@ class ImportExportService:
         return csv_object
 
     @staticmethod
-    def export_pdf_report(df: DataFrame) -> BytesIO:
-        return ReportGenerator.generate_pdf_report(df)
-
-    @staticmethod
     def import_from_excel(file_path_or_object: BytesIO | str) -> DataFrame:
         return read_excel(file_path_or_object, na_filter=False)
 
@@ -39,7 +35,6 @@ class ImportExportService:
 
     def __init__(self):
         self.export_type_mapping: dict[str, Callable] = {
-            "pdf": self.export_pdf_report,
             "xlsx": self.export_to_excel,
             "csv": self.export_to_csv
         }

@@ -12,7 +12,7 @@ from pandas import DataFrame
 
 from annotation.model import AnnotationService
 from annotation.model.data_structures import SequenceTuple
-from annotation.model.import_export import ImportExportService
+from annotation.model.import_export import ImportExportService, ReportGenerator
 from annotation.view.global_notifiers import NotifierService
 
 
@@ -356,6 +356,14 @@ class AnnotationController:
     def export(self, filetype: str) -> Optional[BytesIO]:
         try:
             return self.import_export_service.export(self.annotation_service.get_dataframe_for_export(), filetype)
+        except Exception as e:
+            logging.error(str(e) + '\n' + traceback.format_exc())
+            self.display_error(str(e))
+            return
+
+    def generate_report(self, options: dict) -> Optional[BytesIO]:
+        try:
+            return ReportGenerator.generate_pdf_report(self.annotation_service.get_dataframe_for_export(), options)
         except Exception as e:
             logging.error(str(e) + '\n' + traceback.format_exc())
             self.display_error(str(e))

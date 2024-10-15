@@ -3,10 +3,10 @@ from io import BytesIO
 from pandas import DataFrame
 
 import spacy
-from spacy.tokens.doc import Doc
-from spacy.tokens.token import Token
+from spacy.tokens import SpanGroup
 from docx import Document
 from docx.table import Table
+from clause_segmenter import ClauseSegmenter
 
 CLAUSE_FIELD: str = "clause"
 START_FIELD: str = "start_idx"
@@ -24,6 +24,7 @@ class SourceFileClauser:
             self.source_text = SourceFileClauser.read_txt(source_file)
         else:
             raise ValueError(f"File type {filetype} is not a valid source file type")
+        self.clause_segmenter = ClauseSegmenter(self.NLP)
         self.doc = None
 
     def get_text(self) -> str:
@@ -68,64 +69,14 @@ class SourceFileClauser:
 
         return txt_content
 
-    @staticmethod
-    def _get_clause_subtrees(doc: Doc) -> list[tuple[int, int, list]]:
-        clause_subtrees: list[tuple[int, int, list]] = []
-        for tok in doc:
-            if tok.pos_ == 'VERB' or tok.dep_ == "ROOT":
-                subtree_toks = []
-                if tok.dep_ == 'aux':
-                    continue
-                for child in tok.children:
-                    if child.dep_ == 'conj' or child.pos_ == 'CCONJ':
-                        continue
-                    subtree_toks.extend(child.subtree)
-                subtree_toks.append(tok)
-                subtree_toks.sort(key=lambda ch: ch.i)
-
-                start_idx: int = subtree_toks[0].idx
-                end_idx: int = subtree_toks[-1].idx + len(subtree_toks[-1].text)
-
-                clause_subtree = start_idx, end_idx, subtree_toks
-                clause_subtrees.append(tuple(clause_subtree))
-
-        return sorted(clause_subtrees, key=lambda x: (x[2][0].i, -x[2][-1].i))
-
-    @staticmethod
-    def _get_clause_items(doc: Doc):
-        items: list[dict] = []
-        for start_idx, end_idx, subtree_toks in SourceFileClauser._get_clause_subtrees(doc):
-            item = {START_FIELD: start_idx, END_FIELD: end_idx,
-                    CLAUSE_FIELD: ''.join(tok.text_with_ws
-                                          for tok in subtree_toks
-                                          if not tok.is_space)}
-            items.append(item)
-
-        return items
-
-    @staticmethod
-    def _get_sentence_items(doc: Doc):
-        items: list[dict] = []
-        for sent in doc.sents:
-            start_idx: int = sent[0].idx
-            end_tok: Token = sent[-1]
-            end_idx: int = end_tok.idx + len(end_tok.text)
-            item = {START_FIELD: start_idx, END_FIELD: end_idx,
-                    CLAUSE_FIELD: sent.text_with_ws}
-            items.append(item)
-
-        return items
-
     def generate_clause_dataframe(self) -> DataFrame:
         if self.doc is None:
             self.doc = SourceFileClauser.NLP(self.source_text)
-        clauses: list[dict] = SourceFileClauser._get_clause_items(self.doc)
+        clauses: SpanGroup = self.clause_segmenter.get_clauses_as_spangroup(self.doc)
+        clause_data: dict[str, list] = {CLAUSE_FIELD: [], START_FIELD: [], END_FIELD: []}
+        for clause_span in clauses:
+            clause_data[CLAUSE_FIELD].append(clause_span.text_with_ws)
+            clause_data[START_FIELD].append(clause_span.start_char)
+            clause_data[END_FIELD].append(clause_span.end_char)
 
-        return DataFrame(clauses, columns=[CLAUSE_FIELD, START_FIELD, END_FIELD])
-
-    def generate_sentence_dataframe(self) -> DataFrame:
-        if self.doc is None:
-            self.doc = SourceFileClauser.NLP(self.source_text)
-        sentences: list[dict] = SourceFileClauser._get_sentence_items(self.doc)
-
-        return DataFrame(sentences, columns=[CLAUSE_FIELD, START_FIELD, END_FIELD])
+        return DataFrame(clause_data, columns=[CLAUSE_FIELD, START_FIELD, END_FIELD])

@@ -3,7 +3,7 @@ from typing import Optional
 
 from panel import Row, Column, bind
 from panel.pane import Markdown
-from panel.widgets import Button, FileInput, FileDownload, PasswordInput
+from panel.widgets import Button, FileInput, FileDownload, PasswordInput, IntInput
 
 from annotation.controller import AnnotationController
 
@@ -50,6 +50,49 @@ class ExportControls:
             self.show_options_button.button_style = "solid"
         else:
             self.show_options_button.name = "Show export options"
+            self.show_options_button.button_style = "outline"
+
+
+class ReportControls:
+    FILENAME: str = "EC_Report"
+
+    def __init__(self, controller: AnnotationController):
+        self.controller: AnnotationController = controller
+        self.show_options_button = Button(name="Show report options", button_type="success", button_style="outline")
+        self.file_download_button = FileDownload(
+            label="Generate report",
+            filename=f"{self.FILENAME}.pdf",
+            callback=self.generate,
+            button_type="primary",
+            button_style="outline")
+        self.window_input = IntInput(name='Plot window size', value=25, step=1, start=0)
+        self.download_row = Row(self.file_download_button, self.window_input, visible=False)
+
+        self.show_options_button.on_click(self.toggle_options_visibility)
+
+        self.component = Column(
+            self.show_options_button,
+            self.download_row,
+            align="start"
+        )
+
+    def get_component(self):
+        return self.component
+
+    def set_button_disabled(self, is_disabled: bool):
+        self.show_options_button.disabled = is_disabled
+
+    def generate(self, *_):
+        options = {"window": self.window_input.value}
+        return self.controller.generate_report(options)
+
+    def toggle_options_visibility(self, *_):
+        self.download_row.visible = not self.download_row.visible
+        if self.download_row.visible:
+            self.show_options_button.name = "Hide report options"
+            self.show_options_button.button_style = "solid"
+        else:
+            self.show_options_button.name = "Show report options"
             self.show_options_button.button_style = "outline"
 
 
@@ -100,7 +143,9 @@ class UnprocessedModeLoader:
         self.llm_process_button.on_click(self.llm_process_sequences)
         self.cost_time_estimate = Markdown("")
         self.export_controls = ExportControls(self.controller)
+        self.report_controls = ReportControls(self.controller)
         self.export_controls.set_button_disabled(True)
+        self.report_controls.set_button_disabled(True)
 
         self.component = Column(self.api_key_input,
                                 Row(self.source_file_loader.get_component(),
@@ -115,6 +160,10 @@ class UnprocessedModeLoader:
                                            ),
                                     Column(
                                         self.export_controls.get_component(),
+                                        sizing_mode='stretch_width'
+                                    ),
+                                    Column(
+                                        self.report_controls.get_component(),
                                         sizing_mode='stretch_width'
                                     ),
                                     align="start"
@@ -201,6 +250,7 @@ class UnprocessedModeLoader:
 
         self.llm_process_button.disabled = False
         self.export_controls.set_button_disabled(False)
+        self.report_controls.set_button_disabled(False)
 
     def llm_process_sequences(self, *_):
         self.controller.llm_process_sequences()
@@ -217,7 +267,9 @@ class PreprocessedModeLoader:
                                         button_type="success", button_style="outline")
         self.load_files_button.on_click(self.load_files)
         self.export_controls = ExportControls(self.controller)
+        self.report_controls = ReportControls(self.controller)
         self.export_controls.set_button_disabled(True)
+        self.report_controls.set_button_disabled(True)
 
         self.component = Column(Row(self.source_file_loader.get_component(),
                                 self.preprocessed_loader.get_component()
@@ -228,6 +280,10 @@ class PreprocessedModeLoader:
                                     ),
                                     Column(
                                         self.export_controls.get_component(),
+                                        sizing_mode='stretch_width'
+                                    ),
+                                    Column(
+                                        self.report_controls.get_component(),
                                         sizing_mode='stretch_width'
                                     ),
                                     align="start"
@@ -255,6 +311,7 @@ class PreprocessedModeLoader:
         self.controller.load_source_file(source_file_content, source_filetype)
         self.controller.load_preprocessed_sequences(preprocessed_content, preprocessed_filetype)
         self.export_controls.set_button_disabled(False)
+        self.report_controls.set_button_disabled(False)
 
 
 class SourceLoader:
