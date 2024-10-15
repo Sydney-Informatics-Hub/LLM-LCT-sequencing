@@ -11,13 +11,11 @@ C2_START_FIELD: str = "c2_start"
 C2_END_FIELD: str = "c2_end"
 
 CLAUSE_PAIR_RANGE: int = 1
-SENTENCE_PAIR_RANGE: int = 1
 
 
 class SequencingTool:
-    def __init__(self, clause_df: DataFrame, sentence_df: DataFrame):
+    def __init__(self, clause_df: DataFrame):
         self.clause_df: DataFrame = clause_df
-        self.sentence_df: DataFrame = sentence_df
 
     def _generate_groupings(self, item_df: DataFrame, item_range: int) -> list[dict]:
         groupings: list[dict] = []
@@ -42,7 +40,6 @@ class SequencingTool:
 
     def generate_initial_sequence_df(self) -> DataFrame:
         sequences: list[dict] = self._generate_groupings(self.clause_df, CLAUSE_PAIR_RANGE)
-        sequences.extend(self._generate_groupings(self.sentence_df, SENTENCE_PAIR_RANGE))
         sequences.sort(key=lambda s: (s[C1_START_FIELD], s[C1_END_FIELD], s[C2_START_FIELD], s[C2_END_FIELD]))
 
         for seq_idx, seq in enumerate(sequences):

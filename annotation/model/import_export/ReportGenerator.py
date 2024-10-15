@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from matplotlib import pyplot as plt
-from pandas import DataFrame, Series, get_dummies, concat, read_csv
+from pandas import DataFrame, Series, get_dummies, concat
 from reportlab.lib import colors
 from reportlab.platypus import Image, Table, TableStyle, SimpleDocTemplate
 
@@ -32,17 +32,18 @@ class ReportGenerator:
     })
 
     @staticmethod
-    def generate_pdf_report(df: DataFrame) -> BytesIO:
+    def generate_pdf_report(df: DataFrame, options: dict) -> BytesIO:
+        window: int = options['window']
         pdf_buffer = BytesIO()
         flowables: list = []
 
         pdf_doc = SimpleDocTemplate(pdf_buffer)
         flowables.append(ReportGenerator.create_frequency_table(df))
-        flowables.append(ReportGenerator.create_frequency_plot_image(df))
-        flowables.append(ReportGenerator.create_frequency_bidirectional_image(df, 'Class frequency area plot'))
-        flowables.append(ReportGenerator.create_ec_worm_image(df, 'The EC Worm with ordinal weighting',
+        flowables.append(ReportGenerator.create_frequency_plot_image(df, window))
+        flowables.append(ReportGenerator.create_frequency_bidirectional_image(df, window, 'Class frequency area plot'))
+        flowables.append(ReportGenerator.create_ec_worm_image(df, window, 'The EC Worm with ordinal weighting',
                                                               ReportGenerator.WEIGHTS_ORDINAL))
-        flowables.append(ReportGenerator.create_ec_worm_image(df, 'The EC Worm with simple weighting',
+        flowables.append(ReportGenerator.create_ec_worm_image(df, window, 'The EC Worm with simple weighting',
                                                               ReportGenerator.WEIGHTS_SIMPLE))
 
         pdf_doc.build(flowables)
@@ -55,6 +56,9 @@ class ReportGenerator:
         dummies_df = get_dummies(class_series)
         na_col = dummies_df.pop('-')
         dummies_df.insert(len(dummies_df.columns), 'N/A', na_col)
+        for col in ReportGenerator.COLUMN_ORDER:
+            if col not in dummies_df:
+                dummies_df[col] = 0
         dummies_df = dummies_df[ReportGenerator.COLUMN_ORDER]
         return (dummies_df.rolling(window).sum()
                 .reindex()
@@ -62,9 +66,9 @@ class ReportGenerator:
                 )
 
     @staticmethod
-    def create_frequency_plot_image(df: DataFrame, colormap: str = 'viridis') -> Image:
+    def create_frequency_plot_image(df: DataFrame, window: int, colormap: str = 'viridis') -> Image:
         trimmed_df = df[['sequence_id', 'predicted_classes_name']]
-        classes_df = ReportGenerator.get_density_over_sequences(trimmed_df['predicted_classes_name'])
+        classes_df = ReportGenerator.get_density_over_sequences(trimmed_df['predicted_classes_name'], window)
         density_df = concat([df['sequence_id'], classes_df], axis=1)
 
         density_df.to_csv('density.csv', index=False)
@@ -81,9 +85,9 @@ class ReportGenerator:
         return Image(buf, useDPI=(300, 300))
 
     @staticmethod
-    def create_frequency_bidirectional_image(df: DataFrame, title: str, colormap: str = 'winter') -> Image:
+    def create_frequency_bidirectional_image(df: DataFrame, window: int, title: str, colormap: str = 'winter') -> Image:
         trimmed_df = df[['sequence_id', 'predicted_classes_name']]
-        classes_df = ReportGenerator.get_density_over_sequences(trimmed_df['predicted_classes_name'])
+        classes_df = ReportGenerator.get_density_over_sequences(trimmed_df['predicted_classes_name'], window)
         classes_df = classes_df.drop(['REI', 'REP', 'N/A'], axis=1)
         classes_df[['COH', 'INC']] = -classes_df[['COH', 'INC']]
         density_df = concat([df['sequence_id'], classes_df], axis=1)
@@ -99,9 +103,9 @@ class ReportGenerator:
         return Image(buf, useDPI=(300, 300))
 
     @staticmethod
-    def create_ec_worm_image(df: DataFrame, title: str, weighting: Series) -> Image:
+    def create_ec_worm_image(df: DataFrame, window: int, title: str, weighting: Series) -> Image:
         trimmed_df = df[['sequence_id', 'predicted_classes_name']]
-        classes_df = ReportGenerator.get_density_over_sequences(trimmed_df['predicted_classes_name'])
+        classes_df = ReportGenerator.get_density_over_sequences(trimmed_df['predicted_classes_name'], window)
         worm_df = DataFrame({'': classes_df.multiply(weighting).sum(axis=1)})
         density_df = concat([df['sequence_id'], worm_df], axis=1)
 
@@ -123,6 +127,9 @@ class ReportGenerator:
         frequency_df = frequency_df.T
         na_col = frequency_df.pop('-')
         frequency_df.insert(len(frequency_df.columns), 'N/A', na_col)
+        for col in ReportGenerator.COLUMN_ORDER:
+            if col not in frequency_df:
+                frequency_df[col] = 0
         frequency_df = frequency_df[ReportGenerator.COLUMN_ORDER]
         frequency_df['Total'] = frequency_df.iloc[0].sum()
 
@@ -156,10 +163,3 @@ class ReportGenerator:
     @staticmethod
     def create_confusion_matrix(df: DataFrame) -> BytesIO:
         pass
-
-
-if __name__ == "__main__":
-    df = read_csv("/Users/hcro4489/My Drive/USYD SIH/Projects/LCT Classroom Interactions/sequence_annotation.csv")
-    pdf_buf = ReportGenerator.generate_pdf_report(df)
-    with open('test.pdf', 'wb') as f:
-        f.write(pdf_buf.read())

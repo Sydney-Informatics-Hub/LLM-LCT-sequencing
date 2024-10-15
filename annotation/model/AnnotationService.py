@@ -29,8 +29,7 @@ class AnnotationService:
         self.datastore_handler.build_text_datastore(text_content)
 
         clause_df: DataFrame = source_loader.generate_clause_dataframe()
-        sentence_df: DataFrame = source_loader.generate_sentence_dataframe()
-        sequence_generator = SequencingTool(clause_df, sentence_df)
+        sequence_generator = SequencingTool(clause_df)
         sequence_df = sequence_generator.generate_initial_sequence_df()
         self.datastore_handler.build_clause_datastores(sequence_df)
 
