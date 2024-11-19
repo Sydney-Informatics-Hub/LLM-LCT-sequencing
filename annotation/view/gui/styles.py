@@ -6,7 +6,7 @@ top_bar_style = {
 }
 
 text_display_style = {
-    "height": "800px",
+    "height": "400px",
     "padding": "20px",
 }
 

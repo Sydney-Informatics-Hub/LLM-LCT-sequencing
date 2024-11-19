@@ -153,3 +153,35 @@ class DatastoreHandler:
 
         df = DataFrame(export_data, columns=export_columns)
         return df.astype(DatastoreHandler.FIELD_DTYPES)
+
+    def build_plot_dataframe(self) -> Optional[DataFrame]:
+        sequence_position_field: str = "sequence_position"
+        classification_field: str = "classification"
+        plot_columns = [sequence_position_field, classification_field]
+        plot_data: list[dict] = []
+        default_class_name: str = 'NA'
+
+        sequences: list[ClauseSequence] = self.annotation_dao.get_all_sequences()
+        if len(sequences) == 0:
+            return None
+        for sequence in sequences:
+            sequence_data: list = []
+            clause_a_range, clause_b_range = sequence.get_clause_ranges()
+            sequence_position: int = (sum(clause_a_range) + sum(clause_b_range)) // 4
+            sequence_data.append(sequence_position)
+
+            predicted_classes: Optional[list[Classification]] = sequence.get_predicted_classes()
+            correct_classes: Optional[list[Classification]] = sequence.get_correct_classes()
+            class_names: str
+            if predicted_classes is not None:
+                class_names = ','.join([c.name for c in predicted_classes])
+            elif correct_classes is not None:
+                class_names = ','.join([c.name for c in correct_classes])
+            else:
+                class_names = default_class_name
+            sequence_data.append(class_names)
+
+            sequence_dict: dict = {col: data for col, data in zip(plot_columns, sequence_data)}
+            plot_data.append(sequence_dict)
+
+        return DataFrame(plot_data, columns=plot_columns)

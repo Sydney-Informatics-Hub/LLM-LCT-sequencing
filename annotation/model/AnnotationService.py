@@ -69,6 +69,9 @@ class AnnotationService:
     def get_dataframe_for_export(self) -> DataFrame:
         return self.datastore_handler.build_export_dataframe()
 
+    def get_dataframe_for_plot(self) -> Optional[DataFrame]:
+        return self.datastore_handler.build_plot_dataframe()
+
     def get_text(self) -> str:
         return self.annotation_dao.get_text()
 
