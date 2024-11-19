@@ -3,8 +3,6 @@ from typing import Callable
 
 from pandas import DataFrame, read_excel, read_csv
 
-from annotation.model.import_export.ReportGenerator import ReportGenerator
-
 
 class ImportExportService:
     """
