@@ -4,8 +4,7 @@ from typing import Optional
 import pandas as pd
 from numpy import ndarray
 
-from annotation.model.data_structures import TextRange, ClauseSequence
-from annotation.model.data_structures.Classification import Classification
+from annotation.model.data_structures import TextRange, ClauseSequence, Classification
 from annotation.model.database.repositories import TextTXTRepository, TextRangeCSVRepository, SequenceCSVRepository
 
 
