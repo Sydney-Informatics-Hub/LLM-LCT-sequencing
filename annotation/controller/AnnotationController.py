@@ -366,3 +366,6 @@ class AnnotationController:
 
     def get_plot_data(self) -> Optional[DataFrame]:
         return self.annotation_service.get_dataframe_for_plot()
+
+    def get_plot_weights_data(self) -> Optional[DataFrame]:
+        return self.annotation_service.get_weights_dataframe_for_plot()

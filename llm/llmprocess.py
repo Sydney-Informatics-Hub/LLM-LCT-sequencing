@@ -23,7 +23,6 @@ prompt_id, filename_prompt, filename_response, tokens, modelname_llm
 
 import os
 import pandas as pd
-import numpy as np
 import json
 import argparse
 from enum import Enum
@@ -107,14 +106,14 @@ class LCTclasses(Enum):
     Enum for LCT classes.
     """
     NA = 0
-    INT = 1
-    SUB = 2
-    CON = 3
-    SEQ = 4
-    REI = 5
-    REP = 6
-    COH = 7
-    INC = 8
+    INC = 1
+    COH = 2
+    REP = 3
+    REI = 4
+    SEQ = 5
+    CON = 6
+    SUB = 7
+    INT = 8
 
 def lct_string_to_int(s):
     """
@@ -302,7 +301,7 @@ class LLMProcess():
 
         cost_estimate = {'compute_time': compute_time,
                          'costs': costs}
-        
+
         return cost_estimate
 
 
@@ -451,20 +450,19 @@ class LLMProcess():
         total_seq_count: int = self.df_sequences.shape[0]
         self.progress_update_fn(f"\r{processed_seq_count} of {total_seq_count} sequences complete", end="")
         for index_multi, text_content_multi, text_chunk1_multi, text_chunk2_multi, window_start_multi, window_end_multi in zip(list_index_multi, 
-                                                                                         list_text_content_multi, 
-                                                                                         list_text_chunk1_multi, 
+                                                                                         list_text_content_multi,
+                                                                                         list_text_chunk1_multi,
                                                                                          list_text_chunk2_multi,
                                                                                          list_window_start_multi,
                                                                                          list_window_end_multi):
 
-            
             nseq = len(index_multi)
-            
+
             logging.debug('Processing clauses for samples', index_multi[0], ' to ', index_multi[-1])
-           
+
             # copy string self.zero_shot_prompt
-            self.prompt = self.gen_multiprompt(text_content_multi, 
-                                               text_chunk1_multi, 
+            self.prompt = self.gen_multiprompt(text_content_multi,
+                                               text_chunk1_multi,
                                                text_chunk2_multi)
 
 
@@ -487,13 +485,13 @@ class LLMProcess():
                 completion_text = completion_text[1:]
 
             # check if response is json
-            if completion_text.startswith('{') and completion_text.endswith('}'):     
+            if completion_text.startswith('{') and completion_text.endswith('}'):
                 try:
                     completion_text = json.loads(completion_text)
                     # save response to json file
-                    filename_response = f'response_{chat_id}.json'    
+                    filename_response = f'response_{chat_id}.json'
                     with open(os.path.join(self.outpath_prompts, filename_response), 'w') as f:
-                        json.dump(completion_text, f, indent=2)  
+                        json.dump(completion_text, f, indent=2)
                     # Extract classification, reasoning and linkage word from completion_text
                     keys = completion_text.keys()
                     list_reasoning = [completion_text[key]['reason'] for key in keys]
@@ -516,7 +514,6 @@ class LLMProcess():
                 list_class_pred = ['NONE'] * nseq
                 list_linkage_pred = ['NONE'] * nseq
 
-            
             # convert class_pred to int
             list_class_pred_int = [lct_string_to_int(class_pred) for class_pred in list_class_pred]
             # add results to dataframe
@@ -537,10 +534,6 @@ class LLMProcess():
 
             #print results
             logging.debug('Index:', index_multi, ' | Prediction:', list_class_pred, ' | Used tokens:', tokens_used)
-            logging.debug('')
-
-            # number of classes that are not 'NONE' or 'NA' in list_class_pred
-            nclasses_found = len([class_pred for class_pred in list_class_pred if class_pred not in ['NONE', 'NA']])
 
             # print process message
             self.progress_update_fn(f"\r{processed_seq_count} of {total_seq_count} sequences complete", end="")
@@ -555,7 +548,7 @@ class LLMProcess():
         logging.debug('Experiment finished! Results saved to folder', self.outpath)
 
         return self.fname_results
-    
+
     def run_single(self, 
                    c1_start, 
                    c1_end, 

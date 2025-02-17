@@ -165,6 +165,34 @@ class DatastoreHandler:
         if len(sequences) == 0:
             return None
         for sequence in sequences:
+            clause_a_range, clause_b_range = sequence.get_clause_ranges()
+            sequence_position: int = (sum(clause_a_range) + sum(clause_b_range)) // 4
+
+            predicted_classes: Optional[list[Classification]] = sequence.get_predicted_classes()
+            correct_classes: Optional[list[Classification]] = sequence.get_correct_classes()
+
+            class_names: list[str]
+            if (correct_classes is not None) and (len(correct_classes) > 0):
+                class_names = [c.name for c in correct_classes]
+            elif (predicted_classes is not None) and (len(predicted_classes) > 0):
+                class_names = [c.name for c in predicted_classes]
+            else:
+                class_names = [default_class_name]
+            for class_name in class_names:
+                plot_data.append({sequence_position_field: sequence_position, classification_field: class_name})
+
+        return DataFrame(plot_data, columns=plot_columns)
+
+    def build_weights_plot_dataframe(self) -> Optional[DataFrame]:
+        sequence_position_field: str = "sequence_position"
+        weight_field: str = "weight"
+        plot_columns = [sequence_position_field, weight_field]
+        plot_data: list[dict] = []
+
+        sequences: list[ClauseSequence] = self.annotation_dao.get_all_sequences()
+        if len(sequences) == 0:
+            return None
+        for sequence in sequences:
             sequence_data: list = []
             clause_a_range, clause_b_range = sequence.get_clause_ranges()
             sequence_position: int = (sum(clause_a_range) + sum(clause_b_range)) // 4
@@ -172,14 +200,17 @@ class DatastoreHandler:
 
             predicted_classes: Optional[list[Classification]] = sequence.get_predicted_classes()
             correct_classes: Optional[list[Classification]] = sequence.get_correct_classes()
-            class_names: str
-            if predicted_classes is not None:
-                class_names = ','.join([c.name for c in predicted_classes])
-            elif correct_classes is not None:
-                class_names = ','.join([c.name for c in correct_classes])
+
+            class_weight: int
+            if (correct_classes is not None) and (len(correct_classes) > 0):
+                class_weight = sum([c.value for c in correct_classes])
+            elif (predicted_classes is not None) and (len(predicted_classes) > 0):
+                class_weight = sum([c.value for c in predicted_classes])
             else:
-                class_names = default_class_name
-            sequence_data.append(class_names)
+                class_weight = 0
+            if class_weight < 0:
+                class_weight = 0
+            sequence_data.append(class_weight)
 
             sequence_dict: dict = {col: data for col, data in zip(plot_columns, sequence_data)}
             plot_data.append(sequence_dict)

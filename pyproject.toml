@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llm-lct-sequencing"
-version = "1.2.6"
+version = "1.2.7"
 description = "An automatic classification system that detects and identifies the sequencing types of combination of passages (clauses) according to Legitimation Code Theory"
 authors = ["Sebastian Haan <sebastian.haan@sydney.edu.au>", "Hamish Croser <h.croser1@gmail.com>"]
 license = "MIT"

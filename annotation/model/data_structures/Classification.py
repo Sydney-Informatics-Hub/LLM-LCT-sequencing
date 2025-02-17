@@ -3,11 +3,11 @@ from enum import Enum
 
 class Classification(Enum):
     NA = -1
-    INT = 1
-    SUB = 2
-    CON = 3
-    SEQ = 4
-    REI = 5
-    REP = 6
-    COH = 7
-    INC = 8
+    INC = 1
+    COH = 2
+    REP = 3
+    REI = 4
+    SEQ = 5
+    CON = 6
+    SUB = 7
+    INT = 8

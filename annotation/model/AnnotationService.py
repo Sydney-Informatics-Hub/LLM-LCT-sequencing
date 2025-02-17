@@ -14,6 +14,8 @@ from llm import LLMProcess
 
 
 class AnnotationService:
+    OPEN_AI_MODEL: str = "gpt-4o"
+
     def __init__(self):
         self.annotation_dao: AnnotationDAO = AnnotationDAO(ref_text_ds_path, clauses_ds_path, sequences_ds_path)
         self.annotation_dao.clear_all_data_stores()
@@ -38,7 +40,8 @@ class AnnotationService:
                                  llm_zero_prompt_path: Path,
                                  progress_update_fn: Callable):
         self.datastore_handler.update_pre_llm_sequence_file(str(pre_llm_sequence_path.resolve()))
-        self.llm_processor = LLMProcess(filename_pairs=str(pre_llm_sequence_path.resolve()),
+        self.llm_processor = LLMProcess(modelname_llm=self.OPEN_AI_MODEL,
+                                        filename_pairs=str(pre_llm_sequence_path.resolve()),
                                         filename_text=str(ref_text_ds_path.resolve()),
                                         filename_examples=str(llm_examples_path.resolve()),
                                         filename_definitions=str(llm_definitions_path.resolve()),
@@ -71,6 +74,9 @@ class AnnotationService:
 
     def get_dataframe_for_plot(self) -> Optional[DataFrame]:
         return self.datastore_handler.build_plot_dataframe()
+
+    def get_weights_dataframe_for_plot(self) -> Optional[DataFrame]:
+        return self.datastore_handler.build_weights_plot_dataframe()
 
     def get_text(self) -> str:
         return self.annotation_dao.get_text()
