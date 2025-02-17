@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+import pandas as pd
 from numpy import ndarray
 
 from annotation.model.data_structures import TextRange, ClauseSequence
@@ -15,12 +16,15 @@ class AnnotationDAO:
         self.sequence_repository: SequenceCSVRepository = SequenceCSVRepository(sequence_database_fn)
 
     @staticmethod
-    def _split_to_int_list(delimited_str: str) -> list[int]:
-        if len(delimited_str) == 0:
+    def _split_to_int_list(sequence_data) -> list[int]:
+        if pd.isna(sequence_data):
+            return []
+        sequence_data = str(sequence_data)
+        if len(sequence_data) == 0:
             return []
 
         delimiter: str = SequenceCSVRepository.CLASS_LS_DELIMITER
-        return [int(x) for x in delimited_str.split(delimiter)]
+        return [int(x) for x in sequence_data.split(delimiter)]
 
     @staticmethod
     def _join_str_from_int_list(int_list: list[int]) -> str:
@@ -62,8 +66,8 @@ class AnnotationDAO:
         clause_a_id: int = sequence_data[1]
         clause_b_id: int = sequence_data[2]
         linkage_words: str | float = sequence_data[3]
-        class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(str(sequence_data[4]))
-        class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(str(sequence_data[5]))
+        class_predict_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[4])
+        class_correct_ids: list[int] = AnnotationDAO._split_to_int_list(sequence_data[5])
         reasoning: str = sequence_data[6]
 
         clause_a_data: tuple = self.clause_repository.read_by_id(clause_a_id)
