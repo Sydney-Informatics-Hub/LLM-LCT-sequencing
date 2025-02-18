@@ -1,6 +1,146 @@
+# Annotation module for LLM-LCT-sequencing
+
+This document is to provide high-level documentation for the annotation module in order to assist a developer continuing the LLM-LCT-sequencing project.
+This file is not intended to be maintained and the docs/handover branch should not be merged into main.
+
+## Overview
+
+The annotation module handles the clause segmentation, clause pairing, import/export, data storage, and GUI for the LLM-LCT tool.
+
+## Usage
+
+The public-facing Annotation class is very simple with just one method, `run()`. A complete example that can be used in a Jupyter notebook can be seen below:
+
+```python
+from annotation.Annotation import Annotation
+annotation: Annotation = Annotation(debug=True)
+annotation.run()
+```
+
+## Structure
+
+A general Model-View-Controller pattern is used in the annotation module.
+
+### Controller
+
+The controller submodule consists of a single class `AnnotationController` that acts as the intermediary between the services in the model and the view classes.
+
+### Model
+
+The model submodule contains the services that handle logic related to clause segmentation, clause pairing, import/export, and data storage.
+
+The clausing sub-submodule handles clause segmentation (`SourceFileClauser`) and clause sequencing/pairing (`SequencingTool`). The clause segmentation is abstracted to a publicly available package called clause-segmenter. 
+
+The database sub-submodule handles interactions with the CSV files acting as the database for the application.
+
+The import_export sub-submodule handles the importing and exporting of some file types used in the application. The reading of some specific user provided files is not handled by this sub-submodule, such as the files handled in `SourceFileClauser`.
+
+The data_structures sub-submodule contains several data structures used throughout the application.
+
+### View
+
+The view submodule handles all GUI configuration and logic. The panel package is used heavily here.
+
+The `AnnotationViewWrapper` aggregates the components of the GUI and handles the overall layout.
+
+The `SourceLoader` class handles loading of the canonical text to be analysed and some LLM configuration files. There are two modes, 'Unprocessed' mode and 'Preprocessed' mode, and the `SourceLoader` contains implementations of these two strategies. The 'Unprocessed' mode is for when the user has not processed the text at all, and the 'Preprocessed' mode is for when the user has exported some progress, i.e. when they have exported the LLM analysis and wish to avoid the time/cost of reprocessing this analysis.
+
+The `Controls` class handles the annotator navigation and classification components.
+
+The `DataDisplay` class handles the graphs (currently generated using plotly) that display visualisations of the classification analysis.
+
+The `TextDisplay` class handles rendering of the canonical text. Included in this is logic handling the highlighting of selected clauses and their overlaps.
+
+The `LoadingIndicator` and `NotifierService` classes are under the sub-submodule global_notifiers as they have a more direct relationship with the controller and there should only be one of each in the application.
+
+## Diagrams
+
+Below are two diagrams, a simplified class relationship diagram and a more detailed class diagram.
+The diagrams are rendered using [Mermaid](https://mermaid.js.org/) and are partially generated using [pymermaider](https://pypi.org/project/pymermaider/).
+
 ```mermaid
 ---
-title: annotation
+title: Relationship diagram - annotation
+---
+classDiagram
+    DatabaseStateError --|> Exception
+
+    DatabaseFieldError --|> DatabaseStateError
+
+    DatabaseEntryError --|> DatabaseStateError
+
+    DatabaseFileSizeError --|> DatabaseStateError
+
+    Classification --|> `enum.Enum`
+
+    Annotation *-- AnnotationController
+    Annotation *-- AnnotationViewWrapper
+    Annotation *-- AnnotationService
+    Annotation *-- NotifierService
+    Annotation *-- ImportExportService
+    
+    AnnotationController --> AnnotationService
+    AnnotationController --> NotifierService
+    AnnotationController --> ImportExportService
+    AnnotationController o-- TextRange
+    
+    AnnotationService *-- DatastoreHandler
+    AnnotationService *-- AnnotationDAO
+    AnnotationService *-- LLMProcess
+    AnnotationService o-- SourceFileClauser
+    AnnotationService o-- SequencingTool
+    AnnotationService o-- ClauseSequence
+    AnnotationService o-- Classification
+    AnnotationService o-- SequenceTuple
+
+    DatastoreHandler --> AnnotationDAO
+    DatastoreHandler ..> ClauseSequence
+    DatastoreHandler ..> Classification
+
+    AnnotationDAO --* TextTXTRepository
+    AnnotationDAO --* TextRangeCSVRepository
+    AnnotationDAO --* SequenceCSVRepository
+    AnnotationDAO ..> TextRange
+    AnnotationDAO ..> ClauseSequence
+    AnnotationDAO ..> Classification
+    
+    ClauseSequence o-- Classification
+    ClauseSequence o-- TextRange
+
+    TextRangeCSVRepository ..> DatabaseFieldError
+    TextRangeCSVRepository ..> DatabaseEntryError
+
+    SequenceCSVRepository ..> DatabaseFieldError
+    SequenceCSVRepository ..> DatabaseEntryError
+
+    TextTXTRepository ..> DatabaseFileSizeError
+
+    AnnotationViewWrapper --> AnnotationController
+    AnnotationViewWrapper *-- LoadingIndicator
+    AnnotationViewWrapper *-- SourceLoader
+    AnnotationViewWrapper *-- TextDisplay
+    AnnotationViewWrapper *-- DataDisplay
+    AnnotationViewWrapper *-- Controls
+    
+    LoadingIndicator --> AnnotationController
+
+    SourceLoader --> AnnotationController
+    SourceLoader *-- UnprocessedModeLoader
+    SourceLoader *-- PreprocessedModeLoader
+
+    PreprocessedModeLoader --> AnnotationController
+    PreprocessedModeLoader *-- FileUploadWidget
+
+    UnprocessedModeLoader --> AnnotationController
+    UnprocessedModeLoader *-- FileUploadWidget
+    UnprocessedModeLoader *-- ExportControls
+
+    ExportControls --> AnnotationController
+```
+
+```mermaid
+---
+title: Class diagram - annotation
 ---
 classDiagram
     class Annotation {
@@ -418,7 +558,7 @@ classDiagram
     
     AnnotationService *-- DatastoreHandler
     AnnotationService *-- AnnotationDAO
-    AnnotationService *-- llm.LLMProcess
+    AnnotationService *-- LLMProcess
     AnnotationService o-- SourceFileClauser
     AnnotationService o-- SequencingTool
     AnnotationService o-- ClauseSequence
