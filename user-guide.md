@@ -18,6 +18,6 @@ This is a non-comprehensive user guide for the LLM-LCT-sequencing annotator
 
 For step 5 of the above instructions, you may optionally upload files configuring the prompt for the LLM. The file paths for the default files can be found below. These files can be edited and uploaded, but their format must remain the same to function.
 
-LLM definitions default path: schemas/sequencing_types.xlsx
-LLM examples default path: tests/sequencing_examples.xlsx
-LLM prompt default path: schemas/instruction_multiprompt.txt
+- LLM definitions default path: schemas/sequencing_types.xlsx
+- LLM examples default path: tests/sequencing_examples.xlsx
+- LLM prompt default path: schemas/instruction_multiprompt.txt
